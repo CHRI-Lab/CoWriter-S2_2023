@@ -1,0 +1,25 @@
+# adapted from: https://github.com/py-actions/flake8
+
+name: Flake8 Linting
+
+on: [push, pull_request]
+
+jobs:
+  flake8-lint:
+    runs-on: ubuntu-latest
+    name: Linting
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Flake8 linting
+        uses: py-actions/flake8@v2
+        with:
+          # ignore: "F401" -> to be updated later
+          # exclude: "src/ignoreme.py" -> to be updated later
+          max-line-length: "80"
+          path: "src"
+          plugins: "flake8"
