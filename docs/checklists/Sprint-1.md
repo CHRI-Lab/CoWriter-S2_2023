@@ -3,17 +3,17 @@ This checklist helps you double check your work for Sprint 1.
 
 
 ## Background description, client goals, motivation
-- [ ] Project overview, background and goals were created.
-- [ ] DO-BE-FEEL list and GOAL MODEL were created. 
-- [ ] The goal model is consistent with the client understanding of the problem and with DO-BE-FEEL list.
+- [x] Project overview, background and goals were created.
+- [x] DO-BE-FEEL list and GOAL MODEL were created. 
+- [x] The goal model is consistent with the client understanding of the problem and with DO-BE-FEEL list.
 
 
 ## Personas
 Make sure that your Personas satisfies the following criteria:
 
-- [ ] 2-3 personas were validated (from previous/existing ones) or developed to help with requirements validation.
-- [ ] Personas are based on the research done by students and the discussion with industry partners.
-- [ ] Personas are inclusive and diverse.
+- [x] 2-3 personas were validated (from previous/existing ones) or developed to help with requirements validation.
+- [x] Personas are based on the research done by students and the discussion with industry partners.
+- [x] Personas are inclusive and diverse.
 
 
 ## Analysis of requirements (User Stories or Use Cases)
@@ -25,10 +25,10 @@ Make sure that your Personas satisfies the following criteria:
 
 ## Development environment
 
-- [ ] Confluence is organized (cover page, project details, requirements, technical details about the project, meeting minutes and so on). 
-- [ ] Trello (or Github projects or JIRA) is created, structured and organized. 
+- [x] Confluence is organized (cover page, project details, requirements, technical details about the project, meeting minutes and so on). 
+- [x] Trello (or Github projects or JIRA) is created, structured and organized. 
 - [ ] Previous/existing project is deployed and could be used/tested as part of this requirements engineering phase.
-- [ ] README file is updated and provide details about the project, workflow (branches/naming conventions and so on).
+- [x] README file is updated and provide details about the project, workflow (branches/naming conventions and so on).
 
 ## Plan
 
@@ -39,14 +39,14 @@ Make sure that your Personas satisfies the following criteria:
 
 ## Meetings
 
-- [ ] Meetings are recorded in Confluence and only. They were NOT exported to Github as they're part of internal process.
+- [x] Meetings are recorded in Confluence and only. They were NOT exported to Github as they're part of internal process.
 
 
 ## GitHub 
 
-- [ ] Folders are structured (On Canvas, visit Assignment -> "Sprint 1: Confluence Space, project background and elicitation documents" page: you can find requirements for folders' structure.)
+- [x] Folders are structured (On Canvas, visit Assignment -> "Sprint 1: Confluence Space, project background and elicitation documents" page: you can find requirements for folders' structure.)
 - [ ] Sprint 1 documents were exported from Confluence and added to the repository (and are updated)
-- [ ] README file is updated and explain the team's repository
+- [x] README file is updated and explain the team's repository
 - [ ] A baseline tag was generated for this Sprint (On Canvas, visit Assignment -> "Sprint 1: Confluence Space, project background and elicitation documents" page: you can find requirements for the baseline tag)
 
 ## Additional Information
