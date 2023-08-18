@@ -18,10 +18,10 @@ Make sure that your Personas satisfies the following criteria:
 
 ## Analysis of requirements (User Stories or Use Cases)
 
-- [ ] The analysis of requirements was performed on most of the existing requirements. 
-- [ ] The [new set of] requirements is consistent to the scope of the project, completely cover the new capabilities required by the client and are well documented/structured/organized on Confluence.
-- [ ] The requirements can be documented in the form of user stories or use cases, supplementary specification of design/implementation/deployment requirements, prototypes, and others. It may also be necessary to be explicit about what is not in scope to define the scope boundary more clearly.
-- [ ] We used ChatGPT to generate user stories to our project. On Confluence Space, we documented the prompt we've used, what user stories were generated WITH and WITHOUT ChatGPT.
+- [x] The analysis of requirements was performed on most of the existing requirements. 
+- [x] The [new set of] requirements is consistent to the scope of the project, completely cover the new capabilities required by the client and are well documented/structured/organized on Confluence.
+- [x] The requirements can be documented in the form of user stories or use cases, supplementary specification of design/implementation/deployment requirements, prototypes, and others. It may also be necessary to be explicit about what is not in scope to define the scope boundary more clearly.
+- [x] We used ChatGPT to generate user stories to our project. On Confluence Space, we documented the prompt we've used, what user stories were generated WITH and WITHOUT ChatGPT.
 
 ## Development environment
 
@@ -32,9 +32,9 @@ Make sure that your Personas satisfies the following criteria:
 
 ## Plan
 
-- [ ] A plan (or discussion on what to do next) was provided (requirements to develop, technologies to use, infrastructure to deploy the project) for Sprint 2 and Sprint 3. 
-- [ ] Requirements were estimated and prioritised.
-- [ ] Backlog items can be found in Trello (or Github project or JIRA).
+- [x] A plan (or discussion on what to do next) was provided (requirements to develop, technologies to use, infrastructure to deploy the project) for Sprint 2 and Sprint 3. 
+- [x] Requirements were estimated and prioritised.
+- [x] Backlog items can be found in Trello (or Github project or JIRA).
 
 
 ## Meetings
@@ -45,9 +45,9 @@ Make sure that your Personas satisfies the following criteria:
 ## GitHub 
 
 - [x] Folders are structured (On Canvas, visit Assignment -> "Sprint 1: Confluence Space, project background and elicitation documents" page: you can find requirements for folders' structure.)
-- [ ] Sprint 1 documents were exported from Confluence and added to the repository (and are updated)
+- [x] Sprint 1 documents were exported from Confluence and added to the repository (and are updated)
 - [x] README file is updated and explain the team's repository
-- [ ] A baseline tag was generated for this Sprint (On Canvas, visit Assignment -> "Sprint 1: Confluence Space, project background and elicitation documents" page: you can find requirements for the baseline tag)
+- [x] A baseline tag was generated for this Sprint (On Canvas, visit Assignment -> "Sprint 1: Confluence Space, project background and elicitation documents" page: you can find requirements for the baseline tag)
 
 ## Additional Information
 
