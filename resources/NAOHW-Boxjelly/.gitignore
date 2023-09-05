@@ -1,0 +1,26 @@
+# Byte-compiled / optimized / DLL files
+/__pycache__
+*.py[cod]
+
+# C extensions
+*.so
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# .dat file is currently causing some problem in git, as they are always considered modified
+*.dat
+
+# .DS_Store file on mac 
+*.DS_Store
+
+# database generated
+ui_database/*
+
+/.vscode
+
+build/*
+devel/*
+
+!devel/setup.sh

@@ -1,0 +1,447 @@
+## Release Overview
+### Codebase Port
+- Transitioned codebase from Python 2.7 to Python 3.8.10 and ROS framework from Indigo to Noetic
+- Updated *.py files for CoWriter functionality to ensure compatibility with Python 3.8.10
+- Adapted relevant files to function seamlessly with ROS Noetic
+- Improved quality of existing codebase and created detailed documentation
+
+### Teaching Nao to Write
+- Teach Nao robot to write using CoWriter Letter Learning program
+- Child demonstrates writing letters to Nao robot using tablet or touch screen
+- Nao robot observes and interprets demonstrations, adjusts its own writing
+- Send specific words to Nao robot for it to write through user interface
+- Nao robot writes out received word, providing visual reference for child
+- Child compares own writing to robot’s demonstration
+
+### Integration Of ChatGPT
+- Integrate OpenAI’s ChatGPT API as dialogue manager for Nao robot
+- Use Whisper speech-to-text technology to capture child’s verbal interaction
+- Transcribe child’s spoken words into written text for ChatGPT input
+- Enable microphone input from device for natural communication
+- Record speech from child or educator using device microphone
+- Transcribe audio to text using OpenAI’s Whisper model
+- Send transcribed audio to ChatGPT as prompt via OpenAI API
+- Use returned output from ChatGPT in Nao’s text-to-speech
+
+### New and Improved User Interface
+- Design and implement new User Interface (UI) using PyQt
+- Incorporate interactive features to improve engagement and learning
+- Draw letters directly on UI and send to robot in real-time
+- Display robot’s emulation of child’s writing for visual feedback
+- Send words directly to Nao for demonstration of correct formation
+- Press button to talk to robot and facilitate conversation through ChatGPT
+- Introduce PyQt-based UI for more interactive and immersive learning
+
+### Extensive Code Documentation and Testing
+- Documented code extensively for future developers
+- Provided docstrings for significant classes, methods, and functions
+- Developed comprehensive suite of unit tests
+- Unit tests serve as additional documentation for classes and functions
+
+### Extensive Installation and Set Up Guide
+- Provide extensive instructions for software installation and setup
+- Offer both written and video instructions
+- Include automated setup bash script for packages and dependencies
+
+<details>
+<summary>Click here to view full changelog</summary>
+  
+## Full changelog
+- 0b6a844 add confluence export
+- 0db4fd2 fix: add year to readme for expiring openai api key
+- 83cc47b fix: add notes about openai api key
+- effb2cd fix documentations
+- 3f96d47 update CHANGELOG.md
+- f10ba54 update confluence doc export
+- b18f9f1 fix launch command in README.md
+- 92ea676 export confluence doc
+- 6795076 Update README.md
+- 46ba4ad Update README.md
+- ba92765 Merge branch 'main' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into main
+- 8b640e3 add todo comment to commented-out codeblocks
+- 2301edf delete old picture of UI
+- 35552c7 Update README.md
+- 8e1fe30 update the Ui picture
+- 585c9ef delete irrelevant part
+- c7f8a74 Update README.md
+- d041f04 Update README.md
+- d9b33b2 update the launching instruction
+- b6fe467 update the file to fit the latest code
+- 8980002 Merge branch 'main' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into main
+- c617e96 export confluence documents
+- 264d476 make the file fit the latest codes
+- cdec80f fix minor typos in README.md
+- 081a6ef fix dev guide step 9 (run test) in README.md
+- f2b30ff update package README.md, remove unused cowriter launch package
+- c953036 fix youtube links in README.md
+- 196ac41 add usage demo video to README.md
+- 1a853fc Adding documentation to choose adaptive words
+- d04d1fe Merge branch 'finalising-letter_learning_interaction-docs' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into main
+- 726823b Document the nao_writer_naoqi.py, trajectory_visulaizer.py and writing_surface_position
+- 351cf81 fix: provide missing docstrings for learning_words_nao.py
+- b9dc186 fix test config in nao_traj
+- 0a17dd1 add print test summary after test
+- 47cd825 Merge branch 'main' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly
+- 4391145 Update the test file for the test_nao_writer_naoqi and change the Name for both of the files
+- 70a4b38 fix test cases, move test case to respective package
+- 2cab173 document the shape_learner_manager and shape_learner
+- 8935d86 fix: documentation for lli except learning_words_nao
+- 3deafe1 minor formatting change in README.md
+- 9af38cf Merge pull request #17 from COMP90082-2023-SM1/add_guides
+- a5b3c26 fix: adding missing docstrings to lli files
+- 613195e revert formatting changes in README.md
+- cd0f804 fix embed youtube link formatting in README.md
+- 80fc590 fix youtube link embeds in README.md
+- 7a70535 update user guide, typo fixes in README.md
+- da6a9a9 fix: update comments in scripts/
+- 34f677f add user guides, fix minor errors in README.md
+- d236318 add presentation slide document
+- ce72713 update CHANGELOG.md
+- 810fd46 re-add missing installation steps README.md
+- 76ccd82 update changelog
+- 80e730d re-add missing changes to README.md and setup.sh
+- 4e74706 add confluence export doc
+- f66512f Merge pull request #16 from COMP90082-2023-SM1/remove_voice_related
+- 60182ac Adding a stop button
+- 4faed3a Update learning_words_nao.py
+- c17876c Merge remote-tracking branch 'origin/JustTesting' into remove_voice_related
+- 8720b50 Update manager_ui.py
+- 1036d07 remove /
+- 0228b80 Update the voice to audio
+- cbbdc3d modify logic of state machine, get ready for chat interaction
+- cabb8fd Add the Language for the audio
+- 2bcc54c TestingAudio
+- 3f4d1b7 Update learning_words_nao.py
+- e7eb6ed Merge branch 'fix_audio_recording' into remove_voice_related
+- f9275e7 adjusting the ui, removing redundant states
+- c6548a3 adjust the writing speed and fix suddent huge action by actual robot test
+- 3d3295b Update shape_learner_manager.py
+- ecd035c remove redundant files for ui
+- 986e72b modify state machine
+- b1cc0ad make hand closed to hold a pen
+- 8314422 Revert "Merge branch 'Testing_Simulation' into remove_voice_related"
+- e8029e9 Merge branch 'Testing_Simulation' into remove_voice_related
+- b7e9889 Update new state for the chatGPT
+- 3949e55 fix recording node wait before stop recording
+- 258aa8e fix: use threading to test audio processor properly
+- 675deb9 feat: add test_audio_processor to CMakeLists.txt so it runs with run_tests
+- efe78fa feat: refactor AudioProcessor to node, write test cases
+- e1f5494 fix: remove speech transcriber and audio process from nao_settings.py, adjust tests accordingly
+- 86b7a76 Update learning_words_nao.py
+- 60f2ac4 modify devel/setup.sh and nao_writer_naoqi
+- 27342fd Update setup.sh
+- bf6ea6e fix: trying to get audio thread to shut down, incomplete
+- a84765f fix: correct a typo in test_nao_settings.py
+- fdf42fb fix: fixing timeout error for test of audio recorder
+- 34dcda7 add ffmpeg install instruction
+- 9a02d9e feat: testing audio recording, unfinished
+- f318aad fix typo
+- 543858f remove whisper testing dir
+- 1f82318 add libportaudio2 dep to install guide, tweak install guide
+- e00720a switch to record laptop/tablet audio instead of nao robot mic which doesnt work
+- ffe3aa4 recover nao_writer_naoqi.py
+- a755936 Merge remote-tracking branch 'origin/14-there-is-no-phrase-manager-class-which-calls-the-chatgpt-api' into Testing_Simulation
+- 5973926 adding finish button
+- 5eda781 add requirments to the response of GPT
+- 91a5af2 fix GPT output format problems
+- 4118660 add the code letting robots to speaking
+- 3b49b00 Update tablet_input_interpreter.py
+- ba31b59 add int to the (len(shape) / 2) in shape modeler
+- 9ee6b08 add choregraph installation to readme
+- af7d624 feat: add transcriber class to publish mic input in nao_settings.py
+- 04711ab Delete test.ipynb
+- 95470fa Update tablet_input_interpreter.py
+- cb2e235 Merge branch 'Testing_Simulation' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into Testing_Simulation
+- ba48452 Change the method of reading shape
+- 163695c Update child_ui.py
+- 4325522 fix errors with ChatGPT, updating requirements
+- 6a78bd2 Update ChatGPT3
+- b19bc27 Connected new button for chatGPT testing
+- 5cc932a Update manager_view.ui
+- f0b33a0 fix: uncomment NAO_HANDEDNESS in NaoSettings class of nao_settings.py, commenting out caused tests/init of class to fail.
+- 90267a5 Add comments on newly added function
+- c5afd0e finished robot writing movement
+- 0967646 update temp backend, draw generated letter
+- 4179459 Fix some problems caused by snake case and other
+- 6a10e81 update from testing with simulator
+- f964053 change "head_yaw", "head_pitch"to"HeadYaw", "HeadPitch"
+- a63cdf5 set the port of NAO
+- 67abdc6 add record & process audio function to nao_settings
+- b7bf597 add initial audio proxy services
+- d03246e Replace zmq to qi in nao_settings.py
+- 8addaf9 fix: more steps toward making learning_words_nao.py fully pep8 compliant
+- 299413e Merge branch '14-there-is-no-phrase-manager-class-which-calls-the-chatgpt-api' of github.com:COMP90082-2023-SM1/NA-Boxjelly into 14-there-is-no-phrase-manager-class-which-calls-the-chatgpt-api
+- cffc2c6 fix: address flaws in learning_words_nao.py raised in week 10 code review
+- 35246cc fix chatgpt test and return indentation
+- 6d191bd fix: call chatgpt api multiple times to see if rate issue encountered.
+- 9478f01 fix instructions in README.md
+- 72359ef remove redundant mentions in README.md
+- 46f578d minor syntax fix in README.md
+- 0c006ea minor updates to setup.sh
+- 3edc8f8 update and restructure installation in README.md
+- fb9a030 fix missing boost var, improve build times (parallel build), remove roslaunch
+- f2f60f0 remove duplicate module
+- 6f1ca9c Replace the zmq to qi in that branches
+- 4d746ae add testing wav files and instructions in temp test dir
+- 41d186c simplify transcribe_audio function
+- 05897d6 update setup.sh with libqi installation
+- d933a17 add new pip modules to requirements.txt
+- c7c4def add SpeechManagerWhisper to nao_settings.py
+- 61bb77c Update nao_writer_naoqi.py
+- 74563b6 set the port of NAO
+- c1d4755 replace zmq with qi
+- de8f036 Update the Modules qi in the Nao_writing
+- d018c1f feat: PhraseManagerGPT inherit from PhraseManager in nao_settings.py
+- 38ec200 fix: make interaction_settings.py more PEP 8 compliant
+- af692cb feat: test of basic gpt functionality. \nPlease be mindful when running catkin_make run_tests, that each call will query chatgpt on my openai token. Preferable to use rostest when testing/debugging individual test files.
+- 193b5ea feat: add PhraseManagerGPT class to nao_settings.py, can get response from chatgpt
+- 6becc4e fix: add openai to requirements.txt
+- 64a3353 Update install instructions in README.md
+- e225c6b update confluence export files
+- a6e8dd9 update changelog
+- 2361d6c add changelog
+- 30cae02 Merge pull request #12 from COMP90082-2023-SM1/integration-1
+- a1703c1 fix nao_settings speaking/standing var
+- 6e4b62f update readme, add Confluence export
+- 78e9b23 change catkin_make test to catkin_make run_tests
+- a8578ea fix readme manual installation instruction
+- 1c78d8e Fix README headings
+- 6ac3e25 modify repo structure in readme
+- 5dc4f35 add source /devel/setup.bash fallback
+- 67f1281 fix missing source devel/setup.sh file
+- 25f04aa fix setup.sh catkin_make error on clean workspace
+- d0f4ae0 workspace cleanup, fix .gitignore, add ui_database dir
+- 006369c Update README.md
+- 15990c1 A temporary back-end for demo
+- 65a4926 Added erase function for manager
+- 88e161c enable message between manager and child UI
+- b3ebc51 workspace dir cleanup, add roslaunch nao_learning to setup.sh
+- 28fb876 fix rostest failing with unknown reason
+- 4e9421f last fix to get ros_markers working
+- 1cd9074 fix ros_markers to be in src/packages
+- 3e8a342 fix add ros_markers package
+- 3549f5f add ros_markers package, update setup.sh to include building ros_markers
+- 99d5758 test fix letter_learning_nao launch
+- 78d9935 change autopep8 file name, remove unused dirs (cleanup)
+- 3e8b88e add setup.sh for easier installation/build/test
+- 94d039e re-add /build and /devel since bash terminal might error out if the dirs are not found
+- e683315 created manager_ui.py
+- 2f3682a fix: delete tests in root of repo, redundant/empty due to conversion to rostest.
+- a920fed fix: add motion to requirements.txt
+- 9bb1650 fix: perform reasonable tests on downsample_shape to check for correct output
+- 301409b fix: remove list conversion from downsample_shape method, resolving error showing up in tests.
+- c809ad5 fix: restructure src/catkin_ws/src to src/
+- dfcc76f fix: shorten line length in nao_settings.py to make PEP 8 compliant
+- a37ac8b fix: execute perms on shape_learner and shape_modeler
+- 7f599cb feat: test_nao_settings.py using rostest, add launch, update CMakeLists.txt
+- 0795b80 feat: test_display_manager.py using rostest, add launch file, update CMakeLists.txt
+- acbfd71 feat: test_interaction_settings.py using rostest, add launch file, update CMakeLists.txt
+- 179987f feat: convert test_state_machine.py to use rospy, add launch file, update CMakeLists.txt
+- a37c672 reorder Requirements installation section in README
+- 4d8dfeb fix: add test_watchdog.test to CMakeLists.txt in letter_learning_interaction/
+- 7f44198 feat: make test_watchdog.py use rostest and create launch file
+- 4657017 fix: shorten line in test_display_manager_server.py to make it PEP 8 compliant
+- f90b8e2 add testing instruction to README
+- 52355f4 remove old confluence exports to prepare for new export
+- 98f2faa fix: reduce line length to make watchdog.py PEP 8 compliant
+- c16452a fix: add test_show_shapes.test to CMakeLists.txt in letter_learning_interaction/
+- 43d0038 feat: add launch file for test_show_shapes
+- 73917f2 feat: test_show_shapes.py using rostest
+- 94067fd fix: add Empty to import from std_msgs
+- 8352d30 fix: make minor changes based on ChatGPT code review
+- 5d77c86 Merge branch 'integration-1' of github.com:COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- 4e21775 Create child_ui.py
+- c655d5d Delete requirements_auto_gen.txt
+- 340fea5 Update test_learning_words_nao.py
+- e5a4eef fix: add shebang line to test_shape_counter.py
+- 33c694f feat: add test_shape_counter.test to CMakeLists.txt
+- deadb9d feat: add launch file for test_shape_counter
+- e979453 feat: use rostest for test_shape_counter.py
+- 5a882d1 fix: make count_shapes.py as PEP 8 compliant as possible without refactor.
+- f12582b fix error in test_make_traj_msg
+- 0430cb7 fix: correct Mock import statement in test_learning_words_nao.py
+- 188e30a fix: correct Mock import.
+- 4c0e7a1 workspace cleanup, remove /build /devel
+- 5994357 add draft workspace tree in README
+- 5ad0541 replace import naoqi to improt zmq
+- 1d08fc0 add test_respond_to_new_word
+- 016218e fix missing numpy import
+- 7089701 change shape into 1D array in test_downsample_shape
+- 53d58ac add import
+- 082ce6f add test_make_traj_msg
+- cb4cdf6 add test_make_bounding_box_msg
+- 4fc03c2 add bunch of StateManager test cases
+- e030622 add even more StateManager test cases
+- 6012b1a Merge branch 'integration-1' of github.com:COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- 2964587 fixing path exist error, adding a test for drawing
+- da34c09 Merge branch 'integration-1' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- 901bdd6 Update the rostest for the nao_writing package
+- 90db04a add a couple of StateManager tests
+- 1e12b75 fix cmake version, python3 env in nao_traj package
+- 1041c01 uncomment downsample test
+- 1046e5c add more SubscriberCallbacks test (1 broken/failing)
+- 444faf5 fix srv import
+- f9fe7da Merge the nao_trajectory_following
+- 82976a6 delete database files and add it to gitignore
+- 43875e4 updating UI
+- 541d325 restructure test file to only have 1 single test class
+- cd4ebd4 fix some source code errors found from test_learning_words_nao
+- 00c7425 fix test_learning_word_nao
+- 6e9c497b Merge branch 'integration-1' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- 2971206 fix a bunch of int division and list slicing warnings
+- 5efc45c fix: correct import statement from shape_display_manager in display_manager_server.py
+- 17cdbea fix: move shape_display_manager.py back to include/ now import issue resolved.
+- 41104be convert zip() to python3 list(zip())
+- bc2e899 convert zip() to python3 list(zip())
+- a8c1d18 fix: add comment to shape_learner_manager.py clarifying why recordtype comment left in file.
+- 7b98ab8 feat: add shape class to shape_learner_manager, try get test_tablet_input_interpreter running.
+- d2c81aa Merge branch 'integration-1' of github.com:COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- 54d2987 fix: import Shape from .msg instead of .srv.
+- f25f03b test fix Shape.msg import
+- 09cb0aa fix test file permissions
+- 206246a Add files via upload
+- 3309705 Merge branch 'integration-1' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- 5321410 feat: create learning_words_nao rostest
+- acb1e08 Update watchdog_clearer.py
+- aca0492 Update tablet_input_interpreter.py
+- 6b4904e Update watchdog_clearer.py
+- d1f6887 Delete nao_settings.py
+- 8e2738e Delete wrapper_class.py
+- aa3a782 Add files via upload
+- 99ba27a Add files via upload
+- 5daf887 Merge branch 'integration-1' of github.com:COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- e7cf1a1 fix: add test_tablet_input_interpreter.text to CMakeLists.txt properly.
+- f07d933 Update RNN_Model.py
+- 9acf06c update pep8 workflow (continue-on- error)
+- d0676b9 add documentation export README.md
+- 69112bb Merge branch 'integration-1' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- 2712829 Update README.md
+- 9859451 update confluence documentation export structure
+- 29c75b8 remove duplicated py files
+- 8d213f2 fix: fix Shape.msg format, more work on rostest for tablet_input_interpreter.
+- f3f4b7c Show UI
+- 8c39fc8 fix: add test_tablet_input_interpreter launch to CMakeLists.txt.
+- ebb9c07 feat: create launch file for test_tablet_input_interpreter.py.
+- 72eff0d fix: converting test_tablet_input_interpreter.py from unittest to rostest.
+- 7cd4fc5 fix: add comment explaining import hack.
+- b10b0e7 fix: rostest working for test_display_manager_server.
+- e100a8f feat: work on getting rostest to work
+- a740f1e Merge branch 'integration-1' of github.com:COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- 167f30b feat: still working on getting rostest to work.
+- ea9f90f Remove training steps as it has already been trainned. Add compat v1 method
+- 23ccd24 re-add deleted rostest files
+- 57c69ad fix choose_adaptive_words activity launch path, fix instructions
+- dd93340 move dependencies into src/catkin_ws/src, move install instruction to read README.md
+- 7a1b70f fix typo in README.md
+- a5d924e edit README.md env installation structure
+- bad8cfc Update README.md
+- 06726fb remove Predictor_v2.py
+- 38036c8 Porting tf v1 to tf v2
+- 5483eac Merge branch 'integration-1' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- fccf4de implement zmq to replace naoqi in nao_settings.py
+- 42f1ec1 updating requirements.txt, deleting useless import
+- 1577a81 fix specify python3 environment
+- eea343f add nao_trajectory files
+- d159015 add missing cowriter files
+- d0a015b add missing cowriter_letter_learning files
+- f6dca6d feat: rostest for nodes (incomplete)
+- c4d6222 fix: remove init node from test_shape_counter.py
+- e94b39a Squashed commit of the following:
+- 8ec0367 fix: correct structure for catkin_ws
+- abd7bc1 fix cmake errors
+- 9b57ecd fix: add CMakeLists.txt and package.xml to letter_learning_interaction/
+- c6255e8 fix: get_param_mock scope changed to work with all methods.
+- 87eaaf2 fix: resolve issues with test_nao_settings.py so it can run.
+- 0d0811c fix: raise exception properly in interaction settings.
+- 758085b fix: moved test_nao_settings.py to correct directory
+- 9f1a3d5 fix: add stakeholder info to README.md
+- aaeff2f fix: change README.md back to correct one, instead of ShapeLearning readme
+- 0728e9f fix: move nao_settings.py and wrapper_class.py to include/, update imports in nodes/learning_words_nao.py
+- 8abce00 Merge branch 'integration-1' of github.com:COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- f909a2a bug fix: fix test_interaction_settings.py. Note: had to run pip install recordtype and pip install scikit-learn, also get a warning about numpy version when running test.
+- 7d34f40 fix test command
+- ef085a6 fix imports and test cases
+- cc5a53d re-add missing dirs from main
+- 6e4c636 remove unused files
+- b808bad Merge branch 'integration-1' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- 8a3c6dc remove unused files
+- 34308c4 Merge branch 'main' into integration-1
+- 990b2e2 fix remaining camelCase variables, fix formatting, fix more type warnings
+- ac44b7d remove unnecessary files
+- 5c2cb12 re-add missing Shape.msg file
+- 1f8707f Merge branch '1-ros-package-cowriter_letter_learning-is-written-in-python-27' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into integration-1
+- 994d84c Remove redundant comment.
+- c7addaf Merge branch '1-ros-package-cowriter_letter_learning-is-written-in-python-27' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into 1-ros-package-cowriter_letter_learning-is-written-in-python-27
+- 1412846 a lot of changes .py files in cowriter_letter_learning, mostly fixing/ignoring type_checking errors/warnings, autoformatting
+- 847d158 Add files via upload
+- 0974a04 Refactoring of the code originally in learning_words_nao.py nearly complete, this update mostly consists of small refactors to stop repeating code, slight restructure of logic and parameter passing, and some added documentation.
+- 637a2b3 bugfix: missing device manager variable
+- e6f18c7 seperate out wrapper classes, nao_settings classes into individual file
+- 5b7be02 Create .gitignore
+- 880546c fix duplicated imports, fix formatting, fix missing variables
+- 5c468ff fix tuple variables not using tuples, fix formatting
+- 7d4b2cb Fix return of get_phrases in InteractionSettings to return all parameters it should.
+- d82ca34 Refactoring is nearing completion, almost everything has been abstracted away into classes. There is still some work to be done on handling publis traj, downsampling, and how to handle interaction between SubscriberCallbacks and StateMachine (presently looks like the instance of StateMachine in main will need to be passed as an instance variable to the instance of SubscriberCallbacks. Additionally, there is a bit of tidying to be done to make sure the old variable calls are embedded within the appropriate instance classes, e.g., self.some_publisher.do_something() => self.publish_manager.some_publisher.do_something().
+- 7a68f41 fix formatting, refactor remaining global variables, fix some variable usage in classes, fix some typechecking, add some comments to broken variables
+- 4ebce7c The refactoring continues, made a number of new classes and methods (NaoSettings, SubscriberTopics, PublisherManager, I think some others), factoring out some logic of the StateManager into NaoSettings class as it makes sense for this to control robot actions. Probably needs 2-3 more simple classes to handle trajectory publishing, device management, and some other misc items. Need to update SubscriberCallbacks and StateManager to use the implemented classes instead of handling a bunch of instance variables.
+- f0cc8a0 fix function inputs, incorrect indentations, missing imports, fix main
+- 111611c Merge branch '1-ros-package-cowriter_letter_learning-is-written-in-python-27' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into letter_learning_nao-JL
+- c8b8915 Substantial updates to learning_words_nao.py, mainly consisting of adding methods to StateManager class, but also some bug fixes and some refactoring to remove duplicated code. Still work to be done before it is finished; it has turned out to be much more work than anticipated and if I cannot finish it tomorrow it would be beneficial to get some help.
+- f7273c9 Further update
+- 3d3f4b1 Minor update, push before reviewing catkin build branch
+- 94ab49c Further word on refactor of learning_words_nao.py, still a fair way to go.
+- adf4fe3 Refactor callback methods in learning_words_nao.py into a class
+- 0ae51a3 Convert camelCase to snake_case in learning_words_nao.py
+- 71d0c59 small fix to import (previously was importing .py file for some reason)
+- 4e5343d Fixed indentation issue in test_interaction_settings.py and some other imports. Added __init__.py to shape_learning directories but still facing an import issue for shape_learning, probably better to address this with updated shape_learning library as it could be python2 code causing the issue.
+- 9b2a0f0 moved __init__.py from src/ to tests/ as test dirs need it
+- 5d23e2a fix test cases import issues, remove __init__.py files since its not necessary (?)
+- d24a6ba Merge branch '1-ros-package-cowriter_letter_learning-is-written-in-python-27' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into letter_learning_nao-JL
+- 79beda4 Merge pull request #8 from COMP90082-2023-SM1/autocheck-pep-8-format-JL
+- 5998699 Merge branch '1-ros-package-cowriter_letter_learning-is-written-in-python-27' of github.com:COMP90082-2023-SM1/NA-Boxjelly into 1-ros-package-cowriter_letter_learning-is-written-in-python-27
+- e6e87c9 Fix import issues in include/ of tests for letter_learning_interaction. Some indentation issue in test_interaction settings needs fixed, also need to fix imports in other dirs
+- e798707 Deal with the .dat file in both uji_pen_chars2 and uji_pen_subset
+- 0225331 Update the visualization
+- b2428e1 fixed bug for visualize dat, but only [a-h]]
+- 9fb3177 Update .gitignore
+- 088d9f0 Shape Learning
+- 092bb66 Update autocheck_pep8_format.yml
+- e509feb Update autocheck_pep8_format.yml
+- 8dfe691 initial format fix, import fixes
+- 36027ce Adding tests which seem to have been lost in the merge
+- 74e5815 Finished tablet_input_interpreter.py, only remaining node to update is learning_words_nao.py, will move card to review once this is done. Created a test script but facing an import issue, to be addressed once package is fully updated.
+- 91697c3 Merge branch '1-ros-package-cowriter_letter_learning-is-written-in-python-27' of github.com:COMP90082-2023-SM1/NA-Boxjelly into 1-ros-package-cowriter_letter_learning-is-written-in-python-27 Can't commit my local without pulling existing.
+- 136d4e1 Finished tablet_input_interpreter.py, wrote some tests but still facing an import issue which I will address once whole package is updated. Only learning_words_nao.py remains to be updated, will move card to in review once that is done.
+- afea564 add pep8 autocheck workflow note, currently: 1)  max line length is set at 120 char 2) errors/warnings do not cause workflow to fail (will be changed later in the project, once more stuff has been done)
+- be07aae Merge branch '1-ros-package-cowriter_letter_learning-is-written-in-python-27' of https://github.com/COMP90082-2023-SM1/NA-Boxjelly into 1-ros-package-cowriter_letter_learning-is-written-in-python-27
+- d44e5e2 improvements to testing README.md
+- 1998b71 Finished display_manager_server.py and watchdog_clearer.py, have some test code for display but I am getting a weird import error, using the same import as original code. This will need to be looked into but probably push on with finishing the package updates first.
+- d504143 Finish shape_display_manager.py, added test script which passes, test script added in relevant /tests subdirectory. TODO modify imports in tests contained in /tests/letter_learning_interaction/ to import relevant objects from files in /src/catkin_ws/cowriter_letter_learning/letter_learning_interaction/include/. As a result of this commit, include/ of this package is updated so the card is being moved to review on Trello.
+- 950c282 Fixed typo in text_shaper
+- be9ea15 Complete text_shaper.py, did not write test script as it is using shape_learning so will not be able to run it yet. NOTE: there are many references to bounding boxes and x, y coordinates. I eschewed changing variables names in this case for fear of accidentally reusing names, which I expect was the original authors motivation for using, for example,  bb, boundingbox, bounding_box, etc. For this reason, the code does not strictly adhere to our coding guidelines wrt naming, but I think it is well-motivated. This could be revisited in future, but for now I regard it as more prudent to push on with the development.
+- 6405784 Delete tests from cowriter_letter_learning/include directory
+- 67402d2 Merge pull request #7 from COMP90082-2023-SM1/move-tests-JL
+- 7ef9174 Finished with interaction_settings.py, watchdog.py, state_machine.py and included tests for these. The test for interaction_settings.py is not working due to an issue importing from shape_learning. Some changes to text_shaper.py, but it is a work in progress. Once text_shaper and shape_display_manager.py are finished, card for include directory of this package will be moved to review.
+- c888192 add testing instructions
+- d78f481 move test cases into /tests/, add init files for test cases to look up py files to test (by turning dirs/subdirs into modules)
+- e62a3fd add gitignore template, and autopep8 for auto pep8 code format enforcement
+- 690b8b7 Minor updates to various nodes. Main changes here are adding documentation to count_shapes.py, show_shapes.py, and word_log_to_svg.py. Additionally, refactored count_shapes.py to use OOP and avoid global variables. In addition, I wrote test scripts for count_shapes.py and show_shapes.py, they are by no means exhaustive but demonstrate some functionality. The scripts are left in the working folder so they can be added to and/or ran as part of code acceptance criteria. Test scripts also added to /test in root directory for completeness. I regard the card working on letter_learning_interaction/scripts as in review as a result of this commit and will adjust the Trello board accordingly.
+- a975834 Minor syntactic changes, update interpreters to use python3 in shebang lines. I think watchdog_clearer.py is done, but the rest will require more substantial revisions. Need to chase up the imports in certain files to see if conversion from camelCase to snake_case is appropriate for a lot of the function calls.
+- 6bdbf0f state_machine.py has been changed to python3 (used right string method, fixed exceptions), comments added, type annotations added, interpreter changed to python3; I think that file is complete. The files watchdog.py, interaction_settings.py, and text_shaper.py have been updated to use snake_case instead of camelCase, had some other minor syntactic issues fixed, and had their interpreters changed to python3. More work is needed on these three files to include type annotations, some comments to make what the code is doing clear, and possibly fixing other minor syntactic issues for python3 validity and/or PEP8 compliance.
+- 7b71c12 Modified interaction_settings.py and shape_display_manager.py, modifications were mainly changing from camelCase to snake_case, but some other minor stylistic changes for readability and change to python 3 interpreter.
+- f430649 Changed filenames to proper format. Updated files to use python3 interpreter and python3 syntax. Made code more pythonic with f-strings and list comprehensions. Also included type annotations. Modified show_shapes.py so the plotting is done in a function, and when the file is run as __main__ it executes the script; this way it can be imported and plotting function used without running entire script. Lots of names needed to be changed in count_shapes.py to conform to PEP8, the other files only required minor modifications. TODO use a class in count_shapes.py to avoid the use of global variables
+- 4d8011b Adding the package we need to update as well as dependencies which need updating.
+- 2d0465e Update README.md
+- f51ee96 Update README.md
+- 09ab5a8 export confluence documents
+- 6dddbbf Fix headings in README.md
+- 9c46741 Updated README.md to contain overview of project, naming conventions and work flow, and an overview of the structure of the repo. Added src/catkin_ws/ as a workspace for ROS packages and moved sample.py in there so that I can push it to repo.
+- aae8321 Removed empty folders for old project. Will add links in README.md as the code for old project and dependencies was referencing other repos and could not be pushed to our repo.
+- fe85f96 Merge branch 'main' of github.com:COMP90082-2023-SM1/NA-Boxjelly into main
+- d769793 Add old code to src in existing_project directory
+- 2d298fc add persona directory with confluence export of persona page
+- 3f573f7 Removing bogus files caused directories to be removed, for now leaving these bogus files to keep desired structure.
+- b96a474 Delete bogus files so we have empty directories on git.
+- 3230c08 Create bogus files so I can push the directory structure to git
+- a1194d6 Initial commit
+</details>

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>letter_learning_interaction</name>
+  <version>0.1.0</version>
+  <description>A package for nodes which allow for user interaction around the shape_learning library.</description>
+
+  <maintainer email="deanna.m.good@gmail.com">Deanna Hood</maintainer>
+
+  <license>MIT</license>
+
+  <author email="deanna.m.good@gmail.com">Deanna Hood</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+  <depend>message_generation</depend>
+  <depend>std_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>message_runtime</depend>
+  <depend>rostest</depend>
+</package>
+

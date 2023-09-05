@@ -1,0 +1,23 @@
+name: Autocheck PEP8 format
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python: ["3.8"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install dependencies
+        run: pip install --upgrade pip
+          pip install pycodestyle
+      - name: Run Pycodestyle
+        run: pycodestyle .
+        continue-on-error: true

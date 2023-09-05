@@ -1,0 +1,18 @@
+numpy==1.23.5
+tensorflow==2.11.0
+pandas==1.5.3
+PyQt5==5.14.1
+motion==0.2.0
+scikit-learn==1.2.2
+recordtype==1.4
+openai==0.27.6
+sounddevice==0.4.6
+# following packages from extra url
+--extra-index-url https://rospypi.github.io/simple/
+rospy==1.15.11
+actionlib-msgs==1.13.0.post3
+geometry-msgs==1.13.0.post2
+nav-msgs==1.13.0.post3
+std-msgs==0.5.13.post0
+rosgraph-msgs==1.11.3.post2
+pyzmq==25.0.2
