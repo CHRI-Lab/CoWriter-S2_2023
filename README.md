@@ -39,6 +39,8 @@ This semester, our team aims to:
     ├── .github/workflows/              # Implementation of the GitHub Actions  
     ├── docs/                           # Documentation files 
     ├── src/                            # Source code
+    ├── .gitignore 
+    ├── CHANGELOG.md 
     └── README.md
 ```
 
