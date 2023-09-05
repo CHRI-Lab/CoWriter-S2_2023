@@ -1,66 +1,31 @@
-# NA-Redback - ChatGPT and NAO Robot
+# setup-redback
 
-## Project Context
+## Install Docker
 
-<p align="center">
-  <img src="./docs/main_read_me_illustration.jpeg" />
-</p>
+Download Docker on your Ubuntu (https://docs.docker.com/engine/install/ubuntu/).
 
-Composed of a set of ROS nodes that facilitate the user interaction with a robot, the CoWriter project is designed for children to teach a social robot handwriting. Nao is an autonomous, programmable humanoid robot and has been used for demonstration purposes for this project.
-
-Last semester, three different teams from the Software Project subject (COMP90082) took over this project with goals to:
-1. update the CoWriter project from Python2 to Python3 ;
-2. integrate ChatGPT to enable NAO robot to have conversations with children.
-
-Currently, these projects are each deployed in different environments and have achieved slightly different outcomes.
-
-## Goals
-
-This semester, our team aims to:
-1. merge the previous projects in one unified environment ;
-2. add further enhancements to the CoWriter project and NAO’s conversation capabilities ;
-3. implement a logging and annotation module for data management purposes.
-
-## Contributors
-
-| Name | Role | Contact |
-| ----------- | ----------- | ----------- |
-| Wafa Johal | Client | wafa.johal@unimelb.edu.au |
-| Sebastian Bobadilla | Project Supervisor | bobadillacha@unimelb.edu.au |
-| Eunji Kim | Product Owner, Dev Member | kimek@student.unimelb.edu.au |
-| Difan Wu | Scrum Master, Dev Member | difan.wu@student.unimelb.edu.au |
-| Aurélien Plaire | Tech Lead | aplaire@student.unimelb.edu.au |
-| Chien-Pu Lin | Test Lead | chienpu.lin@student.unimelb.edu.au
-| Yangchen Shen | Quality Lead | yangchen.shen1@student.unimelb.edu.au |
-
-## Structure
+When it is installed run
 
 ```
-    ├── .github/workflows/              # Implementation of the GitHub Actions  
-    ├── docs/                           # Documentation files 
-    ├── src/                            # Source code
-    └── README.md
+sudo groupadd docker
+sudo usermod -aG docker $USER
 ```
 
-## Coding Standards
+(replace $USER with your ubuntu username)
 
-The Git branching model used for this project will be [Gitflow Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow).
+## RUN
 
-The general idea of this workflow is to work with 2 principal branches:
+Start Choregraphe and connect the simulation of the robot.
 
-- *main* which will host the tested and finalised source code ;
-- *develop* which will serve as a feature integration branch to test new releases before merging them on main.
+All the commands should be ran at the level of the `Makefile` (root of the project).
 
-More information about this workflow is available [here](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow).
+Pull the docker image associated to RedBack: `make pull`.
 
+When the pull is finished, open 3 terminals and execute the following instructions (in order and 1 per terminal):
+- `make run-gui`
+- `make run-test`
+- `make run-audio-chat`. Once you are inside the container, run `ros2 launch launch/nao_writing_launch.py`.
 
-Most of our code development will be Python, so the coding standards used for this language will be the following:
+## Comments
 
-- [PEP8](https://peps.python.org/pep-0008/) for all the coding conventions (ex: syntax checking, conventions) ;
-- [Black](https://pypi.org/project/black/) for code formatting automation (ex: maximum character number per line).
-
-To ensure that the code pushed is consistent with the chosen Python standards, a [GitHub Action](https://github.com/features/actions) has been set on the repository (see the `.github/workflows` folder).
-
-At each commit, a pipeline will be triggered. It will execute a command (module [Flake8](https://pypi.org/project/flake8/)) to check if each specified Python file complies with PEP8’s rules.
-
-If the pipeline should fail, it would mean some changes have to be made to ensure the consistency of the source code.
+Best working project so far
