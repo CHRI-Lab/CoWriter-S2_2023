@@ -1,0 +1,43 @@
+<launch>
+    <arg name="use_external_camera" default="true" /> <!-- if false, camera on robot will be used -->
+    <arg name="camera_device" default="/dev/video0" /> <!-- only used if using external camera -->
+
+    <!-- Frame of camera that will be detecting fiducial markers for words to write -->
+    <arg name="word_detector_frame_id" value="camera_frame" if="$(arg use_external_camera)" />
+    <arg name="word_detector_frame_id" value="CameraTop_frame" unless="$(arg use_external_camera)" />
+
+    <arg name="camera_image_topic" value="v4l/camera/image_raw" if="$(arg use_external_camera)" />
+    <arg name="camera_image_topic" value="/nao_camera/image_raw" unless="$(arg use_external_camera)" />
+
+    <arg name="detected_words_topic" default="words_to_write" />
+
+
+    <!-- No need for card_detector -->
+    <!-- <arg name="language" default="english" /> -->
+
+
+    <!-- Start the appropriate camera -->
+    <!-- <group if="$(arg use_external_camera)">
+        <include file="$(find gscam)/launch/v4l.launch">
+            <arg name="DEVICE" value="$(arg camera_device)" />
+        </include>
+    </group> -->
+    <!-- <group unless="$(arg use_external_camera)">
+        <include file="$(find nao_trajectory_following)/launch/nao_camera_controllable.launch"> <arg name="nao_ip" value="$(arg nao_ip_to_use)"/>
+        </include>
+    </group> -->
+
+
+    <!-- Start the card detection -->
+    <include file="$(find ros_markers)launch/detect.launch">
+        <!-- <arg name="camera_frame_id" value="$(arg word_detector_frame_id)" />
+        <arg name="image_topic" value="$(arg camera_image_topic)" /> -->
+    </include>
+    <node pkg="bluering_letter_learning" type="word_card_detector.py" name="word_detector" output="screen">
+        <param name="detector_frame_id" type="str" value="$(arg word_detector_frame_id)" />
+        <!-- <param name="language" type="str" value="$(arg language)" /> -->
+        <param name="detected_words_topic" type="str" value="$(arg detected_words_topic)" />
+        <!-- <param name="stop_request_topic" type="str" value="$(arg stop_request_topic)" />
+        <param name="test_request_topic" type="str" value="$(arg test_request_topic)" /> -->
+    </node>
+</launch>

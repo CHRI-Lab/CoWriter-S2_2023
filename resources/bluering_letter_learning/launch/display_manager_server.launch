@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="bluering_letter_learning" type="display_manager_server.py" name="display_manager_server" output="screen" />
+</launch>
