@@ -10,7 +10,7 @@ class WordTool():
 	def __init__(self):
 
 		self.words = {}
-		self.df_req = pd.read_csv("requirement.csv")
+		self.df_req = pd.read_csv("./requirement.csv")
 
 
 		# create lsit of words
