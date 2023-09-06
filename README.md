@@ -22,7 +22,7 @@ All the commands should be ran at the level of the `Makefile` (root of the proje
 Pull the docker image associated to RedBack: `make pull`.
 
 When the pull is finished, open 3 terminals and execute the following instructions (in order and 1 per terminal):
-- `make run-gui`
+- `make run-gui`. If it's the first time you run it, do `make run-gui-build`.
 - `make run-test`
 - `make run-audio-chat`. Once you are inside the container, run `ros2 launch launch/nao_writing_launch.py`.
 

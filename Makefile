@@ -13,6 +13,9 @@ pull:
 run-gui:
 	docker compose -f ./resources/NAOHW-RedBack/src/nao_drawing_board/docker-compose.dev.yml up
 
+run-gui-build:
+	docker compose -f ./resources/NAOHW-RedBack/src/nao_drawing_board/docker-compose.dev.yml up --build
+
 run-test:
 	docker run --rm -it \
 		--network="host" \
