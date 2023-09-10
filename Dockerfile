@@ -35,6 +35,7 @@ RUN pip3 install grpcio grpcio-tools
 RUN pip3 install --upgrade pip
 RUN pip3 install PyQt5
 RUN pip3 install tensorflow
+RUN pip3 install pandas
 
 # Clean
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
