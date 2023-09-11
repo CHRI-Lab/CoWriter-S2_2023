@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <test test-name="test_show_shapes" pkg="letter_learning_interaction" type="test_show_shapes.py" />
+</launch>

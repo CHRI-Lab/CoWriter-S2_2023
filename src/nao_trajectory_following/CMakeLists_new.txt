@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(nao_trajectory_following)
+
+## Find catkin macros and libraries
+find_package(catkin REQUIRED COMPONENTS
+  rospy
+  std_msgs
+  geometry_msgs
+  nav_msgs
+  visualization_msgs
+)
