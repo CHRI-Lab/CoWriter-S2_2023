@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <test test-name="test_trajectory_visualizer" pkg="nao_trajectory_following" type="test_trajectory_visualizer.py" />
+</launch>

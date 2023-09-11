@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <test test-name="test_learning_words_nao" pkg="letter_learning_interaction" type="test_learning_words_nao.py" />
+</launch>

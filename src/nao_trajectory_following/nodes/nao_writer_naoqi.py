@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+"""
+Listens for a trajectory to write and sends it to the nao via naoqi SDK.
+
+Requires a running robot/simulation with ALNetwork proxies.
+
+"""
+import qi
+import json
+from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Path
+from std_msgs.msg import String, Empty, Header
+from copy import deepcopy
+import rospy
+import tf
+import motion
+import math
+
+SHAPE_TOPIC = rospy.get_param('~trajectory_nao_topic','write_traj')
+# TRAJ_TOPIC = rospy.get_param('~trajectory_nao_input_topic','/write_traj_nao')  
+NAO_IP = rospy.get_param('~nao_ip','127.0.0.1')
+PORT = int(rospy.get_param('~nao_port','9559'))
+NAO_HANDEDNESS = rospy.get_param('~nao_handedness','right')
+
+class nao_writer_naoqi:
+    def __init__(self, naoIP, naoPort, effector='RArm', naoWriting=True, naoSpeaking=True, naoStanding=True, language='english', isFrontInteraction=True, alternateSidesLookingAt=False) -> None:
+        """
+        Initialize the RobotController object.
+
+        Parameters:
+        - naoIP (str): The IP address of the NAO robot.
+        - naoPort (int): The port number to connect to the NAO robot.
+        - effector (str, optional): The effector to use for writing. Defaults to 'RArm'.
+        - naoWriting (bool, optional): Flag indicating whether the NAO robot is capable of writing. Defaults to True.
+        - naoSpeaking (bool, optional): Flag indicating whether the NAO robot is capable of speaking. Defaults to True.
+        - naoStanding (bool, optional): Flag indicating whether the NAO robot should stand initially. Defaults to True.
+        - language (str, optional): The language to use for speech. Defaults to 'english'.
+        - isFrontInteraction (bool, optional): Flag indicating whether the interaction is in front of the robot. Defaults to True.
+        - alternateSidesLookingAt (bool, optional): Flag indicating whether the robot should alternate sides when looking at objects. Defaults to False.
+        """
+        rospy.init_node("nao_writer") 
+
+        if(NAO_HANDEDNESS.lower()=='right'):
+            self.effector = "RArm"
+        elif(NAO_HANDEDNESS.lower()=='left'):
+            self.effector = "LArm"
+        else: 
+            rospy.loginfo('error in handedness param')
+
+        self.qi_url = f'tcp://{NAO_IP}:{PORT}'
+        rospy.loginfo(f'[RobotController] Connecting to qi_url={self.qi_url}')
+        self.app = qi.Application(url=self.qi_url)
+        self.app.start()
+        # app.run()
+        rospy.loginfo(f'[RobotController] app started')
+        self.session = self.app.session
+        self.motionProxy = self.session.service('ALMotion')
+        self.memoryProxy = self.session.service('ALMemory')
+        self.postureProxy = self.session.service('ALRobotPosture')
+        self.ttsProxy = self.session.service('ALTextToSpeech')
+        self.tl = tf.TransformListener()
+        self.space = 2 # {FRAME_TORSO = 0, FRAME_WORLD = 1, FRAME_ROBOT = 2}
+        self.isAbsolute = True
+
+        rospy.Subscriber(SHAPE_TOPIC, Path, self.on_traj)
+    
+    def point_dist(self, p1, p2):
+        return math.sqrt((p1[0] - p2[0]) * (p1[0] - p2[0]) +
+                         (p1[1] - p2[1]) * (p1[1] - p2[1]) +
+                         (p1[2] - p2[2]) * (p1[2] - p2[2]))
+    
+    def on_traj(self, traj):
+        """
+        Callback function to handle trajectory messages.
+
+        Parameters:
+        - traj (Path): The trajectory message containing the desired poses.
+
+        Note: The parameters `AXIS_MASK_X`, `AXIS_MASK_Y`, `AXIS_MASK_Z`, and `AXIS_MASK_WX` are assumed to be defined outside this method.
+
+        Returns:
+        None
+        """
+        rospy.loginfo("got traj at "+str(rospy.Time.now())) 
+        AXIS_MASK_X = 1
+        AXIS_MASK_Y = 2
+        AXIS_MASK_Z = 4
+        AXIS_MASK_WX = 8
+
+        axisMask = [AXIS_MASK_X+AXIS_MASK_Y+AXIS_MASK_Z+AXIS_MASK_WX]
+    
+        if(self.effector == "LArm"):
+            self.motionProxy.openHand("LHand")
+            self.motionProxy.closeHand("LHand")
+            roll = -1.7  #rotate wrist to the left (about the x axis, w.r.t. robot frame)
+        else:
+            self.motionProxy.openHand("RHand")
+            self.motionProxy.closeHand("RHand")
+            roll = 1.7  #rotate wrist to the right (about the x axis, w.r.t. robot frame)
+
+        target = PoseStamped()
+
+        target_frame = traj.header.frame_id
+        target.header.frame_id = target_frame
+        
+        '''
+        #go to first point then wait
+        path = []  
+        times = [] 
+        trajStartPosition = traj.poses[0].pose.position 
+        traj.poses[0].pose.position.z = 0.05
+        target.pose.position = deepcopy(traj.poses[0].pose.position)
+        target.pose.orientation = deepcopy(traj.poses[0].pose.orientation)
+        trajStartPosition_robot = tl.transformPose("base_footprint",target)
+        point = [trajStartPosition_robot.pose.position.x,trajStartPosition_robot.pose.position.y,trajStartPosition_robot.pose.position.z,roll,0,0] 
+        
+        path.append(point) 
+        timeToStartPosition = traj.poses[0].header.stamp.to_sec() 
+        times.append(timeToStartPosition) 
+        motionProxy.setPosition(effector,space,point,0.5,axisMask) #,times,isAbsolute) 
+        '''
+        path = []  
+        times = []
+        timer = 1.0
+        timer_step = 0.01
+        last_point = None
+        for trajp in traj.poses:
+            
+            target.pose.position = deepcopy(trajp.pose.position)
+            target.pose.orientation = deepcopy(trajp.pose.orientation)
+            target.header.frame_id = "base_footprint"
+            target_robot = self.tl.transformPose("base_footprint",target)
+
+            point = [float(target_robot.pose.position.x),float(target_robot.pose.position.y),float(0.0),roll, 0.0, 0.0]#roll,pitch,yaw] 
+            # point = [0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+
+            
+            
+            times.append(timer)
+            if not last_point is None:
+                point_dist = self.point_dist(last_point, point)
+                timer += point_dist * 80
+            else:
+                timer += 0.4
+            # to keep time increasing
+            timer += timer_step
+            path.append(point)
+            # times.append(trajp.header.stamp.to_sec() )#- timeToStartPosition) 
+            last_point = point
+        #wait until time instructed to start executing
+        rospy.sleep(traj.header.stamp-rospy.Time.now())#+rospy.Duration(timeToStartPosition)) 
+        rospy.loginfo("executing rest of traj at "+str(rospy.Time.now()))
+        startTime = rospy.Time.now()
+        
+        self.motionProxy.positionInterpolations([self.effector],self.space,self.traj_to_path(path),axisMask,times,self.isAbsolute)
+        rospy.loginfo("Time taken for rest of trajectory: "+str((rospy.Time.now()-startTime).to_sec()))
+
+    # normalize a path for nao robot so it can write comfortablely
+    # lot of random numbers due to artistic freedom
+    def traj_to_path(self, points):
+        """
+        Convert a list of points representing a trajectory into a path suitable for writing.
+
+        Parameters:
+        - points (list): A list of points representing the trajectory, where each point is a list with six elements [x, y, z, roll, pitch, yaw].
+
+        Returns:
+        - converted_pts (list): A list of converted points representing the writing path, where each point is a list with six elements [x, y, z, roll, pitch, yaw].
+        """
+        arm_len = 0.323
+        converted_pts = []
+        corner_min = [0.12, 0.03, 0.32]
+        corner_max = [0.12, -0.18, 0.47]
+        #limit the coordinate range for writing
+        for point in points:#Convert the writing trajectory of the X and Y axes into a writing trajectory perpendicular to the ground
+            y = point[0]
+            z = point[1]
+            converted_pts.append([0, y, z, point[3], point[4], point[5]])
+        
+        pt_min = [0, min([point[1] for point in converted_pts]), min([point[2] for point in converted_pts])]
+        pt_max = [0, max([point[1] for point in converted_pts]), max([point[2] for point in converted_pts])]
+
+        normal_factor = [0, 
+                         (corner_max[1] - corner_min[1]) / (pt_max[1] - pt_min[1]),
+                         (corner_max[2] - corner_min[2]) / (pt_max[2] - pt_min[2])]
+        
+        for i, point in enumerate(converted_pts):
+            y = (point[1] - pt_min[1]) * normal_factor[1] + corner_min[1]
+            z = (point[2] - pt_min[2]) * normal_factor[2] + corner_min[2]
+            #The length of the robot's arm is limited, and it needs to adjust the X-axis coordinate size according to the writing position
+            x = math.sqrt(max([0.12 - (y + 0.07) * (y + 0.07) - z * z, 0.1])) * 1.2 - 0.21
+            converted_pts[i] = [x, y, z, point[3], point[4], point[5]]
+
+        return converted_pts
+
+if __name__ == "__main__":
+    writer = nao_writer_naoqi(NAO_IP, PORT)
+    rospy.spin()
