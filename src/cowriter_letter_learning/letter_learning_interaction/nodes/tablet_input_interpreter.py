@@ -66,12 +66,17 @@ from typing import List, Optional
 import os.path
 import sys
 from letter_learning_interaction.msg import Shape as ShapeMsg  # type: ignore
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+)
 from srv import *
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../include'))
+
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../include")
+)
 from shape_learner_manager import ShapeLearnerManager, Shape
 from shape_modeler import ShapeModeler
-
 
 
 word_logger = logging.getLogger("word_logger")
@@ -91,7 +96,7 @@ class TabletInputInterpreter:
         position_to_shape_mapping_method (str): Method used to map user
             demonstrations to intended shape.
 
-        shape_preprocessing_method (str): 
+        shape_preprocessing_method (str):
             Method used to preprocess user-drawn shapes.
 
         strokes (List[np.ndarray]):
@@ -101,11 +106,15 @@ class TabletInputInterpreter:
             Active shape type for the user's demonstrations.
     """
 
-    def __init__(self, publish_shapes: rospy.Publisher, path: Optional[str] = None):
+    def __init__(
+        self, publish_shapes: rospy.Publisher, path: Optional[str] = None
+    ):
         self.publish_shapes = publish_shapes
         self.word_logger = logging.getLogger("word_logger")
         self.configure_logging(path)
-        self.position_to_shape_mapping_method: str = 'basedOnClosestShapeToPosition'
+        self.position_to_shape_mapping_method: str = (
+            "basedOnClosestShapeToPosition"
+        )
         self.shape_preprocessing_method: str = "merge"
         self.strokes: List = []
         self.active_shape_for_demonstration_type: Optional[int] = None
@@ -125,7 +134,8 @@ class TabletInputInterpreter:
             handler = logging.FileHandler(path)
             handler.setLevel(logging.DEBUG)
             formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
             handler.setFormatter(formatter)
         else:
             handler = logging.NullHandler()
@@ -133,9 +143,7 @@ class TabletInputInterpreter:
         self.word_logger.addHandler(handler)
         self.word_logger.setLevel(logging.DEBUG)
 
-
-# ---------------------------------------------------- LISTENING FOR USER SHAPE
-
+    # ---------------------------------------------------- LISTENING FOR USER SHAPE
 
     def user_shape_preprocessor(self, message):
         """
@@ -145,7 +153,10 @@ class TabletInputInterpreter:
             message (Path): A ROS Path message containing the shape's
                             points.
         """
-        pts = [(message.data[i * 2], message.data[i * 2 + 1]) for i in range(int(len(message.data) / 2))]
+        pts = [
+            (message.data[i * 2], message.data[i * 2 + 1])
+            for i in range(int(len(message.data) / 2))
+        ]
         nb_pts = pts[0][1]
         x = []
         y = []
@@ -154,8 +165,8 @@ class TabletInputInterpreter:
         while i < len(pts[1:]):
             x.append(pts[1:][i][0])
             y.append(pts[1:][i][1])
-            index+=1
-            i+=1
+            index += 1
+            i += 1
             if index == nb_pts:
                 shape = []
                 index = 0
@@ -168,10 +179,10 @@ class TabletInputInterpreter:
                 self.strokes.append(np.reshape(shape, (-1, 1)))
                 x = []
                 y = []
-                i+=1
+                i += 1
         self.on_user_drawn_shape_received()
 
-# ------------------------------------------------------- PROCESSING USER SHAPE
+    # ------------------------------------------------------- PROCESSING USER SHAPE
     def on_user_drawn_shape_received(self):
         """
         Handles the processing and publishing of a user-drawn shape.
@@ -192,13 +203,14 @@ class TabletInputInterpreter:
             # Stroke is formatted as [x0, ..., xn, y0, ..., yn]
             # Use number_of_pts indexing and zip to get [(x0, y0), ..., (xn, yn)]
             xy_paths.append(
-                list(zip(stroke[:number_of_pts], stroke[number_of_pts:])))
+                list(zip(stroke[:number_of_pts], stroke[number_of_pts:]))
+            )
         word_logger.info(str(xy_paths))
 
         # Preprocess to turn multiple strokes into one path
-        if self.shape_preprocessing_method == 'merge':
+        if self.shape_preprocessing_method == "merge":
             path = self.process_shape_merge_strokes()
-        elif self.shape_preprocessing_method == 'longestStroke':
+        elif self.shape_preprocessing_method == "longestStroke":
             path = self.process_shape_longest_stroke()
         else:
             path = self.process_shape_first_stroke()
@@ -207,9 +219,8 @@ class TabletInputInterpreter:
         demo_shape_received = Shape(path=path)
         shape_message = self.make_shape_message(demo_shape_received)
         self.publish_shapes.publish(shape_message)
-        
 
-# ---------------------------------------- FORMATTING SHAPE OBJECT INTO ROS MSG
+    # ---------------------------------------- FORMATTING SHAPE OBJECT INTO ROS MSG
     @staticmethod
     def make_shape_message(shape: Shape) -> ShapeMsg:
         """
@@ -226,7 +237,7 @@ class TabletInputInterpreter:
         if shape.path is not None:
             shape_message.path = shape.path
         if shape.shape_id is not None:
-            shape_message.shapeID = shape.shape_id
+            shape_message.shape_id = shape.shape_id
         if shape.shape_type is not None:
             shape_message.shape_type = shape.shape_type
         if shape.shape_type_code is not None:
@@ -238,7 +249,7 @@ class TabletInputInterpreter:
 
         return shape_message
 
-# ------------------------------------------------- SHAPE PREPROCESSING METHODS
+    # ------------------------------------------------- SHAPE PREPROCESSING METHODS
     def process_shape_longest_stroke(self) -> np.ndarray:
         """
         Selects the longest stroke from the user-drawn shape's strokes.
@@ -281,7 +292,7 @@ class TabletInputInterpreter:
         """
         return self.strokes[0]
 
-# ----------------- PROCESS GESTURES FOR SETTING ACTIVE SHAPE FOR DEMONSTRATION
+    # ----------------- PROCESS GESTURES FOR SETTING ACTIVE SHAPE FOR DEMONSTRATION
     def on_set_active_shape_gesture(self, message: PointStamped):
         """
         Handles the gesture input to set the active shape for
@@ -294,7 +305,8 @@ class TabletInputInterpreter:
         gesture_location = [message.point.x, message.point.y]
         try:
             shape_at_location = rospy.ServiceProxy(
-                'shape_at_location', shape_at_location)  # type: ignore
+                "shape_at_location", shape_at_location
+            )  # type: ignore
             request = shapeAtLocationRequest()
             request.location.x = gesture_location[0]
             request.location.y = gesture_location[1]
@@ -307,43 +319,51 @@ class TabletInputInterpreter:
         if shape_type_code != -1 and shape_id != -1:  # type: ignore
             self.active_shape_for_demonstration_type = shape_type_code  # type: ignore
 
-            rospy.loginfo(f'Setting active shape to shape \
-                {shape_type_code}')  # type: ignore
+            rospy.loginfo(
+                f"Setting active shape to shape \
+                {shape_type_code}"
+            )  # type: ignore
 
 
 if __name__ == "__main__":
-
     rospy.init_node("tablet_input_interpreter")
 
     # Name of topic to get gestures representing the active shape for demonstration
-    GESTURE_TOPIC = rospy.get_param('~gesture_info_topic', 'gesture_info')
+    GESTURE_TOPIC = rospy.get_param("~gesture_info_topic", "gesture_info")
 
     # Name of topic to get user drawn raw shapes on
     USER_DRAWN_SHAPES_TOPIC = rospy.get_param(
-        '~user_drawn_shapes_topic', 'user_drawn_shapes')
+        "~user_drawn_shapes_topic", "user_drawn_shapes"
+    )
 
     # Name of topic to publish processed shapes on
     PROCESSED_USER_SHAPE_TOPIC = rospy.get_param(
-        '~processed_user_shape_topic', 'user_shapes_processed')
+        "~processed_user_shape_topic", "user_shapes_processed"
+    )
 
     # Init shape publisher and tablet interpreter
     publish_shapes = rospy.Publisher(
-        PROCESSED_USER_SHAPE_TOPIC, ShapeMsg, queue_size=10)
+        PROCESSED_USER_SHAPE_TOPIC, ShapeMsg, queue_size=10
+    )
     interpreter = TabletInputInterpreter(publish_shapes)
 
     # Listen for gesture representing active demo shape
     gesture_subscriber = rospy.Subscriber(
-        GESTURE_TOPIC, PointStamped, interpreter.on_set_active_shape_gesture)
+        GESTURE_TOPIC, PointStamped, interpreter.on_set_active_shape_gesture
+    )
 
     # Listen for user-drawn shapes
     shape_subscriber = rospy.Subscriber(
-        USER_DRAWN_SHAPES_TOPIC, Int32MultiArray, interpreter.user_shape_preprocessor)
+        USER_DRAWN_SHAPES_TOPIC,
+        Int32MultiArray,
+        interpreter.user_shape_preprocessor,
+    )
 
     # initialise display manager for shapes (manages positioning of shapes)
-    rospy.wait_for_service('shape_at_location')
-    rospy.wait_for_service('possible_to_display_shape')
-    rospy.wait_for_service('closest_shapes_to_location')
-    rospy.wait_for_service('display_shape_at_location')
-    rospy.wait_for_service('index_of_location')
+    rospy.wait_for_service("shape_at_location")
+    rospy.wait_for_service("possible_to_display_shape")
+    rospy.wait_for_service("closest_shapes_to_location")
+    rospy.wait_for_service("display_shape_at_location")
+    rospy.wait_for_service("index_of_location")
 
     rospy.spin()

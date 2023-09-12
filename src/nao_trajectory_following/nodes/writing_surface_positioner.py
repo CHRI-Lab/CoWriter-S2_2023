@@ -5,7 +5,7 @@ interactive marker or wherever a fiducial marker has been detected (e.g. a
 chilitag).
 '''
 
-import roslib; roslib.load_manifest("interactive_markers")
+# import roslib; roslib.load_manifest("interactive_markers")
 import rospy
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped

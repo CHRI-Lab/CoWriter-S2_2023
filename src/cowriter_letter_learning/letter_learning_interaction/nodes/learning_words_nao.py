@@ -14,15 +14,16 @@ import os.path
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
-import rospy
 from scipy import interpolate
 from copy import deepcopy
 import sys
+import rclpy
+from rclpy.node import Node
 
 # for normalise_shape_height()
 sys.path.insert(
-    0,
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), '../include'))
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../include")
+)
 from wrapper_class import DeviceManager, PublisherManager, SubscriberTopics
 from nao_settings import NaoSettings, PhraseManagerGPT
 from watchdog import Watchdog
@@ -31,13 +32,24 @@ from interaction_settings import InteractionSettings
 from state_machine import StateMachine
 from shape_modeler import ShapeModeler
 
-from letter_learning_interaction.msg import Shape as ShapeMsg # type: ignore
+from letter_learning_interaction.msg import Shape as ShapeMsg  # type: ignore
 from letter_learning_interaction.srv import *
 
 
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, Point, PointStamped
-from std_msgs.msg import String, Empty, Bool, Float64MultiArray, MultiArrayDimension
+from std_msgs.msg import (
+    String,
+    Empty,
+    Bool,
+    Float64MultiArray,
+    MultiArrayDimension,
+)
+
+
+class LearningWordsNao(Node):
+    def __init__(self):
+        super().__init__("learning_words_nao")
 
 
 def configure_logging(logger: logging.Logger, path="/tmp"):
@@ -62,7 +74,8 @@ def configure_logging(logger: logging.Logger, path="/tmp"):
         handler = logging.FileHandler(path)
         handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         handler.setFormatter(formatter)
     else:
         handler = logging.NullHandler()
@@ -75,6 +88,7 @@ def configure_logging(logger: logging.Logger, path="/tmp"):
 
 # -- interaction config parameters come from launch file
 
+
 # -------------------------- CALLBACK METHODS FOR ROS SUBSCRIBERS
 class SubscriberCallbacks:
     """
@@ -82,12 +96,14 @@ class SubscriberCallbacks:
     messages and update instance variables accordingly.
     """
 
-    def __init__(self, nao_settings: NaoSettings,
-                 device_manager: DeviceManager,
-                 managerGPT: PhraseManagerGPT,
-                 publish_manager: PublisherManager,
-                 state_machine: StateMachine):
-
+    def __init__(
+        self,
+        nao_settings: NaoSettings,
+        device_manager: DeviceManager,
+        managerGPT: PhraseManagerGPT,
+        publish_manager: PublisherManager,
+        state_machine: StateMachine,
+    ):
         self.managerGPT = managerGPT
         self.nao_settings = nao_settings
         self.device_manager = device_manager
@@ -101,7 +117,7 @@ class SubscriberCallbacks:
         self.stop_request_received: bool = False
         self.word_received: Optional[str] = None
         self.feedback_received: Optional[str] = None
-        
+
         # chatGPT related variables
         # a state should have these variables defined on entry
         # or it will "remain the same as it was"
@@ -114,14 +130,13 @@ class SubscriberCallbacks:
         if self.chat_enabled is enabled, send the word to Chatgpt,
         and let robot say() the output
 
-        :in_chat: std_msgs.msg.String, input fot chat in .data 
+        :in_chat: std_msgs.msg.String, input fot chat in .data
         """
         rospy.loginfo("input for GPT: " + in_chat.data)
         if self.chatGPT_enabled:
             self.response = self.managerGPT.get_gpt_response(in_chat.data)
             if self.chatGPT_to_say_enabled:
                 self.nao_settings.text_to_speech.say(self.response)
-
 
     def on_user_drawn_shape_received(self, shape: ShapeMsg) -> None:
         """
@@ -130,27 +145,35 @@ class SubscriberCallbacks:
 
         :param shape: The received shape message from the user.
         """
-        if (self.state_machine.get_state() == "WAITING_FOR_FEEDBACK"
-                or self.state_machine.get_state() == "ASKING_FOR_FEEDBACK"):
-
+        if (
+            self.state_machine.get_state() == "WAITING_FOR_FEEDBACK"
+            or self.state_machine.get_state() == "ASKING_FOR_FEEDBACK"
+        ):
             nbpts = int(len(shape.path) / 2)
             # Create a path from the shape by combining x and y coordinates into tuples
-            path = list(zip(shape.path[:nbpts], [-y for y in shape.path[nbpts:]]))
+            path = list(
+                zip(shape.path[:nbpts], [-y for y in shape.path[nbpts:]])
+            )
             # Split the path into segments based on a template
-            demo_from_template = self.device_manager.screen_manager.split_path_from_template(
-                path)  # type: ignore
+            demo_from_template = (
+                self.device_manager.screen_manager.split_path_from_template(
+                    path
+                )
+            )  # type: ignore
 
             # If the demo_from_template is not empty
             if demo_from_template:
                 rospy.loginfo(
-                    f'Received template demonstration for letters {demo_from_template.keys()}')
+                    f"Received template demonstration for letters {demo_from_template.keys()}"
+                )
 
                 # Iterate through the path segments
                 for name, path in demo_from_template.items():
                     # If the path segment corresponds to a multi-stroke letter, ignore it
-                    if name in ['i', 'j', 't']:
+                    if name in ["i", "j", "t"]:
                         rospy.logwarn(
-                            f'Received demonstration for multi-stroke letter {name}: ignoring it.')
+                            f"Received demonstration for multi-stroke letter {name}: ignoring it."
+                        )
                         continue
 
                     # Flatten the path by combining x and y coordinates into a single list
@@ -160,7 +183,8 @@ class SubscriberCallbacks:
 
                     # Append the flattened path as a ShapeMsg to the demo_shapes_received list
                     self.demo_shapes_received.append(
-                        ShapeMsg(path=flatpath, shape_type=name))
+                        ShapeMsg(path=flatpath, shape_type=name)
+                    )
 
             # If demo_from_template is empty
             else:
@@ -170,21 +194,25 @@ class SubscriberCallbacks:
                     shape.shape_type = self.active_letter
                     self.active_letter = None
                     rospy.loginfo(
-                        f'Received demonstration for selected letter {shape.shape_type}')
+                        f"Received demonstration for selected letter {shape.shape_type}"
+                    )
                 else:
                     # Find the letter corresponding to the shape path
                     letter, bb = self.device_manager.screen_manager.find_letter(
-                        shape.path)
+                        shape.path
+                    )
 
                     # If a letter is found
                     if letter:
                         # Assign the shape type as the found letter
                         shape.shape_type = letter
                         rospy.loginfo(
-                            f'Received demonstration for {shape.shape_type}')
+                            f"Received demonstration for {shape.shape_type}"
+                        )
                     else:
                         rospy.logwarn(
-                            'Received demonstration, but unable to find the letter that was demonstrated! Ignoring it.')
+                            "Received demonstration, but unable to find the letter that was demonstrated! Ignoring it."
+                        )
                         return
 
                 # Replace any existing feedback with the new shape
@@ -221,19 +249,31 @@ class SubscriberCallbacks:
             else:
                 self.nao_settings.motion_proxy.rest()
                 self.nao_settings.motion_proxy.setStiffnesses(
-                    ["Head", "LArm", "RArm"], 0.5)
-                self.nao_settings.motion_proxy.setStiffnesses(["LHipYawPitch", "LHipRoll",
-                                                               "LHipPitch", "RHipYawPitch",
-                                                               "RHipRoll", "RHipPitch"],
-                                                              0.8)
+                    ["Head", "LArm", "RArm"], 0.5
+                )
+                self.nao_settings.motion_proxy.setStiffnesses(
+                    [
+                        "LHipYawPitch",
+                        "LHipRoll",
+                        "LHipPitch",
+                        "RHipYawPitch",
+                        "RHipRoll",
+                        "RHipPitch",
+                    ],
+                    0.8,
+                )
 
         if self.nao_settings.nao_speaking:
             if self.nao_settings.alternate_sides_looking_at:
                 self.nao_settings.look_and_ask_for_feedback(
-                    self.nao_settings.phrase_manager.intro_phrase, self.nao_settings.next_side_to_look_at)
+                    self.nao_settings.phrase_manager.intro_phrase,
+                    self.nao_settings.next_side_to_look_at,
+                )
             else:
                 self.nao_settings.look_and_ask_for_feedback(
-                    self.nao_settings.phrase_manager.intro_phrase, self.nao_settings.person_side)
+                    self.nao_settings.phrase_manager.intro_phrase,
+                    self.nao_settings.person_side,
+                )
         # clear screen
         self.publish_manager.pub_clear.publish(Empty())
         rospy.sleep(0.5)
@@ -245,13 +285,15 @@ class SubscriberCallbacks:
 
         :param message: The received word message.
         """
-        if (self.state_machine.get_state() == "WAITING_FOR_FEEDBACK"
-                or self.state_machine.get_state() == "WAITING_FOR_WORD"
-                or self.state_machine.get_state() == "ASKING_FOR_FEEDBACK"
-                or self.state_machine.get_state() == "STARTING_INTERACTION"
-                or self.state_machine.get_state() is None):  # state machine hasn't started yet - word probably came from input arguments
+        if (
+            self.state_machine.get_state() == "WAITING_FOR_FEEDBACK"
+            or self.state_machine.get_state() == "WAITING_FOR_WORD"
+            or self.state_machine.get_state() == "ASKING_FOR_FEEDBACK"
+            or self.state_machine.get_state() == "STARTING_INTERACTION"
+            or self.state_machine.get_state() is None
+        ):  # state machine hasn't started yet - word probably came from input arguments
             self.word_received = message
-            rospy.loginfo(f'Received word: {self.word_received}')
+            rospy.loginfo(f"Received word: {self.word_received}")
         else:
             self.word_received = None  # ignore
 
@@ -263,10 +305,10 @@ class SubscriberCallbacks:
         :param message (Empty): The received clear screen request
         message.
         """
-        rospy.loginfo('Clearing display')
+        rospy.loginfo("Clearing display")
         try:
             # NOTE: follow up this clear_all_shapes pass to service then call func
-            clear_all_shapes = rospy.ServiceProxy('clear_all_shapes', ClearAllShapes)  # type: ignore
+            clear_all_shapes = rospy.ServiceProxy("clear_all_shapes", ClearAllShapes)  # type: ignore
             resp1 = clear_all_shapes()
         except rospy.ServiceException as e:
             rospy.logerr(f"Service call failed: {e}")
@@ -297,8 +339,12 @@ class SubscriberCallbacks:
         :param message: The received finger gesture message.
         """
         # NOTE: Need to handle screen_manager here!
-        self.active_letter, bb = self.device_manager.screen_manager.closest_letter(
-            message.point.x, message.point.y, strict=True)
+        (
+            self.active_letter,
+            bb,
+        ) = self.device_manager.screen_manager.closest_letter(
+            message.point.x, message.point.y, strict=True
+        )
 
     def on_feedback_received(self, in_chat) -> None:
         """
@@ -314,11 +360,8 @@ class SubscriberCallbacks:
         else:
             self.response = "feedback"
             self.nao_settings.text_to_speech.say("Thanks for feedback")
-        
-        self.feedback_received = self.response
-    
-        
 
+        self.feedback_received = self.response
 
 
 # ------------------------------- METHODS FOR DIFFERENT STATES IN STATE MACHINE
@@ -360,26 +403,32 @@ class StateManager:
         drawing_letter_substates (List[str]):
             A list of substates related to drawing letters.
     """
+
     # shape params
     # Frame ID to publish points in
-    FRAME = rospy.get_param('~writing_surface_frame_id', 'writing_surface')
+    FRAME = rospy.get_param("~writing_surface_frame_id", "writing_surface")
 
     # Name of topic to receive feedback on
     # FEEDBACK_TOPIC = rospy.get_param('~shape_feedback_topic', 'shape_feedback')
     # FEEDBACK_TOPIC not used anywhere, comment out for now
 
-    NUMDESIREDSHAPEPOINTS = 7.0  # Number of points to downsample the length of shapes to
+    NUMDESIREDSHAPEPOINTS = (
+        7.0  # Number of points to downsample the length of shapes to
+    )
     # Number of points used by ShapeModelers (@todo this could vary for each letter)
     NUMPOINTS_SHAPEMODELER = 70
-    DOWNSAMPLEFACTOR = float(NUMPOINTS_SHAPEMODELER-1) / \
-        float(NUMDESIREDSHAPEPOINTS-1)
+    DOWNSAMPLEFACTOR = float(NUMPOINTS_SHAPEMODELER - 1) / float(
+        NUMDESIREDSHAPEPOINTS - 1
+    )
 
-    def __init__(self, nao_settings: NaoSettings,
-                 device_manager: DeviceManager,
-                 publish_manager: PublisherManager,
-                 subscriber_callbacks: SubscriberCallbacks,
-                 generated_word_logger):
-
+    def __init__(
+        self,
+        nao_settings: NaoSettings,
+        device_manager: DeviceManager,
+        publish_manager: PublisherManager,
+        subscriber_callbacks: SubscriberCallbacks,
+        generated_word_logger,
+    ):
         self.nao_settings = nao_settings
         self.device_manager = device_manager
         self.publish_manager = publish_manager
@@ -388,8 +437,13 @@ class StateManager:
         self.generated_word_logger = generated_word_logger
 
         # Trajectory publishing parameters
-        self.t0, self.dt, self.delay_before_executing = InteractionSettings.get_trajectory_timings(
-            self.nao_settings.nao_writing)
+        (
+            self.t0,
+            self.dt,
+            self.delay_before_executing,
+        ) = InteractionSettings.get_trajectory_timings(
+            self.nao_settings.nao_writing
+        )
 
         # Phrase params are in nao_settings.phrase_manager
 
@@ -401,13 +455,15 @@ class StateManager:
         self.info_to_restore_wait_for_robot_to_connect = None
         # self.info_to_restore_wait_for_tablet_to_connect = None
 
-        self.drawing_letter_substates: List[str] = ['WAITING_FOR_ROBOT_TO_CONNECT',
-                                                    'WAITING_FOR_TABLET_TO_CONNECT',
-                                                    'PUBLISHING_LETTER']
+        self.drawing_letter_substates: List[str] = [
+            "WAITING_FOR_ROBOT_TO_CONNECT",
+            "WAITING_FOR_TABLET_TO_CONNECT",
+            "PUBLISHING_LETTER",
+        ]
 
-    def handle_word_received(self, next_state: str,
-                             info_for_next_state: Dict[str, str]
-                             ) -> Tuple[str, Dict[str, str]]:
+    def handle_word_received(
+        self, next_state: str, info_for_next_state: Dict[str, str]
+    ) -> Tuple[str, Dict[str, str]]:
         """
         Handles the 'word_received' event. If a new word is received &
         the 'word_received' callback is set, updates the
@@ -428,7 +484,9 @@ class StateManager:
                 updated 'info_for_next_state' dictionary.
         """
         if self.subscriber_callbacks.word_received is not None:
-            info_for_next_state['word_received'] = self.subscriber_callbacks.word_received
+            info_for_next_state[
+                "word_received"
+            ] = self.subscriber_callbacks.word_received
             self.subscriber_callbacks.word_received = None
             next_state = "RESPONDING_TO_NEW_WORD"
 
@@ -513,7 +571,7 @@ class StateManager:
     #     return next_state, info_for_next_state
 
     def respond_to_demonstration_with_full_word(
-            self, info_from_prev_state: Dict[str, Any]
+        self, info_from_prev_state: Dict[str, Any]
     ) -> Tuple[str, Dict[str, Any]]:
         """
         Respond to a demonstration by updating shape models, displaying
@@ -530,18 +588,19 @@ class StateManager:
                 the next state.
         """
         rospy.loginfo("STATE: RESPONDING_TO_DEMONSTRATION_FULL_WORD")
-        
-        demo_shapes_received = info_from_prev_state[
-            'demo_shapes_received']
 
-        letters = "".join([s.shape_type
-                           for s in demo_shapes_received])
+        demo_shapes_received = info_from_prev_state["demo_shapes_received"]
+
+        letters = "".join([s.shape_type for s in demo_shapes_received])
 
         if self.nao_settings.nao_speaking:
-            to_say, self.nao_settings.phrase_manager.demo_response_phrases_counter = self.get_next_phrase(
+            (
+                to_say,
+                self.nao_settings.phrase_manager.demo_response_phrases_counter,
+            ) = self.get_next_phrase(
                 self.nao_settings.phrase_manager.demo_response_phrases,
                 self.nao_settings.phrase_manager.demo_response_phrases_counter,
-                letters
+                letters,
             )
 
             self.nao_settings.nao_speak_and_log_phrase(to_say)
@@ -553,12 +612,18 @@ class StateManager:
 
             rospy.logdebug(f"Downsampling {shape_name}...")
             glyph = self.downsample_shape(glyph)
-            rospy.loginfo(f'Downsampling of {shape_name} done. ' +
-                          f'Demo received for {shape_name}')
-            shape_index = self.device_manager.word_manager.current_collection.index(
-                shape_name)
+            rospy.loginfo(
+                f"Downsampling of {shape_name} done. "
+                + f"Demo received for {shape_name}"
+            )
+            shape_index = (
+                self.device_manager.word_manager.current_collection.index(
+                    shape_name
+                )
+            )
             self.device_manager.word_manager.respond_to_demonstration(
-                shape_index, glyph)
+                shape_index, glyph
+            )
 
         # 2- Display the updated word
 
@@ -567,17 +632,23 @@ class StateManager:
         self.publish_manager.pub_clear.publish(Empty())
         rospy.sleep(0.5)
 
-        shapes_to_publish = self.device_manager.word_manager.shapes_of_current_collection()
+        shapes_to_publish = (
+            self.device_manager.word_manager.shapes_of_current_collection()
+        )
 
-        next_state = 'PUBLISHING_WORD'
-        info_for_next_state = {'state_came_from': "RESPONDING_TO_DEMONSTRATION_FULL_WORD",
-                               'state_go_to': "WAITING_FOR_WORD",
-                               'shapes_to_publish': shapes_to_publish,
-                               'item_written': self.device_manager.word_manager.current_collection}
+        next_state = "PUBLISHING_WORD"
+        info_for_next_state = {
+            "state_came_from": "RESPONDING_TO_DEMONSTRATION_FULL_WORD",
+            "state_go_to": "WAITING_FOR_WORD",
+            "shapes_to_publish": shapes_to_publish,
+            "item_written": self.device_manager.word_manager.current_collection,
+        }
 
         return next_state, info_for_next_state
 
-    def publish_word(self, info_from_prev_state: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+    def publish_word(
+        self, info_from_prev_state: Dict[str, Any]
+    ) -> Tuple[str, Dict[str, Any]]:
         """
         Publishes the word on the screen.
 
@@ -592,19 +663,20 @@ class StateManager:
         """
         # Log the current state
         rospy.loginfo("STATE: PUBLISHING_WORD")
-        rospy.loginfo("From " + info_from_prev_state['state_came_from'])
-        rospy.loginfo("To " + info_from_prev_state['state_go_to'])
+        rospy.loginfo("From " + info_from_prev_state["state_came_from"])
+        rospy.loginfo("To " + info_from_prev_state["state_go_to"])
 
         # Shape and place the word on the screen
         # NOTE: need to handle text_shaper and screen_manager
         shaped_word = self.device_manager.text_shaper.shape_word(
-            self.device_manager.word_manager)
-        placed_word = self.device_manager.screen_manager.place_word(
-            shaped_word)
+            self.device_manager.word_manager
+        )
+        placed_word = self.device_manager.screen_manager.place_word(shaped_word)
 
         # Create a trajectory for the word
-        traj = self.make_traj_msg(placed_word, float(
-            self.dt) / self.DOWNSAMPLEFACTOR, log=True)
+        traj = self.make_traj_msg(
+            placed_word, float(self.dt) / self.DOWNSAMPLEFACTOR, log=True
+        )
 
         # Downsample the trajectory for the robot arm motion
         downsampled_shaped_word = deepcopy(placed_word)
@@ -615,7 +687,7 @@ class StateManager:
         # TODO: Request the tablet to display the letters' and word's bounding boxes
 
         # Get the starting position of the trajectory
-        if (traj.poses):
+        if traj.poses:
             traj_start_position = traj.poses[0].pose.position  # type: ignore
         else:
             traj_start_position = None
@@ -632,15 +704,17 @@ class StateManager:
         # Transition to the next state
         next_state = "WAITING_FOR_LETTER_TO_FINISH"
         info_for_next_state = {
-            'state_came_from': "PUBLISHING_WORD",
-            'state_go_to': info_from_prev_state['state_go_to'],
-            'centre': traj_start_position,
-            'item_written': info_from_prev_state['item_written']
+            "state_came_from": "PUBLISHING_WORD",
+            "state_go_to": info_from_prev_state["state_go_to"],
+            "centre": traj_start_position,
+            "item_written": info_from_prev_state["item_written"],
         }
 
         return next_state, info_for_next_state
 
-    def wait_for_shape_to_finish(self, info_from_prev_state: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+    def wait_for_shape_to_finish(
+        self, info_from_prev_state: Dict[str, Any]
+    ) -> Tuple[str, Dict[str, Any]]:
         """
         Manages the state transitions in the system while waiting for a
         shape to finish being drawn. This method takes into account the
@@ -675,34 +749,39 @@ class StateManager:
         if self.subscriber_callbacks.shape_finished:
             # Draw the templates for the demonstrations
             ref_boundingboxes = self.device_manager.screen_manager.place_reference_boundingboxes(
-                self.device_manager.word_manager.current_collection)
+                self.device_manager.word_manager.current_collection
+            )
             for bb in ref_boundingboxes:
                 self.publish_manager.pub_bounding_boxes.publish(
-                    self.make_bounding_box_msg(bb, selected=False))
+                    self.make_bounding_box_msg(bb, selected=False)
+                )
                 rospy.sleep(0.2)
 
             self.subscriber_callbacks.shape_finished = False
             # info_for_next_state = self.info_to_restore_wait_for_shape_to_finish  # type: ignore
-            if info_from_prev_state['state_go_to'] is not None:
-                next_state = info_from_prev_state['state_go_to']
+            if info_from_prev_state["state_go_to"] is not None:
+                next_state = info_from_prev_state["state_go_to"]
             else:
                 rospy.loginfo("STATE: WAITING_FOR_LETTER_TO_FINISH")
                 rospy.loginfo("WARNING: state_go_to not set")
-                next_state = 'WAITING_FOR_FEEDBACK'
-            info_for_next_state = {'state_came_from': 'WAITING_FOR_LETTER_TO_FINISH',
-                                   'item_written': info_from_prev_state['item_written']}
+                next_state = "WAITING_FOR_FEEDBACK"
+            info_for_next_state = {
+                "state_came_from": "WAITING_FOR_LETTER_TO_FINISH",
+                "item_written": info_from_prev_state["item_written"],
+            }
 
         # Check if next state should be stopping.
-        next_state = self.check_stop_request_received(next_state) 
+        next_state = self.check_stop_request_received(next_state)
 
         # If haven't received next state then go into waiting state
         if next_state is None:
             rospy.sleep(0.1)
-            next_state = 'WAITING_FOR_LETTER_TO_FINISH'
+            next_state = "WAITING_FOR_LETTER_TO_FINISH"
             info_for_next_state = {
-                'state_go_to': info_from_prev_state['state_go_to'],
-                'state_came_from': 'WAITING_FOR_LETTER_TO_FINISH',
-                'item_written': info_from_prev_state['item_written']}
+                "state_go_to": info_from_prev_state["state_go_to"],
+                "state_came_from": "WAITING_FOR_LETTER_TO_FINISH",
+                "item_written": info_from_prev_state["item_written"],
+            }
         else:
             info_for_next_state = info_from_prev_state
 
@@ -734,8 +813,9 @@ class StateManager:
 
     #     return next_state, info_for_next_state
 
-    def stop_interaction(self, info_from_prev_state: Dict[str, Any]
-                         ) -> Tuple[str, int]:
+    def stop_interaction(
+        self, info_from_prev_state: Dict[str, Any]
+    ) -> Tuple[str, int]:
         """
         Stops the current interaction by having the NAO robot say the
         thank you phrase (if speaking is enabled), disabling effector
@@ -761,18 +841,21 @@ class StateManager:
         # Factor two if statements to method for NaoSettings
         if self.nao_settings.nao_speaking:
             self.nao_settings.nao_speak_and_log_phrase(
-                self.nao_settings.phrase_manager.thank_you_phrase[0])
+                self.nao_settings.phrase_manager.thank_you_phrase[0]
+            )
 
         # Set nao to rest
         self.nao_settings.nao_rest()
 
         next_state = "EXIT"
         info_for_next_state = 0
-        rospy.signal_shutdown('Interaction exited')
+        rospy.signal_shutdown("Interaction exited")
 
         return next_state, info_for_next_state
 
-    def start_interaction(self, info_from_prev_state: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+    def start_interaction(
+        self, info_from_prev_state: Dict[str, Any]
+    ) -> Tuple[str, Dict[str, Any]]:
         """
         Starts the interaction with the person, including speaking,
         asking for feedback, and looking at the person. Determines the
@@ -792,16 +875,19 @@ class StateManager:
         # If nao speaking say intro phrase
         if self.nao_settings.nao_speaking:
             self.nao_settings.handle_look_and_ask_for_feedback(
-                self.nao_settings.phrase_manager.intro_phrase)
+                self.nao_settings.phrase_manager.intro_phrase
+            )
 
         next_state = "WAITING_FOR_WORD"
-        info_for_next_state = {'state_came_from': "STARTING_INTERACTION"}
+        info_for_next_state = {"state_came_from": "STARTING_INTERACTION"}
 
         next_state = self.check_stop_request_received(next_state)
 
         return next_state, info_for_next_state
 
-    def wait_for_word(self, info_from_prev_state: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+    def wait_for_word(
+        self, info_from_prev_state: Dict[str, Any]
+    ) -> Tuple[str, Dict[str, Any]]:
         """
         Waits for a word from the user, publishes camera status and
         determines the next state based on the received word or stop
@@ -818,24 +904,25 @@ class StateManager:
                 information for the next state.
         """
         next_state = None
-        if info_from_prev_state['state_came_from'] != "WAITING_FOR_WORD":
+        if info_from_prev_state["state_came_from"] != "WAITING_FOR_WORD":
             rospy.loginfo("STATE: WAITING_FOR_WORD")
 
             # broken for now (pub_camera_status in PublisherManager class)
             # self.publish_manager.pub_camera_status.publish(
             #     True)  # Turn camera on
 
-        if info_from_prev_state['state_came_from'] == "STARTING_INTERACTION":
+        if info_from_prev_state["state_came_from"] == "STARTING_INTERACTION":
             pass
 
-        info_for_next_state = {'state_came_from': "WAITING_FOR_WORD"}
+        info_for_next_state = {"state_came_from": "WAITING_FOR_WORD"}
         if self.subscriber_callbacks.word_received is None:
             next_state = "WAITING_FOR_WORD"
             rospy.sleep(0.1)  # Don't check again immediately
         else:
             # Check for received word and modify next_state if so
             next_state, info_for_next_state = self.handle_word_received(
-                next_state, info_for_next_state)  # type: ignore
+                next_state, info_for_next_state
+            )  # type: ignore
             # self.publish_manager.pub_camera_status.publish(
             #     False)  # Turn camera off
 
@@ -846,7 +933,9 @@ class StateManager:
 
         return next_state, info_for_next_state
 
-    def wait_for_feedback(self, info_from_prev_state: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+    def wait_for_feedback(
+        self, info_from_prev_state: Dict[str, Any]
+    ) -> Tuple[str, Dict[str, Any]]:
         """
         Waits for user feedback, demonstration shapes, a new word, or a
         test request, and determines the next state based on the
@@ -866,19 +955,21 @@ class StateManager:
         #     rospy.loginfo("STATE: WAITING_FOR_FEEDBACK")
         #     self.publish_manager.pub_camera_status.publish(
         #         True)  # turn camera on
-        
 
         info_for_next_state: Dict[str, Any] = {
-            'state_came_from': "WAITING_FOR_FEEDBACK"}
+            "state_came_from": "WAITING_FOR_FEEDBACK"
+        }
         next_state = None
 
         if self.subscriber_callbacks.feedback_received is not None:
             rospy.loginfo(self.subscriber_callbacks.feedback_received)
             rospy.loginfo("STATE: WAITING_FOR_FEEDBACK, got feedback")
-            info_for_next_state['feedback_received'] = self.subscriber_callbacks.feedback_received
+            info_for_next_state[
+                "feedback_received"
+            ] = self.subscriber_callbacks.feedback_received
             self.subscriber_callbacks.feedback_received = None
-            next_state = 'WAITING_FOR_WORD'
-            
+            next_state = "WAITING_FOR_WORD"
+
             # Commented method/function out because not presently in use
             # TODO: reintegrate or remove
             # Ensure robot is connected before going to that state
@@ -888,11 +979,13 @@ class StateManager:
         if self.subscriber_callbacks.demo_shapes_received:
             rospy.loginfo(self.subscriber_callbacks.demo_shapes_received)
             rospy.loginfo("STATE: WAITING_FOR_FEEDBACK, got demo")
-            info_for_next_state['demo_shapes_received'] = self.subscriber_callbacks.demo_shapes_received
+            info_for_next_state[
+                "demo_shapes_received"
+            ] = self.subscriber_callbacks.demo_shapes_received
             self.subscriber_callbacks.demo_shapes_received = []
             rospy.loginfo(self.subscriber_callbacks.demo_shapes_received)
             next_state = "RESPONDING_TO_DEMONSTRATION_FULL_WORD"
-            
+
             # Commented method/function out because not presently in use
             # TODO: reintegrate or remove
             # Ensure robot is connected before going to that state
@@ -911,9 +1004,9 @@ class StateManager:
         # if self.subscriber_callbacks.test_request_received:
         #     self.subscriber_callbacks.test_request_received = False
         #     next_state = "RESPONDING_TO_TEST_CARD"
-            # Ensure robot is connected before going to that state
-            # info_for_next_state['state_go_to'] = [next_state]
-            # next_state = 'WAITING_FOR_ROBOT_TO_CONNECT'
+        # Ensure robot is connected before going to that state
+        # info_for_next_state['state_go_to'] = [next_state]
+        # next_state = 'WAITING_FOR_ROBOT_TO_CONNECT'
 
         next_state = self.check_stop_request_received(next_state)
 
@@ -925,12 +1018,13 @@ class StateManager:
             # Default behavior is to loop
             rospy.sleep(0.1)  # Don't check again immediately
             next_state = "WAITING_FOR_FEEDBACK"
-            info_for_next_state = {'state_came_from': "WAITING_FOR_FEEDBACK"}
+            info_for_next_state = {"state_came_from": "WAITING_FOR_FEEDBACK"}
 
         return next_state, info_for_next_state
 
-    def get_next_phrase(self, phrases: List[str], counter: int,
-                        variable: Optional[str] = None) -> Tuple[str, int]:
+    def get_next_phrase(
+        self, phrases: List[str], counter: int, variable: Optional[str] = None
+    ) -> Tuple[str, int]:
         """
         Helper method to factor the repeating pattern of selecting the
         next phrase from a list of phrases, optionally formatting the
@@ -959,8 +1053,9 @@ class StateManager:
 
         return to_say, counter
 
-    def respond_to_new_word(self, info_from_prev_state: Dict[str, Any]
-                            ) -> Tuple[str, Dict[str, Any]]:
+    def respond_to_new_word(
+        self, info_from_prev_state: Dict[str, Any]
+    ) -> Tuple[str, Dict[str, Any]]:
         """
         Responds to a new word and starts learning it.
 
@@ -975,25 +1070,31 @@ class StateManager:
                 information for the next state.
         """
         rospy.loginfo("STATE: RESPONDING_TO_NEW_WORD")
-        word_to_learn = info_from_prev_state['word_received'].data
+        word_to_learn = info_from_prev_state["word_received"].data
         word_seen_before = self.device_manager.word_manager.new_collection(
-            word_to_learn)
+            word_to_learn
+        )
 
         if self.nao_settings.nao_speaking:
-
             if word_seen_before:
                 # word_again_response_phrases doesnt exist
-                to_say, self.nao_settings.phrase_manager.word_again_response_phrases_counter = self.get_next_phrase(
+                (
+                    to_say,
+                    self.nao_settings.phrase_manager.word_again_response_phrases_counter,
+                ) = self.get_next_phrase(
                     self.nao_settings.phrase_manager.word_again_response_phrases,
                     self.nao_settings.phrase_manager.word_again_response_phrases_counter,
-                    word_to_learn
+                    word_to_learn,
                 )
             else:
                 # word_response_phrases doesnt exist
-                to_say, self.nao_settings.phrase_manager.word_response_phrases_counter = self.get_next_phrase(
+                (
+                    to_say,
+                    self.nao_settings.phrase_manager.word_response_phrases_counter,
+                ) = self.get_next_phrase(
                     self.nao_settings.phrase_manager.word_response_phrases,
                     self.nao_settings.phrase_manager.word_response_phrases_counter,
-                    word_to_learn
+                    word_to_learn,
                 )
 
             self.nao_settings.nao_speak_and_log_phrase(to_say)
@@ -1002,11 +1103,11 @@ class StateManager:
         self.device_manager.screen_manager.clear()
 
         # Commented method/function out because not presently in use
-#        TODO: reintegrate or remove
+        #        TODO: reintegrate or remove
         # currently the probulisher is not implimented, skipping publish
-        # !!!!!!!! change later 
+        # !!!!!!!! change later
         # self.publish_manager.pub_clear.publish(Empty())
-        
+
         rospy.sleep(0.5)
 
         # Start learning
@@ -1015,15 +1116,18 @@ class StateManager:
             shape = self.device_manager.word_manager.start_next_shape_learner()
             shapes_to_publish.append(shape)
 
-        next_state = 'PUBLISHING_WORD'
-        info_for_next_state = {'state_came_from': "RESPONDING_TO_NEW_WORD",
-                               'state_go_to': 'ASKING_FOR_FEEDBACK',
-                               'shapes_to_publish': shapes_to_publish,
-                               'item_written': word_to_learn}
+        next_state = "PUBLISHING_WORD"
+        info_for_next_state = {
+            "state_came_from": "RESPONDING_TO_NEW_WORD",
+            "state_go_to": "ASKING_FOR_FEEDBACK",
+            "shapes_to_publish": shapes_to_publish,
+            "item_written": word_to_learn,
+        }
 
         # Check if word received and respond appropriately
         next_state, info_for_next_state = self.handle_word_received(
-            next_state, info_for_next_state)
+            next_state, info_for_next_state
+        )
 
         # Commented method/function out because not presently in use
         # TODO: reintegrate or remove
@@ -1035,7 +1139,9 @@ class StateManager:
 
         return next_state, info_for_next_state
 
-    def ask_for_feedback(self, info_from_prev_state: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+    def ask_for_feedback(
+        self, info_from_prev_state: Dict[str, Any]
+    ) -> Tuple[str, Dict[str, Any]]:
         """
         Ask for feedback after publishing a word or letter.
 
@@ -1050,15 +1156,18 @@ class StateManager:
                 the next state.
         """
         rospy.loginfo("STATE: ASKING_FOR_FEEDBACK")
-        rospy.loginfo("From " + info_from_prev_state['state_came_from'])
-        rospy.loginfo("item_written = " + info_from_prev_state['item_written'])
+        rospy.loginfo("From " + info_from_prev_state["state_came_from"])
+        rospy.loginfo("item_written = " + info_from_prev_state["item_written"])
 
-        item_written = info_from_prev_state['item_written']
+        item_written = info_from_prev_state["item_written"]
         if self.nao_settings.nao_speaking:
-            to_say, self.nao_settings.phrase_manager.asking_phrases_after_word_counter = self.get_next_phrase(
+            (
+                to_say,
+                self.nao_settings.phrase_manager.asking_phrases_after_word_counter,
+            ) = self.get_next_phrase(
                 self.nao_settings.phrase_manager.asking_phrases_after_word,
                 self.nao_settings.phrase_manager.asking_phrases_after_word_counter,
-                item_written
+                item_written,
             )
 
             self.nao_settings.handle_look_and_ask_for_feedback(to_say)
@@ -1100,10 +1209,11 @@ class StateManager:
         #         self.nao_settings.look_at_tablet()
 
         next_state = "WAITING_FOR_FEEDBACK"
-        info_for_next_state = {'state_came_from': "ASKING_FOR_FEEDBACK"}
+        info_for_next_state = {"state_came_from": "ASKING_FOR_FEEDBACK"}
 
         next_state, info_for_next_state = self.handle_word_received(
-            next_state, info_for_next_state)
+            next_state, info_for_next_state
+        )
 
         next_state = self.check_stop_request_received(next_state)
 
@@ -1145,14 +1255,14 @@ class StateManager:
         # make shape have the same number of points as the shape_modeler
         t_current = np.linspace(0, 1, num_points_in_shape)
         t_desired = np.linspace(0, 1, self.NUMPOINTS_SHAPEMODELER)
-        f = interpolate.interp1d(t_current, x_shape, kind='linear')
+        f = interpolate.interp1d(t_current, x_shape, kind="linear")
         x_shape = f(t_desired)
-        f = interpolate.interp1d(t_current, y_shape, kind='linear')
+        f = interpolate.interp1d(t_current, y_shape, kind="linear")
         y_shape = f(t_desired)
 
         shape = []
-        shape[0:self.NUMPOINTS_SHAPEMODELER] = x_shape
-        shape[self.NUMPOINTS_SHAPEMODELER:] = y_shape
+        shape[0 : self.NUMPOINTS_SHAPEMODELER] = x_shape
+        shape[self.NUMPOINTS_SHAPEMODELER :] = y_shape
 
         shape = ShapeModeler.normalise_shape_height(np.array(shape))
         # explicitly make it 2D array with only one column
@@ -1167,7 +1277,7 @@ class StateManager:
 
         This function creates a Float64MultiArray message and
         populates it with bounding box information. The `selected`
-        parameter is used to label the array dimension. 
+        parameter is used to label the array dimension.
 
         Args:
             bbox (tuple):
@@ -1188,7 +1298,7 @@ class StateManager:
         bb = Float64MultiArray()
         bb.layout.data_offset = 0
         dim = MultiArrayDimension()
-        # we use the label of the first dimension to carry the 
+        # we use the label of the first dimension to carry the
         # selected/not selected infomation
         dim.label = "bb" if not selected else "select"
         bb.layout.dim = [dim]
@@ -1221,18 +1331,21 @@ class StateManager:
 
         Returns:
             traj:
-                A ROS `Path` message that contains the trajectory info. 
+                A ROS `Path` message that contains the trajectory info.
         """
         traj = Path()
         traj.header.frame_id = self.FRAME
-        traj.header.stamp = rospy.Time.now() + rospy.Duration(int(self.delay_before_executing))
+        traj.header.stamp = rospy.Time.now() + rospy.Duration(
+            int(self.delay_before_executing)
+        )
 
         point_idx = 0
         paths = shaped_word.get_letters_paths()
 
         if log:
             self.generated_word_logger.info(
-                "%s" % [[(x, -y) for x, y in path] for path in paths])
+                "%s" % [[(x, -y) for x, y in path] for path in paths]
+            )
 
         for path in paths:
             first = True
@@ -1265,19 +1378,23 @@ settings_shape_learners = []
 
 
 if __name__ == "__main__":
-
     # Init node inside main to avoid running node if imported
-    rospy.init_node("learning_words_nao")
+    # rospy.init_node("learning_words_nao")
+    rclpy.init()
+    node = LearningWordsNao()
 
-    dataset_directory = rospy.get_param('~dataset_directory', 'default')
-    if dataset_directory.lower() == 'default':  # use default
+    dataset_directory = rospy.get_param("~dataset_directory", "default")
+    if dataset_directory.lower() == "default":  # use default
         import inspect
+
         # TODO: letters templates must be in share files of Allograph
         try:
             file_name = inspect.getsourcefile(ShapeModeler)
-            install_directory = file_name.split('/lib')[0]  # type: ignore
-            dataset_directory = install_directory + \
-                '/share/shape_learning/letter_model_datasets/uji_pen_chars2'
+            install_directory = file_name.split("/lib")[0]  # type: ignore
+            dataset_directory = (
+                install_directory
+                + "/share/shape_learning/letter_model_datasets/uji_pen_chars2"
+            )
         except:
             RuntimeError("Missing Dataset")
 
@@ -1290,41 +1407,49 @@ if __name__ == "__main__":
     publish_manager = PublisherManager()
     managerGPT = PhraseManagerGPT("English")
 
-    subscriber_callbacks = SubscriberCallbacks(nao_settings, device_manager,
-                                               managerGPT,
-                                               publish_manager,
-                                               state_machine)
+    subscriber_callbacks = SubscriberCallbacks(
+        nao_settings, device_manager, managerGPT, publish_manager, state_machine
+    )
 
     generated_word_logger = logging.getLogger("word_logger")
     # HACK: should properly configure the path from an option
     generated_word_logger = configure_logging(generated_word_logger)
 
-    state_manager = StateManager(nao_settings, 
-                                 device_manager,
-                                 publish_manager,
-                                 subscriber_callbacks,
-                                 generated_word_logger)
+    state_manager = StateManager(
+        nao_settings,
+        device_manager,
+        publish_manager,
+        subscriber_callbacks,
+        generated_word_logger,
+    )
 
     # Add interaction states to state machine
-    state_machine.add_state("STARTING_INTERACTION",
-                            state_manager.start_interaction)
+    state_machine.add_state(
+        "STARTING_INTERACTION", state_manager.start_interaction
+    )
     state_machine.add_state("WAITING_FOR_WORD", state_manager.wait_for_word)
-    state_machine.add_state("RESPONDING_TO_NEW_WORD",
-                            state_manager.respond_to_new_word)
+    state_machine.add_state(
+        "RESPONDING_TO_NEW_WORD", state_manager.respond_to_new_word
+    )
     state_machine.add_state("PUBLISHING_WORD", state_manager.publish_word)
-    state_machine.add_state("WAITING_FOR_LETTER_TO_FINISH",
-                            state_manager.wait_for_shape_to_finish)
-    state_machine.add_state("ASKING_FOR_FEEDBACK",
-                            state_manager.ask_for_feedback)
-    state_machine.add_state("WAITING_FOR_FEEDBACK",
-                            state_manager.wait_for_feedback)
-    state_machine.add_state("RESPONDING_TO_DEMONSTRATION_FULL_WORD",
-                            state_manager.respond_to_demonstration_with_full_word)
+    state_machine.add_state(
+        "WAITING_FOR_LETTER_TO_FINISH", state_manager.wait_for_shape_to_finish
+    )
+    state_machine.add_state(
+        "ASKING_FOR_FEEDBACK", state_manager.ask_for_feedback
+    )
+    state_machine.add_state(
+        "WAITING_FOR_FEEDBACK", state_manager.wait_for_feedback
+    )
+    state_machine.add_state(
+        "RESPONDING_TO_DEMONSTRATION_FULL_WORD",
+        state_manager.respond_to_demonstration_with_full_word,
+    )
     state_machine.add_state("STOPPING", state_manager.stop_interaction)
     state_machine.add_state("EXIT", None, end_state=True)
     state_machine.set_start("STARTING_INTERACTION")
-    info_for_start_state = {'state_came_from': None}
-    
+    info_for_start_state = {"state_came_from": None}
+
     # Commented method/function out because not presently in use
     # TODO: reintegrate or remove
     # state_machine.add_state("WAITING_FOR_ROBOT_TO_CONNECT",
@@ -1347,57 +1472,74 @@ if __name__ == "__main__":
 
     # Init subscribers
     # listen for a new child signal
-    new_child_subscriber = rospy.Subscriber(SubscriberTopics.NEW_CHILD_TOPIC,
-                                            String,
-                                            subscriber_callbacks.on_new_child_received)
+    new_child_subscriber = rospy.Subscriber(
+        SubscriberTopics.NEW_CHILD_TOPIC,
+        String,
+        subscriber_callbacks.on_new_child_received,
+    )
 
     # listen for words to write
-    words_subscriber = rospy.Subscriber(SubscriberTopics.WORDS_TOPIC,
-                                        String,
-                                        subscriber_callbacks.on_word_received)
-
+    words_subscriber = rospy.Subscriber(
+        SubscriberTopics.WORDS_TOPIC,
+        String,
+        subscriber_callbacks.on_word_received,
+    )
 
     # listen for test time
-    test_subscriber = rospy.Subscriber(SubscriberTopics.TEST_TOPIC,
-                                       Empty,
-                                       subscriber_callbacks.on_test_request_received)
+    test_subscriber = rospy.Subscriber(
+        SubscriberTopics.TEST_TOPIC,
+        Empty,
+        subscriber_callbacks.on_test_request_received,
+    )
 
     # listen for when to stop
-    stop_subscriber = rospy.Subscriber(SubscriberTopics.STOP_TOPIC,
-                                       Empty,
-                                       subscriber_callbacks.on_stop_request_received)
+    stop_subscriber = rospy.Subscriber(
+        SubscriberTopics.STOP_TOPIC,
+        Empty,
+        subscriber_callbacks.on_stop_request_received,
+    )
 
     # listen for user-drawn shapes
-    shape_subscriber = rospy.Subscriber(SubscriberTopics.PROCESSED_USER_SHAPE_TOPIC,
-                                        ShapeMsg,
-                                        subscriber_callbacks.on_user_drawn_shape_received)
+    shape_subscriber = rospy.Subscriber(
+        SubscriberTopics.PROCESSED_USER_SHAPE_TOPIC,
+        ShapeMsg,
+        subscriber_callbacks.on_user_drawn_shape_received,
+    )
 
     # listen for user-drawn finger gestures
-    gesture_subscriber = rospy.Subscriber(SubscriberTopics.GESTURE_TOPIC,
-                                          PointStamped,
-                                          subscriber_callbacks.on_set_active_shape_gesture)
+    gesture_subscriber = rospy.Subscriber(
+        SubscriberTopics.GESTURE_TOPIC,
+        PointStamped,
+        subscriber_callbacks.on_set_active_shape_gesture,
+    )
 
-    shape_finished_subscriber = rospy.Subscriber(SubscriberTopics.SHAPE_FINISHED_TOPIC,
-                                                 String,
-                                                 subscriber_callbacks.on_shape_finished)
-    
+    shape_finished_subscriber = rospy.Subscriber(
+        SubscriberTopics.SHAPE_FINISHED_TOPIC,
+        String,
+        subscriber_callbacks.on_shape_finished,
+    )
+
     # Commented method/function out because not presently in use
     # TODO: reintegrate or remove
     # listen for request to clear screen (from tablet)
     # clear_subscriber = rospy.Subscriber(SubscriberTopics.CLEAR_SURFACE_TOPIC,
     #                                     Empty,
     #                                     subscriber_callbacks.on_clear_screen_received)
-    
-    TOPIC_GPT_INPUT = "chatgpt_input"
-    rospy.Subscriber(TOPIC_GPT_INPUT, String, subscriber_callbacks.on_user_chat_received)
 
-    START_SENDING_VOICE = 'speech_rec'
-    rospy.Subscriber(START_SENDING_VOICE, String, subscriber_callbacks.on_feedback_received)
+    TOPIC_GPT_INPUT = "chatgpt_input"
+    rospy.Subscriber(
+        TOPIC_GPT_INPUT, String, subscriber_callbacks.on_user_chat_received
+    )
+
+    START_SENDING_VOICE = "speech_rec"
+    rospy.Subscriber(
+        START_SENDING_VOICE, String, subscriber_callbacks.on_feedback_received
+    )
 
     # initialise display manager for shapes (manages positioning of shapes)
 
-    rospy.loginfo('Waiting for display manager services to become available')
-    rospy.wait_for_service('clear_all_shapes')
+    rospy.loginfo("Waiting for display manager services to become available")
+    rospy.wait_for_service("clear_all_shapes")
 
     rospy.sleep(2.0)  # Allow some time for the subscribers to do t heir thing,
     # or the first message will be missed (eg. first traj on tablet, first clear request locally)
@@ -1406,8 +1548,16 @@ if __name__ == "__main__":
 
     # robot_watchdog = Watchdog('watchdog_clear/robot', 0.8)
 
-    rospy.loginfo("Nao configuration: writing=%s, speaking=%s (%s), standing=%s, handedness=%s" % (
-        nao_settings.nao_writing, nao_settings.nao_speaking, nao_settings.LANGUAGE, nao_settings.nao_standing, nao_settings.NAO_HANDEDNESS))
+    rospy.loginfo(
+        "Nao configuration: writing=%s, speaking=%s (%s), standing=%s, handedness=%s"
+        % (
+            nao_settings.nao_writing,
+            nao_settings.nao_speaking,
+            nao_settings.LANGUAGE,
+            nao_settings.nao_standing,
+            nao_settings.NAO_HANDEDNESS,
+        )
+    )
 
     # initialise word manager (passes feedback to shape learners and keeps history of words learnt)
     InteractionSettings.set_dataset_directory(dataset_directory)

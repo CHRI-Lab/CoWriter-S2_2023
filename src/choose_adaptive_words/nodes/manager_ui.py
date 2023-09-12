@@ -7,17 +7,28 @@ from ChildProfile import ChildProfile
 from datetime import datetime
 from os.path import expanduser
 from nav_msgs.msg import Path
-from std_msgs.msg import String, UInt8, Int32MultiArray, Float32, MultiArrayDimension, MultiArrayLayout, Empty
+from std_msgs.msg import (
+    String,
+    UInt8,
+    Int32MultiArray,
+    Float32,
+    MultiArrayDimension,
+    MultiArrayLayout,
+    Empty,
+)
 from geometry_msgs.msg import PoseStamped
 import numpy as np
 import os
-import rospy
 
 from parameters import *
 import sys
 
+import rclpy
+from rclpy.node import Node
+
 sys.path.insert(
-    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../nodes'))
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../nodes")
+)
 from audio_processor import AudioProcessor
 
 TOPIC_WORDS_TO_WRITE = "words_to_write"
@@ -26,15 +37,18 @@ TOPIC_LEARNING_PACE = "simple_learning_pace"
 TOPIC_GPT_INPUT = "chatgpt_input"
 TOPIC_SHAPE_FINISHED = "shape_finished"
 
-class Manager_UI(QtWidgets.QDialog):
-    
-    def __init__(self):
 
+class Manager_UI(QtWidgets.QDialog, Node):
+    def __init__(self):
+        self.node = rclpy.create_node("manager_ui")
         self.choose_adaptive_words_path = os.path.dirname(
-			os.path.dirname(os.path.realpath(__file__)))
-        
+            os.path.dirname(os.path.realpath(__file__))
+        )
+
         super(Manager_UI, self).__init__()
-        uic.loadUi(self.choose_adaptive_words_path + '/design/manager_view.ui', self)
+        uic.loadUi(
+            self.choose_adaptive_words_path + "/design/manager_view.ui", self
+        )
         self.show()
         # define QtWidgets
         self.buttonPredict.clicked.connect(self.buttonPredictClicked)
@@ -44,23 +58,41 @@ class Manager_UI(QtWidgets.QDialog):
         self.buttonPathDialog.clicked.connect(self.buttonPathDialogClicked)
         self.buttonWordToWrite.clicked.connect(self.buttonWordToWriteClicked)
         self.buttonGptText.clicked.connect(self.buttonGptTextClicked)
-        self.buttonRobotFinished.clicked.connect(self.buttonRobotFinishedClicked)
-        self.sliderLearningPace.sliderReleased.connect(self.sliderLearningPaceUpdated)
+        self.buttonRobotFinished.clicked.connect(
+            self.buttonRobotFinishedClicked
+        )
+        self.sliderLearningPace.sliderReleased.connect(
+            self.sliderLearningPaceUpdated
+        )
         self.buttonTalkToMe.clicked.connect(self.buttonTalkToMeCliked)
         self.buttonStop.clicked.connect(self.buttonStopCliked)
 
         self.labelLeariningPace.setText(str(self.sliderLearningPace.value()))
-        self.ap = AudioProcessor('english')
+        self.ap = AudioProcessor("english", self.node)
 
         ## init publisher
         # self.publish_word_to_write = rospy.Publisher(TOPIC_WORDS_TO_WRITE, String, queue_size=10)
-        self.publish_word_to_write = rospy.Publisher(TOPIC_WORDS_TO_WRITE, String, queue_size=10)
-        self.publish_simple_learning_pace = rospy.Publisher(TOPIC_LEARNING_PACE, Float32, queue_size=10)
-        self.publish_manager_erase = rospy.Publisher(TOPIC_MANAGER_ERASE, String, queue_size=10)
-        self.publish_chatgpt_input = rospy.Publisher(TOPIC_GPT_INPUT, String, queue_size=10)
-        self.publish_shape_finished = rospy.Publisher(TOPIC_SHAPE_FINISHED, String, queue_size=10)
-        self.transcription_publisher = rospy.Publisher('speech_rec', String, queue_size=10)
-        self.stop_publisher = rospy.Publisher('stop_learning', Empty, queue_size=10)
+        self.publish_word_to_write = self.node.create_publisher(
+            String, TOPIC_WORDS_TO_WRITE, 10
+        )
+        self.publish_simple_learning_pace = self.node.create_publisher(
+            Float32, TOPIC_LEARNING_PACE, 10
+        )
+        self.publish_manager_erase = self.node.create_publisher(
+            String, TOPIC_MANAGER_ERASE, 10
+        )
+        self.publish_chatgpt_input = self.node.create_publisher(
+            String, TOPIC_GPT_INPUT, 10
+        )
+        self.publish_shape_finished = self.node.create_publisher(
+            String, TOPIC_SHAPE_FINISHED, 10
+        )
+        self.transcription_publisher = self.node.create_publisher(
+            String, "speech_rec", 10
+        )
+        self.stop_publisher = self.node.create_publisher(
+            Empty, "stop_learning", 10
+        )
 
         ## init path
         self.pathText.setText(PATH_DB)
@@ -70,13 +102,15 @@ class Manager_UI(QtWidgets.QDialog):
 
     def buttonEraseClicked(self):
         self.publish_manager_erase.publish("erase")
-    
+
     def buttonTalkToMeCliked(self):
         self.ap.run()
         self.transcription_publisher.publish(self.ap.transcription)
 
     def buttonWordToWriteClicked(self):
-        print("published " + self.wordText.text().lower() + " to /words_to_write")
+        print(
+            "published " + self.wordText.text().lower() + " to /words_to_write"
+        )
         self.publish_word_to_write.publish(self.wordText.text().lower())
 
     def buttonGptTextClicked(self):
@@ -84,7 +118,9 @@ class Manager_UI(QtWidgets.QDialog):
         self.publish_chatgpt_input.publish(self.gptText.text())
 
     def sliderLearningPaceUpdated(self):
-        self.publish_simple_learning_pace.publish(np.uint8(self.sliderLearningPace.value()/100))
+        self.publish_simple_learning_pace.publish(
+            np.uint8(self.sliderLearningPace.value() / 100)
+        )
         self.labelLeariningPace.setText(str(self.sliderLearningPace.value()))
 
     def buttonProfileClicked(self):
@@ -109,7 +145,6 @@ class Manager_UI(QtWidgets.QDialog):
         #     self.activity.lettersToWrite[index])
 
         #     self.activity.skills[self.activity.lettersToWrite[index]].dScore.append(d_score)
-
 
         # #save data
         # self.activity.saveData(letters)
@@ -148,7 +183,6 @@ class Manager_UI(QtWidgets.QDialog):
         # # publish in topic
         # self.activity.publish_word_written.publish(words_drawn)
 
-
         # words_drawn = Path()
         # words_drawn.header.stamp = rospy.get_rostime()
         # self.activity.publish_word_written.publish(words_drawn)
@@ -158,24 +192,24 @@ class Manager_UI(QtWidgets.QDialog):
         # self.activity.tactileSurface.erasePixmap()
 
     def buttonPathDialogClicked(self):
-        '''
+        """
         select path for data base, write result in text widget
-        '''
-        input_dir = QFileDialog.getExistingDirectory(None, 'Select a folder:', expanduser("~"))
+        """
+        input_dir = QFileDialog.getExistingDirectory(
+            None, "Select a folder:", expanduser("~")
+        )
         if len(input_dir) > 0:
             self.pathText.setText(input_dir)
 
     def buttonRobotFinishedClicked(self):
         self.publish_shape_finished.publish("finish")
 
-if __name__ == '__main__':
-    rospy.init_node("manager_ui")
-    
-    app = QtWidgets.QApplication(sys.argv)
 
+if __name__ == "__main__":
+    rclpy.init()
+    app = QtWidgets.QApplication(sys.argv)
     window = Manager_UI()
     window.show()
-
     sys.exit(app.exec_())
-    
-    rospy.spin()
+    rclpy.spin(window.node)
+    rclpy.shutdown()

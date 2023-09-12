@@ -1,7 +1,8 @@
 from PyQt5 import uic, QtWidgets
-from PyQt5.QtCore import QObject, QRect, Qt, QDate, QDateTime,pyqtSignal
+from PyQt5.QtCore import QObject, QRect, Qt, QDate, QDateTime, pyqtSignal
 from PyQt5.QtGui import QPainter, QColor, QFont, QBrush, QPen, QPixmap, QPalette
 import os
+
 
 class ChildProfile(QtWidgets.QDialog):
 

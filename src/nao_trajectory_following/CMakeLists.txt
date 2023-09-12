@@ -1,79 +1,52 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(nao_trajectory_following)
 
-## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS
-  rospy
-  std_msgs
-  geometry_msgs
-  nav_msgs
-  visualization_msgs
-)
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
 
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if you package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES beginner_tutorials
-CATKIN_DEPENDS 
-   rospy
-   std_msgs
-   geometry_msgs
-   nav_msgs
-   visualization_msgs
-)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-###########
-## Build ##
-###########
+# Find required packages
+find_package(ament_cmake REQUIRED)
+find_package(rclpy REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
-## Specify additional locations of header files
+# Include directories
 include_directories(
-  ${catkin_INCLUDE_DIRS}
+  ${rclpy_INCLUDE_DIRS}
+  ${std_msgs_INCLUDE_DIRS}
+  ${geometry_msgs_INCLUDE_DIRS}
+  ${nav_msgs_INCLUDE_DIRS}
+  ${visualization_msgs_INCLUDE_DIRS}
 )
 
-#############
-## Install ##
-#############
-
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
- install(PROGRAMS
+# Installation of Python nodes
+install(PROGRAMS
    nodes/nao_writer_naoqi.py
    nodes/trajectory_visualizer.py
    nodes/writing_surface_positioner.py
-   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
- )
+   DESTINATION lib/${PROJECT_NAME}
+)
 
-## Mark other files for installation (e.g. launch and bag files, etc.) 
- install(FILES
-   launch/nao_writing_on_surface.launch
-   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
- )
- install(FILES
-   config/nao_writing_rviz_config.rviz
-   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
- )
- install(FILES
-   res/nao.svg
-   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/res
- )
+# Installation of other files
+install(DIRECTORY launch config res
+  DESTINATION share/${PROJECT_NAME}
+)
 
-#############
-## Testing ##
-#############
+# Export dependencies
+ament_export_dependencies(rclpy)
+ament_export_dependencies(std_msgs)
+ament_export_dependencies(geometry_msgs)
+ament_export_dependencies(nav_msgs)
+ament_export_dependencies(visualization_msgs)
 
-if (CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-
-  # Add your test files here
-  add_rostest(tests/test_nao_writer_naoqi.test)
-  add_rostest(tests/test_trajectory_visualizer.test)
-endif()
+# Package setup
+ament_package()
