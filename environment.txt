@@ -28,6 +28,10 @@ curl -L https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1
 && cd boost_1_77_0 \
 && ./bootstrap.sh \
 && ./b2 --with=all -j 4 install --prefix=$HOME/boost_1_77_0
+
+echo "export BOOST_ROOT=$HOME/boost_1_77_0" >> ~/.bashrc
+echo "export Boost_INCLUDE_DIR=$HOME/boost_1_77_0/include" >> ~/.bashrc
+echo "export Boost_LIBRARY_DIR=$HOME/boost_1_77_0/lib" >> ~/.bashrc
 ============================
 
 sudo apt install libgmock-dev patchelf -y
