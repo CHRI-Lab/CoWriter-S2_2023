@@ -28,14 +28,7 @@ curl -L https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1
 && cd boost_1_77_0 \
 && ./bootstrap.sh \
 && ./b2 --with=all -j 4 install --prefix=$HOME/boost_1_77_0
-
-echo "export BOOST_ROOT=$HOME/boost_1_77_0" >> ~/.bashrc
-echo "export Boost_INCLUDE_DIR=$HOME/boost_1_77_0/include" >> ~/.bashrc
-echo "export Boost_LIBRARY_DIR=$HOME/boost_1_77_0/lib" >> ~/.bashrc
 ============================
-
-sudo apt install libgmock-dev patchelf python3-pip -y
-pip install qibuild scikit-build toml
 
 ==== install libqi ====
 git clone https://github.com/ros-naoqi/libqi \
@@ -47,6 +40,9 @@ git clone https://github.com/ros-naoqi/libqi \
 =======================
 
 ==== install libqi-python ====
+sudo apt install python3-pip -y \
+&& pip install qibuild scikit-build toml
+
 git clone https://github.com/aldebaran/libqi-python.git \
 && cd libqi-python \
 && sed -i "s+'-DQIPYTHON_STANDALONE:BOOL=ON'+'-DQIPYTHON_STANDALONE:BOOL=ON', '-DBOOST_ROOT:PATH=$HOME/boost_1_77_0', '-DBoost_INCLUDE_DIR:PATH=$HOME/boost_1_77_0/include', '-DBoost_LIBRARY_DIR:PATH=$HOME/boost_1_77_0/lib'+g" setup.py \
