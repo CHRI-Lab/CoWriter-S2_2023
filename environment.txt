@@ -34,8 +34,8 @@ echo "export Boost_INCLUDE_DIR=$HOME/boost_1_77_0/include" >> ~/.bashrc
 echo "export Boost_LIBRARY_DIR=$HOME/boost_1_77_0/lib" >> ~/.bashrc
 ============================
 
-sudo apt install libgmock-dev patchelf -y
-pip3 install qibuild scikit-build toml
+sudo apt install libgmock-dev patchelf python3-pip -y
+pip install qibuild scikit-build toml
 
 ==== install libqi ====
 git clone https://github.com/ros-naoqi/libqi \
