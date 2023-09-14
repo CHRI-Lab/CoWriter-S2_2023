@@ -1,36 +1,35 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-"""
-Nao learning words using the shape_learning package.
-This node manages the state machine which maintains the interaction
-sequence, receives interaction inputs e.g. which words to write and
-user demonstrations, passes these demonstrations to the learning
-algorithm, and publishes the resulting learned shapes for the robot
-and tablet to draw.
-"""
-
 import os.path
 import logging
+from time import sleep
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from scipy import interpolate
 from copy import deepcopy
-import sys
 import rclpy
+from rclpy.clock import ROSClock
+from rclpy.duration import Duration
+from rclpy.time import Time
 from rclpy.node import Node
 
-# for normalise_shape_height()
-sys.path.insert(
-    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../include")
-)
-from wrapper_class import DeviceManager, PublisherManager, SubscriberTopics
-from nao_settings import NaoSettings, PhraseManagerGPT
-from watchdog import Watchdog
+from requests import Session
 
-from interaction_settings import InteractionSettings
-from state_machine import StateMachine
-from shape_modeler import ShapeModeler
+from ..include.wrapper_class import (
+    DeviceManager,
+    PublisherManager,
+    SubscriberTopics,
+)
+
+# from ..include.nao_settings import NaoSettings
+from ..include.phrase_manager import PhraseManagerGPT
+from ..include.phrase_manager import PhraseManager
+from ..include.watchdog import Watchdog
+
+from ..include.interaction_settings import InteractionSettings
+from ..include.state_machine import StateMachine
+from ..include.shape_modeler import ShapeModeler
 
 from letter_learning_interaction.msg import Shape as ShapeMsg  # type: ignore
 from letter_learning_interaction.srv import *
@@ -45,11 +44,6 @@ from std_msgs.msg import (
     Float64MultiArray,
     MultiArrayDimension,
 )
-
-
-class LearningWordsNao(Node):
-    def __init__(self):
-        super().__init__("learning_words_nao")
 
 
 def configure_logging(logger: logging.Logger, path="/tmp"):
@@ -86,7 +80,105 @@ def configure_logging(logger: logging.Logger, path="/tmp"):
     return logger
 
 
-# -- interaction config parameters come from launch file
+class LearningWordsNao(Node):
+    def __init__(self, session: Session):
+        super().__init__("learning_words_nao")
+        self.session = session
+        self.declare_parameter("dataset_directory", "default")
+        self.topics = SubscriberTopics(self)
+        self.new_child_subscriber = self.create_subscription(
+            String,
+            self.topics.NEW_CHILD_TOPIC,
+            subscriber_callbacks.on_new_child_received,
+        )
+
+        # listen for words to write
+        self.words_subscriber = self.create_subscription(
+            String,
+            self.topics.WORDS_TOPIC,
+            subscriber_callbacks.on_word_received,
+        )
+
+        # listen for test time
+        self.test_subscriber = self.create_subscription(
+            Empty,
+            self.topics.TEST_TOPIC,
+            subscriber_callbacks.on_test_request_received,
+        )
+
+        # listen for when to stop
+        self.stop_subscriber = self.create_subscription(
+            Empty,
+            self.topics.STOP_TOPIC,
+            subscriber_callbacks.on_stop_request_received,
+        )
+
+        # listen for user-drawn shapes
+        self.shape_subscriber = self.create_subscription(
+            ShapeMsg,
+            self.topics.PROCESSED_USER_SHAPE_TOPIC,
+            subscriber_callbacks.on_user_drawn_shape_received,
+        )
+
+        # listen for user-drawn finger gestures
+        self.gesture_subscriber = self.create_subscription(
+            PointStamped,
+            self.topics.GESTURE_TOPIC,
+            subscriber_callbacks.on_set_active_shape_gesture,
+        )
+
+        self.shape_finished_subscriber = self.create_subscription(
+            String,
+            self.topics.SHAPE_FINISHED_TOPIC,
+            subscriber_callbacks.on_shape_finished,
+        )
+
+        # Commented method/function out because not presently in use
+        # TODO: reintegrate or remove
+        # listen for request to clear screen (from tablet)
+        # clear_subscriber = self.create_subscription(SubscriberTopics.CLEAR_SURFACE_TOPIC,
+        #                                     Empty,
+        #                                     subscriber_callbacks.on_clear_screen_received)
+
+        TOPIC_GPT_INPUT = "chatgpt_input"
+        self.create_subscription(
+            String, TOPIC_GPT_INPUT, subscriber_callbacks.on_user_chat_received
+        )
+
+        START_SENDING_VOICE = "speech_rec"
+        self.create_subscription(
+            String,
+            START_SENDING_VOICE,
+            subscriber_callbacks.on_feedback_received,
+        )
+
+        # initialise display manager for shapes (manages positioning of shapes)
+        self.clear_all_shapes_service = self.create_client(
+            ClearAllShapes, "clear_all_shapes"
+        )
+        self.get_logger().info(
+            "Waiting for display manager services to become available"
+        )
+        self.clear_all_shapes_service.wait_for_service()
+
+        sleep(2.0)  # Allow some time for the subscribers to do t heir thing,
+        # or the first message will be missed (eg. first traj on tablet, first clear request locally)
+
+    def clear_all_shapes(self):
+        while not self.client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Service is not available, waiting...")
+
+        request = ClearAllShapesRequest()
+        # Fill in any data you need to the request if necessary
+
+        future = self.client.call_async(request)
+        rclpy.spin_until_future_complete(self, future)
+
+        if future.result() is not None:
+            # Process the service response
+            pass
+        else:
+            self.get_logger().error("Service call failed.")
 
 
 # -------------------------- CALLBACK METHODS FOR ROS SUBSCRIBERS
@@ -98,14 +190,18 @@ class SubscriberCallbacks:
 
     def __init__(
         self,
-        nao_settings: NaoSettings,
         device_manager: DeviceManager,
         managerGPT: PhraseManagerGPT,
         publish_manager: PublisherManager,
         state_machine: StateMachine,
+        ros_node: LearningWordsNao,
+        nao_settings,
+        session: Session,
+        phrase_manager: PhraseManager,
     ):
-        self.managerGPT = managerGPT
+        self.session = session
         self.nao_settings = nao_settings
+        self.managerGPT = managerGPT
         self.device_manager = device_manager
         self.publish_manager = publish_manager
         self.state_machine = state_machine
@@ -125,6 +221,9 @@ class SubscriberCallbacks:
         self.chatGPT_to_say_enabled = True
         self.response = None
 
+        self.ros_node = ros_node
+        self.phrase_manager = phrase_manager
+
     def on_user_chat_received(self, in_chat: String) -> None:
         """
         if self.chat_enabled is enabled, send the word to Chatgpt,
@@ -132,11 +231,13 @@ class SubscriberCallbacks:
 
         :in_chat: std_msgs.msg.String, input fot chat in .data
         """
-        rospy.loginfo("input for GPT: " + in_chat.data)
+        self.ros_node.get_logger().info("input for GPT: " + in_chat.data)
         if self.chatGPT_enabled:
             self.response = self.managerGPT.get_gpt_response(in_chat.data)
             if self.chatGPT_to_say_enabled:
-                self.nao_settings.text_to_speech.say(self.response)
+                self.session.post(
+                    "http://localhost:5000/say", json=self.response
+                )
 
     def on_user_drawn_shape_received(self, shape: ShapeMsg) -> None:
         """
@@ -163,7 +264,7 @@ class SubscriberCallbacks:
 
             # If the demo_from_template is not empty
             if demo_from_template:
-                rospy.loginfo(
+                self.ros_node.get_logger().info(
                     f"Received template demonstration for letters {demo_from_template.keys()}"
                 )
 
@@ -171,7 +272,7 @@ class SubscriberCallbacks:
                 for name, path in demo_from_template.items():
                     # If the path segment corresponds to a multi-stroke letter, ignore it
                     if name in ["i", "j", "t"]:
-                        rospy.logwarn(
+                        self.ros_node.get_logger().warn(
                             f"Received demonstration for multi-stroke letter {name}: ignoring it."
                         )
                         continue
@@ -193,7 +294,7 @@ class SubscriberCallbacks:
                     # Assign the shape type as the active letter and reset the active letter
                     shape.shape_type = self.active_letter
                     self.active_letter = None
-                    rospy.loginfo(
+                    self.ros_node.get_logger().info(
                         f"Received demonstration for selected letter {shape.shape_type}"
                     )
                 else:
@@ -206,11 +307,11 @@ class SubscriberCallbacks:
                     if letter:
                         # Assign the shape type as the found letter
                         shape.shape_type = letter
-                        rospy.loginfo(
+                        self.ros_node.get_logger().info(
                             f"Received demonstration for {shape.shape_type}"
                         )
                     else:
-                        rospy.logwarn(
+                        self.ros_node.get_logger().warn(
                             "Received demonstration, but unable to find the letter that was demonstrated! Ignoring it."
                         )
                         return
@@ -243,40 +344,53 @@ class SubscriberCallbacks:
 
         :param message: The received new child message.
         """
-        if self.nao_settings.nao_writing:
-            if self.nao_settings.nao_standing:
-                self.nao_settings.posture_proxy.goToPosture("StandInit", 0.3)
-            else:
-                self.nao_settings.motion_proxy.rest()
-                self.nao_settings.motion_proxy.setStiffnesses(
-                    ["Head", "LArm", "RArm"], 0.5
+        if self.nao_settings.get("nao_writing"):
+            if self.nao_settings.get("nao_standing"):
+                self.session.post(
+                    "http://localhost:5000/go_to_posture",
+                    {"posture": "StandInit", "speed": 0.3},
                 )
-                self.nao_settings.motion_proxy.setStiffnesses(
-                    [
-                        "LHipYawPitch",
-                        "LHipRoll",
-                        "LHipPitch",
-                        "RHipYawPitch",
-                        "RHipRoll",
-                        "RHipPitch",
-                    ],
-                    0.8,
+            else:
+                self.session.post("http://localhost:5000/rest")
+                self.session.post(
+                    "http://localhost:5000/set_stiffness",
+                    {"joints": ["Head", "LArm", "RArm"], "set_stiffness": 0.5},
+                )
+                self.session.post(
+                    "http://localhost:5000/set_stiffness",
+                    {
+                        "joints": [
+                            "LHipYawPitch",
+                            "LHipRoll",
+                            "LHipPitch",
+                            "RHipYawPitch",
+                            "RHipRoll",
+                            "RHipPitch",
+                        ],
+                        "set_stiffness": 0.8,
+                    },
                 )
 
-        if self.nao_settings.nao_speaking:
-            if self.nao_settings.alternate_sides_looking_at:
-                self.nao_settings.look_and_ask_for_feedback(
-                    self.nao_settings.phrase_manager.intro_phrase,
-                    self.nao_settings.next_side_to_look_at,
+        if self.nao_settings.get("nao_speaking"):
+            if self.nao_settings.get("alternate_sides_looking_at"):
+                self.session.post(
+                    "http://localhost:5000/look_and_ask_for_feedback",
+                    json={
+                        "phrase": self.phrase_manager.intro_phrase,
+                        "side": self.nao_settings.get("next_side_to_look_at"),
+                    },
                 )
             else:
-                self.nao_settings.look_and_ask_for_feedback(
-                    self.nao_settings.phrase_manager.intro_phrase,
-                    self.nao_settings.person_side,
+                self.session.post(
+                    "http://localhost:5000/look_and_ask_for_feedback",
+                    json={
+                        "phrase": self.phrase_manager.intro_phrase,
+                        "side": self.nao_settings.get("person_side"),
+                    },
                 )
         # clear screen
         self.publish_manager.pub_clear.publish(Empty())
-        rospy.sleep(0.5)
+        sleep(2.0)
 
     def on_word_received(self, message: String) -> None:
         """
@@ -293,7 +407,9 @@ class SubscriberCallbacks:
             or self.state_machine.get_state() is None
         ):  # state machine hasn't started yet - word probably came from input arguments
             self.word_received = message
-            rospy.loginfo(f"Received word: {self.word_received}")
+            self.ros_node.get_logger().info(
+                f"Received word: {self.word_received}"
+            )
         else:
             self.word_received = None  # ignore
 
@@ -305,13 +421,11 @@ class SubscriberCallbacks:
         :param message (Empty): The received clear screen request
         message.
         """
-        rospy.loginfo("Clearing display")
-        try:
-            # NOTE: follow up this clear_all_shapes pass to service then call func
-            clear_all_shapes = rospy.ServiceProxy("clear_all_shapes", ClearAllShapes)  # type: ignore
-            resp1 = clear_all_shapes()
-        except rospy.ServiceException as e:
-            rospy.logerr(f"Service call failed: {e}")
+        self.ros_node.get_logger().info("Clearing display")
+
+        # NOTE: follow up this clear_all_shapes pass to service then call func
+        # clear_all_shapes = rospy.ServiceProxy("clear_all_shapes", ClearAllShapes)  # type: ignore
+        self.ros_node.clear_all_shapes()
 
     def on_test_request_received(self, message: Empty) -> None:
         """
@@ -352,89 +466,46 @@ class SubscriberCallbacks:
 
         :param in_chat: A message containing the feedback.
         """
-        rospy.loginfo("input for GPT: " + in_chat.data)
+        self.ros_node.get_logger().info("input for GPT: " + in_chat.data)
         if self.chatGPT_enabled:
             self.response = self.managerGPT.get_gpt_response(in_chat.data)
-            if self.nao_settings.nao_connected and self.chatGPT_to_say_enabled:
-                self.nao_settings.text_to_speech.say(self.response)
+            if (
+                self.nao_settings.get("nao_connected")
+                and self.chatGPT_to_say_enabled
+            ):
+                self.session.post(
+                    "http://localhost:5000/say", {"phrase": self.response}
+                )
         else:
             self.response = "feedback"
-            self.nao_settings.text_to_speech.say("Thanks for feedback")
+            self.session.post(
+                "http://localhost:5000/say", {"phrase": "Thanks for feedback"}
+            )
 
         self.feedback_received = self.response
 
 
-# ------------------------------- METHODS FOR DIFFERENT STATES IN STATE MACHINE
 class StateManager:
-    """
-    A manager class that handles the states and state transitions in
-    the robot's interaction system. It is responsible for processing
-    and responding to different events such as demonstrations, word
-    reception, and state completion. The class also contains methods
-    to manage speech and trajectory generation, as well as checking for
-    stop requests.
-
-    Attributes:
-        nao_settings (NaoSettings):
-            An object containing the settings for the Nao robot.
-        device_manager (DeviceManager):
-            An object responsible for managing connected devices.
-        publish_manager (PublisherManager):
-            An object responsible for managing ROS publishers.
-        subscriber_callbacks (SubscriberCallbacks):
-            An object containing subscriber callback methods.
-        generated_word_logger:
-            An object responsible for logging generated words.
-        t0 (float):
-            The initial time for trajectories.
-        dt (float):
-            The time step for trajectories.
-        delay_before_executing (float):
-            The delay before executing a trajectory.
-        info_to_restore_wait_for_shape_to_finish (Dict[str, Any]):
-            A dictionary containing information to restore the state
-            when waiting for a shape to finish.
-        info_to_restore_wait_for_robot_to_connect (Dict[str, Any]):
-            A dictionary containing information to restore the state
-            when waiting for the robot to connect.
-        info_to_restore_wait_for_tablet_to_connect (Dict[str, Any]):
-            A dictionary containing information to restore the state
-            when waiting for the tablet to connect.
-        drawing_letter_substates (List[str]):
-            A list of substates related to drawing letters.
-    """
-
-    # shape params
-    # Frame ID to publish points in
-    FRAME = rospy.get_param("~writing_surface_frame_id", "writing_surface")
-
-    # Name of topic to receive feedback on
-    # FEEDBACK_TOPIC = rospy.get_param('~shape_feedback_topic', 'shape_feedback')
-    # FEEDBACK_TOPIC not used anywhere, comment out for now
-
-    NUMDESIREDSHAPEPOINTS = (
-        7.0  # Number of points to downsample the length of shapes to
-    )
-    # Number of points used by ShapeModelers (@todo this could vary for each letter)
-    NUMPOINTS_SHAPEMODELER = 70
-    DOWNSAMPLEFACTOR = float(NUMPOINTS_SHAPEMODELER - 1) / float(
-        NUMDESIREDSHAPEPOINTS - 1
-    )
-
     def __init__(
         self,
-        nao_settings: NaoSettings,
         device_manager: DeviceManager,
         publish_manager: PublisherManager,
         subscriber_callbacks: SubscriberCallbacks,
         generated_word_logger,
+        ros_node: Node,
+        session: Session,
+        nao_settings,
+        phrase_manager,
     ):
+        self.phrase_manager = phrase_manager
+        self.session = session
         self.nao_settings = nao_settings
         self.device_manager = device_manager
         self.publish_manager = publish_manager
         self.publish_manager.init_publishers()
         self.subscriber_callbacks = subscriber_callbacks
         self.generated_word_logger = generated_word_logger
+        self.ros_node = ros_node
 
         # Trajectory publishing parameters
         (
@@ -442,7 +513,7 @@ class StateManager:
             self.dt,
             self.delay_before_executing,
         ) = InteractionSettings.get_trajectory_timings(
-            self.nao_settings.nao_writing
+            self.nao_settings.get("nao_writing")
         )
 
         # Phrase params are in nao_settings.phrase_manager
@@ -460,6 +531,26 @@ class StateManager:
             "WAITING_FOR_TABLET_TO_CONNECT",
             "PUBLISHING_LETTER",
         ]
+
+        # shape params
+        # Frame ID to publish points in
+        # FRAME = rospy.get_param("~writing_surface_frame_id", "writing_surface")
+        self.frame = self.ros_node.get_parameter(
+            "writing_surface_frame_id"
+        ).value
+
+        # Name of topic to receive feedback on
+        # FEEDBACK_TOPIC = rospy.get_param('~shape_feedback_topic', 'shape_feedback')
+        # FEEDBACK_TOPIC not used anywhere, comment out for now
+
+    NUMDESIREDSHAPEPOINTS = (
+        7.0  # Number of points to downsample the length of shapes to
+    )
+    # Number of points used by ShapeModelers (@todo this could vary for each letter)
+    NUMPOINTS_SHAPEMODELER = 70
+    DOWNSAMPLEFACTOR = float(NUMPOINTS_SHAPEMODELER - 1) / float(
+        NUMDESIREDSHAPEPOINTS - 1
+    )
 
     def handle_word_received(
         self, next_state: str, info_for_next_state: Dict[str, str]
@@ -509,67 +600,6 @@ class StateManager:
 
         return next_state
 
-    # Commented method/function out because not presently in use
-    # TODO: reintegrate or remove
-    # def respond_to_demonstration(self, info_from_prev_state):
-    #     """
-    #     Respond to a demonstration by updating shape models and generating speech output (if enabled).
-
-    #     Args:
-    #         info_from_prev_state (dict): A dictionary containing information from the previous state.
-
-    #     Returns:
-    #         tuple: A tuple containing the next state and information for the next state.
-    #     """
-    #     rospy.loginfo("STATE: RESPONDING_TO_DEMONSTRATION")
-    #     self.subscriber_callbacks.demo_shapes_received = info_from_prev_state[
-    #         'demo_shapes_received']
-
-    #     # Update the shape models with the incoming demos
-    #     new_shapes = []
-
-    #     letters = "".join([s.shape_type
-    #                        for s in self.subscriber_callbacks.demo_shapes_received])
-
-    #     # Probably another NaoSettings method to factor out here
-    #     # (Arguably two, get_next_phrase surely is a NaoSettings or PhraseManager method,
-    #     # # but PhraseManager is an attribute of NaoSettings anyway)
-    #     # If nao is speaking then try get response phrase
-    #     if self.nao_settings.nao_speaking:
-    #         to_say, self.nao_settings.phrase_manager.demo_response_phrases_counter = self.get_next_phrase(
-    #             self.nao_settings.phrase_manager.demo_response_phrases,
-    #             self.nao_settings.phrase_manager.demo_response_phrases_counter,
-    #             letters
-    #         )
-
-    #         # Nao speak and rospy log the phrase
-    #         self.nao_settings.nao_speak_and_log_phrase(to_say)
-
-    #     for shape in self.subscriber_callbacks.demo_shapes_received:
-    #         # Get shape info, downsample and log
-    #         glyph = shape.path
-    #         shape_name = shape.shape_type
-    #         glyph = self.downsample_shape(glyph)
-    #         rospy.loginfo(f"Received demo for {shape_name}")
-
-    #         # Process shape with word manager
-    #         shape_index = self.device_manager.word_manager.current_collection.index(
-    #             shape_name)
-    #         shape = self.device_manager.word_manager.respond_to_demonstration(
-    #             shape_index, glyph)
-
-    #         new_shapes.append(shape)
-
-    #     # Pop the next state from the drawing_letter_substates list and
-    #     # generate info for the next state
-    #     state_go_to = deepcopy(self.drawing_letter_substates)
-    #     next_state = state_go_to.pop(0)
-    #     info_for_next_state = {'state_go_to': state_go_to,
-    #                            'state_came_from': "RESPONDING_TO_DEMONSTRATION",
-    #                            'shapes_to_publish': new_shapes}
-
-    #     return next_state, info_for_next_state
-
     def respond_to_demonstration_with_full_word(
         self, info_from_prev_state: Dict[str, Any]
     ) -> Tuple[str, Dict[str, Any]]:
@@ -587,32 +617,37 @@ class StateManager:
                 A tuple containing the next state and information for
                 the next state.
         """
-        rospy.loginfo("STATE: RESPONDING_TO_DEMONSTRATION_FULL_WORD")
+        self.ros_node.get_logger().info(
+            "STATE: RESPONDING_TO_DEMONSTRATION_FULL_WORD"
+        )
 
         demo_shapes_received = info_from_prev_state["demo_shapes_received"]
 
         letters = "".join([s.shape_type for s in demo_shapes_received])
 
-        if self.nao_settings.nao_speaking:
+        if self.nao_settings.get("nao_speaking"):
             (
                 to_say,
-                self.nao_settings.phrase_manager.demo_response_phrases_counter,
+                self.phrase_manager.demo_response_phrases_counter,
             ) = self.get_next_phrase(
-                self.nao_settings.phrase_manager.demo_response_phrases,
-                self.nao_settings.phrase_manager.demo_response_phrases_counter,
+                self.phrase_manager.demo_response_phrases,
+                self.phrase_manager.demo_response_phrases_counter,
                 letters,
             )
 
-            self.nao_settings.nao_speak_and_log_phrase(to_say)
+            self.session.post(
+                "http://localhost:5000/nao_speak_and_log_phrase",
+                {"phrase": to_say},
+            )
 
         # 1- Update the shape models with the incoming demos
         for shape in demo_shapes_received:
             glyph = shape.path
             shape_name = shape.shape_type
 
-            rospy.logdebug(f"Downsampling {shape_name}...")
+            self.ros_node.get_logger().debug(f"Downsampling {shape_name}...")
             glyph = self.downsample_shape(glyph)
-            rospy.loginfo(
+            self.ros_node.get_logger().info(
                 f"Downsampling of {shape_name} done. "
                 + f"Demo received for {shape_name}"
             )
@@ -630,7 +665,7 @@ class StateManager:
         # Clear the screen
         self.device_manager.screen_manager.clear()
         self.publish_manager.pub_clear.publish(Empty())
-        rospy.sleep(0.5)
+        sleep(2.0)
 
         shapes_to_publish = (
             self.device_manager.word_manager.shapes_of_current_collection()
@@ -662,9 +697,13 @@ class StateManager:
             next state.
         """
         # Log the current state
-        rospy.loginfo("STATE: PUBLISHING_WORD")
-        rospy.loginfo("From " + info_from_prev_state["state_came_from"])
-        rospy.loginfo("To " + info_from_prev_state["state_go_to"])
+        self.ros_node.get_logger().info("STATE: PUBLISHING_WORD")
+        self.ros_node.get_logger().info(
+            "From " + info_from_prev_state["state_came_from"]
+        )
+        self.ros_node.get_logger().info(
+            "To " + info_from_prev_state["state_go_to"]
+        )
 
         # Shape and place the word on the screen
         # NOTE: need to handle text_shaper and screen_manager
@@ -693,8 +732,8 @@ class StateManager:
             traj_start_position = None
 
         # Look at the tablet if the Nao is connected
-        if self.nao_settings.nao_connected:
-            self.nao_settings.look_at_tablet()
+        if self.nao_settings.get("nao_connected"):
+            self.session.post("http://localhost:5000/look_at_tablet")
 
         # Publish the trajectories
         # NOTE: need to handle pub_traj
@@ -738,7 +777,7 @@ class StateManager:
         """
         # First time into this state preparations
         # if info_from_prev_state['state_came_from'] != "WAITING_FOR_LETTER_TO_FINISH":
-        #     rospy.loginfo("STATE: WAITING_FOR_LETTER_TO_FINISH")
+        #     self.ros_node.get_logger().info("STATE: WAITING_FOR_LETTER_TO_FINISH")
         #     self.info_to_restore_wait_for_shape_to_finish = info_from_prev_state
 
         # info_for_next_state = {'state_came_from': 'WAITING_FOR_LETTER_TO_FINISH',
@@ -755,15 +794,17 @@ class StateManager:
                 self.publish_manager.pub_bounding_boxes.publish(
                     self.make_bounding_box_msg(bb, selected=False)
                 )
-                rospy.sleep(0.2)
+                sleep(0.2)
 
             self.subscriber_callbacks.shape_finished = False
             # info_for_next_state = self.info_to_restore_wait_for_shape_to_finish  # type: ignore
             if info_from_prev_state["state_go_to"] is not None:
                 next_state = info_from_prev_state["state_go_to"]
             else:
-                rospy.loginfo("STATE: WAITING_FOR_LETTER_TO_FINISH")
-                rospy.loginfo("WARNING: state_go_to not set")
+                self.ros_node.get_logger().info(
+                    "STATE: WAITING_FOR_LETTER_TO_FINISH"
+                )
+                self.ros_node.get_logger().warn("WARNING: state_go_to not set")
                 next_state = "WAITING_FOR_FEEDBACK"
             info_for_next_state = {
                 "state_came_from": "WAITING_FOR_LETTER_TO_FINISH",
@@ -775,7 +816,7 @@ class StateManager:
 
         # If haven't received next state then go into waiting state
         if next_state is None:
-            rospy.sleep(0.1)
+            sleep(0.1)
             next_state = "WAITING_FOR_LETTER_TO_FINISH"
             info_for_next_state = {
                 "state_go_to": info_from_prev_state["state_go_to"],
@@ -786,32 +827,6 @@ class StateManager:
             info_for_next_state = info_from_prev_state
 
         return next_state, info_for_next_state
-
-    # Commented method/function out because not presently in use
-    # TODO: reintegrate or remove
-    # def respond_to_test_card(self, info_from_prev_state: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
-    #     """
-    #     Handles the state when the system is responding to a test card. In this state, if the NAO robot is
-    #     enabled to speak, it will say the test phrase. The system then transitions to the "WAITING_FOR_WORD"
-    #     state.
-
-    #     Args:
-    #         info_from_prev_state (Dict[str, Any]): A dictionary containing information about the previous state
-    #             and any additional details needed for state transitions.
-
-    #     Returns:
-    #         Tuple[str, Dict[str, Any]]: A tuple containing the next state as a string and a dictionary with
-    #             information to be passed to the next state.
-    #     """
-    #     rospy.loginfo("STATE: RESPONDING_TO_TEST_CARD")
-    #     if self.nao_settings.nao_speaking:
-    #         self.nao_settings.nao_speak_and_log_phrase(
-    #             self.nao_settings.phrase_manager.test_phrase[0])
-
-    #     next_state = "WAITING_FOR_WORD"
-    #     info_for_next_state = {'state_came_from': "RESPONDING_TO_TEST_CARD"}
-
-    #     return next_state, info_for_next_state
 
     def stop_interaction(
         self, info_from_prev_state: Dict[str, Any]
@@ -836,20 +851,22 @@ class StateManager:
                 integer with information to be passed to the next
                 state.
         """
-        rospy.loginfo("STATE: STOPPING")
+        self.ros_node.get_logger().info("STATE: STOPPING")
 
         # Factor two if statements to method for NaoSettings
-        if self.nao_settings.nao_speaking:
-            self.nao_settings.nao_speak_and_log_phrase(
-                self.nao_settings.phrase_manager.thank_you_phrase[0]
+        if self.nao_settings.get("nao_speaking"):
+            self.session.post(
+                "http://localhost:5000/nao_speak_and_log_phrase",
+                {"phrase": self.phrase_manager.thank_you_phrase[0]},
             )
 
         # Set nao to rest
-        self.nao_settings.nao_rest()
+        self.session.post("http://localhost:5000/rest")
 
         next_state = "EXIT"
         info_for_next_state = 0
-        rospy.signal_shutdown("Interaction exited")
+        self.ros_node.get_logger().info("Interaction exited")
+        rclpy.shutdown()
 
         return next_state, info_for_next_state
 
@@ -871,11 +888,12 @@ class StateManager:
                 A tuple containing the next state and a dictionary with
                 information for the next state.
         """
-        rospy.loginfo("STATE: STARTING_INTERACTION")
+        self.ros_node.get_logger().info("STATE: STARTING_INTERACTION")
         # If nao speaking say intro phrase
-        if self.nao_settings.nao_speaking:
-            self.nao_settings.handle_look_and_ask_for_feedback(
-                self.nao_settings.phrase_manager.intro_phrase
+        if self.nao_settings.get("nao_speaking"):
+            self.session.post(
+                "http://localhost:5000/handle_look_and_ask_for_feedback",
+                {"phrase": self.phrase_manager.intro_phrase},
             )
 
         next_state = "WAITING_FOR_WORD"
@@ -905,7 +923,7 @@ class StateManager:
         """
         next_state = None
         if info_from_prev_state["state_came_from"] != "WAITING_FOR_WORD":
-            rospy.loginfo("STATE: WAITING_FOR_WORD")
+            self.ros_node.get_logger().info("STATE: WAITING_FOR_WORD")
 
             # broken for now (pub_camera_status in PublisherManager class)
             # self.publish_manager.pub_camera_status.publish(
@@ -917,7 +935,7 @@ class StateManager:
         info_for_next_state = {"state_came_from": "WAITING_FOR_WORD"}
         if self.subscriber_callbacks.word_received is None:
             next_state = "WAITING_FOR_WORD"
-            rospy.sleep(0.1)  # Don't check again immediately
+            sleep(0.1)  # Don't check again immediately
         else:
             # Check for received word and modify next_state if so
             next_state, info_for_next_state = self.handle_word_received(
@@ -952,7 +970,7 @@ class StateManager:
                 information for the next state.
         """
         # if info_from_prev_state['state_came_from'] != "WAITING_FOR_FEEDBACK":
-        #     rospy.loginfo("STATE: WAITING_FOR_FEEDBACK")
+        #     self.ros_node.get_logger().info("STATE: WAITING_FOR_FEEDBACK")
         #     self.publish_manager.pub_camera_status.publish(
         #         True)  # turn camera on
 
@@ -962,8 +980,12 @@ class StateManager:
         next_state = None
 
         if self.subscriber_callbacks.feedback_received is not None:
-            rospy.loginfo(self.subscriber_callbacks.feedback_received)
-            rospy.loginfo("STATE: WAITING_FOR_FEEDBACK, got feedback")
+            self.ros_node.get_logger().info(
+                self.subscriber_callbacks.feedback_received
+            )
+            self.ros_node.get_logger().info(
+                "STATE: WAITING_FOR_FEEDBACK, got feedback"
+            )
             info_for_next_state[
                 "feedback_received"
             ] = self.subscriber_callbacks.feedback_received
@@ -977,13 +999,19 @@ class StateManager:
             # next_state = 'WAITING_FOR_ROBOT_TO_CONNECT'
 
         if self.subscriber_callbacks.demo_shapes_received:
-            rospy.loginfo(self.subscriber_callbacks.demo_shapes_received)
-            rospy.loginfo("STATE: WAITING_FOR_FEEDBACK, got demo")
+            self.ros_node.get_logger().info(
+                self.subscriber_callbacks.demo_shapes_received
+            )
+            self.ros_node.get_logger().info(
+                "STATE: WAITING_FOR_FEEDBACK, got demo"
+            )
             info_for_next_state[
                 "demo_shapes_received"
             ] = self.subscriber_callbacks.demo_shapes_received
             self.subscriber_callbacks.demo_shapes_received = []
-            rospy.loginfo(self.subscriber_callbacks.demo_shapes_received)
+            self.ros_node.get_logger().info(
+                self.subscriber_callbacks.demo_shapes_received
+            )
             next_state = "RESPONDING_TO_DEMONSTRATION_FULL_WORD"
 
             # Commented method/function out because not presently in use
@@ -1016,7 +1044,7 @@ class StateManager:
 
         if next_state is None:
             # Default behavior is to loop
-            rospy.sleep(0.1)  # Don't check again immediately
+            sleep(0.1)  # Don't check again immediately
             next_state = "WAITING_FOR_FEEDBACK"
             info_for_next_state = {"state_came_from": "WAITING_FOR_FEEDBACK"}
 
@@ -1069,35 +1097,38 @@ class StateManager:
                 A tuple containing the next state and a dictionary with
                 information for the next state.
         """
-        rospy.loginfo("STATE: RESPONDING_TO_NEW_WORD")
+        self.ros_node.get_logger().info("STATE: RESPONDING_TO_NEW_WORD")
         word_to_learn = info_from_prev_state["word_received"].data
         word_seen_before = self.device_manager.word_manager.new_collection(
             word_to_learn
         )
 
-        if self.nao_settings.nao_speaking:
+        if self.nao_settings.get("nao_speaking"):
             if word_seen_before:
                 # word_again_response_phrases doesnt exist
                 (
                     to_say,
-                    self.nao_settings.phrase_manager.word_again_response_phrases_counter,
+                    self.phrase_manager.word_again_response_phrases_counter,
                 ) = self.get_next_phrase(
-                    self.nao_settings.phrase_manager.word_again_response_phrases,
-                    self.nao_settings.phrase_manager.word_again_response_phrases_counter,
+                    self.phrase_manager.word_again_response_phrases,
+                    self.phrase_manager.word_again_response_phrases_counter,
                     word_to_learn,
                 )
             else:
                 # word_response_phrases doesnt exist
                 (
                     to_say,
-                    self.nao_settings.phrase_manager.word_response_phrases_counter,
+                    self.phrase_manager.word_response_phrases_counter,
                 ) = self.get_next_phrase(
-                    self.nao_settings.phrase_manager.word_response_phrases,
-                    self.nao_settings.phrase_manager.word_response_phrases_counter,
+                    self.phrase_manager.word_response_phrases,
+                    self.phrase_manager.word_response_phrases_counter,
                     word_to_learn,
                 )
 
-            self.nao_settings.nao_speak_and_log_phrase(to_say)
+            self.session.post(
+                "http://localhost:5000/nao_speak_and_log_phrase",
+                {"phrase": to_say},
+            )
 
         # Clear screen
         self.device_manager.screen_manager.clear()
@@ -1108,7 +1139,7 @@ class StateManager:
         # !!!!!!!! change later
         # self.publish_manager.pub_clear.publish(Empty())
 
-        rospy.sleep(0.5)
+        sleep(0.5)
 
         # Start learning
         shapes_to_publish = []
@@ -1155,58 +1186,30 @@ class StateManager:
                 A tuple containing the next state and information for
                 the next state.
         """
-        rospy.loginfo("STATE: ASKING_FOR_FEEDBACK")
-        rospy.loginfo("From " + info_from_prev_state["state_came_from"])
-        rospy.loginfo("item_written = " + info_from_prev_state["item_written"])
+        self.ros_node.get_logger().info("STATE: ASKING_FOR_FEEDBACK")
+        self.ros_node.get_logger().info(
+            "From " + info_from_prev_state["state_came_from"]
+        )
+        self.ros_node.get_logger().info(
+            "item_written = " + info_from_prev_state["item_written"]
+        )
 
         item_written = info_from_prev_state["item_written"]
-        if self.nao_settings.nao_speaking:
+        if self.nao_settings.get("nao_speaking"):
             (
                 to_say,
-                self.nao_settings.phrase_manager.asking_phrases_after_word_counter,
+                self.phrase_manager.asking_phrases_after_word_counter,
             ) = self.get_next_phrase(
-                self.nao_settings.phrase_manager.asking_phrases_after_word,
-                self.nao_settings.phrase_manager.asking_phrases_after_word_counter,
+                self.phrase_manager.asking_phrases_after_word,
+                self.phrase_manager.asking_phrases_after_word_counter,
                 item_written,
             )
 
-            self.nao_settings.handle_look_and_ask_for_feedback(to_say)
-
-            self.nao_settings.look_at_tablet()
-
-        # Commented method/function out because not presently in use
-        # TODO: reintegrate or remove
-        # if info_from_prev_state['state_came_from'] == "PUBLISHING_WORD":
-        #     word_written = info_from_prev_state['word_written']
-        #     rospy.loginfo('Asking for feedback on word ' + word_written)
-
-        #     if self.nao_settings.nao_speaking:
-        #         # Get phrease based on published word
-        #         to_say, self.nao_settings.phrase_manager.asking_phrases_after_word_counter = self.get_next_phrase(
-        #             self.nao_settings.phrase_manager.asking_phrases_after_word,
-        #             self.nao_settings.phrase_manager.asking_phrases_after_word_counter,
-        #             word_written
-        #         )
-
-        #         self.nao_settings.handle_look_and_ask_for_feedback(to_say)
-
-        #         self.nao_settings.look_at_tablet()
-
-        # elif info_from_prev_state['state_came_from'] == "PUBLISHING_LETTER":
-        #     shape_type = info_from_prev_state['shape_published']
-        #     rospy.loginfo(f'Asking for feedback on letter {shape_type}')
-
-        #     if self.nao_settings.nao_speaking:
-        #         # Get phrase based on published letter/shape
-        #         to_say, self.nao_settings.phrase_manager.asking_phrases_after_feedback_counter = self.get_next_phrase(
-        #             self.nao_settings.phrase_manager.asking_phrases_after_feedback,
-        #             self.nao_settings.phrase_manager.asking_phrases_after_feedback_counter,
-        #             shape_type
-        #         )
-
-        #         self.nao_settings.handle_look_and_ask_for_feedback(to_say)
-
-        #         self.nao_settings.look_at_tablet()
+            self.session.post(
+                "http://localhost:5000/handle_look_and_ask_for_feedback",
+                {"phrase": to_say},
+            )
+            self.session.post("http://localhost:5000/look_at_tablet")
 
         next_state = "WAITING_FOR_FEEDBACK"
         info_for_next_state = {"state_came_from": "ASKING_FOR_FEEDBACK"}
@@ -1261,8 +1264,9 @@ class StateManager:
         y_shape = f(t_desired)
 
         shape = []
-        shape[0 : self.NUMPOINTS_SHAPEMODELER] = x_shape
-        shape[self.NUMPOINTS_SHAPEMODELER :] = y_shape
+
+        shape[0 : self.NUMPOINTS_SHAPEMODELER] = x_shape  # noqa: E203
+        shape[self.NUMPOINTS_SHAPEMODELER :] = y_shape  # noqa: E203
 
         shape = ShapeModeler.normalise_shape_height(np.array(shape))
         # explicitly make it 2D array with only one column
@@ -1334,10 +1338,14 @@ class StateManager:
                 A ROS `Path` message that contains the trajectory info.
         """
         traj = Path()
-        traj.header.frame_id = self.FRAME
-        traj.header.stamp = rospy.Time.now() + rospy.Duration(
-            int(self.delay_before_executing)
-        )
+        traj.header.frame_id = self.frame
+        # traj.header.stamp = rospy.Time.now() + rospy.Duration(
+        #     int(self.delay_before_executing)
+        # )
+        traj.header.stamp = (
+            ROSClock().now()
+            + Duration(seconds=int(self.delay_before_executing))
+        ).to_msg()
 
         point_idx = 0
         paths = shaped_word.get_letters_paths()
@@ -1354,9 +1362,9 @@ class StateManager:
 
                 point.pose.position.x = x
                 point.pose.position.y = y
-                point.header.frame_id = self.FRAME
+                point.header.frame_id = self.frame
                 # @TODO allow for variable time between points for now
-                point.header.stamp = rospy.Time(self.t0 + point_idx * delta_t)
+                point.header.stamp = Time(self.t0 + point_idx * delta_t)
 
                 if first:
                     point.header.seq = 1
@@ -1369,21 +1377,25 @@ class StateManager:
         return traj
 
 
-# ------------------------------------------- MAIN
-shapes_learnt = []
-words_learnt = []
-shape_learners = []
-current_word = []
-settings_shape_learners = []
+def get_nao_settings(session):
+    return session.get("http://localhost:5000/nao_settings").json()
 
 
 if __name__ == "__main__":
     # Init node inside main to avoid running node if imported
     # rospy.init_node("learning_words_nao")
-    rclpy.init()
-    node = LearningWordsNao()
+    session = Session()
+    nao_settings = get_nao_settings(session)
+    phrase_manager = PhraseManager(nao_settings.get("LANGUAGE"))
 
-    dataset_directory = rospy.get_param("~dataset_directory", "default")
+    rclpy.init(args=None)
+    node = LearningWordsNao(session)
+    executor = rclpy.executors.MultiThreadedExecutor()
+    executor.add_node(node)
+
+    # dataset_directory = rospy.get_param("~dataset_directory", "default")
+    dataset_directory = node.get_parameter("dataset_directory").value
+
     if dataset_directory.lower() == "default":  # use default
         import inspect
 
@@ -1402,13 +1414,20 @@ if __name__ == "__main__":
     state_machine = StateMachine()
 
     # Init objects for interaction
-    nao_settings = NaoSettings()
-    device_manager = DeviceManager()
-    publish_manager = PublisherManager()
+
+    device_manager = DeviceManager(node)
+    publish_manager = PublisherManager(node)
     managerGPT = PhraseManagerGPT("English")
 
     subscriber_callbacks = SubscriberCallbacks(
-        nao_settings, device_manager, managerGPT, publish_manager, state_machine
+        device_manager,
+        managerGPT,
+        publish_manager,
+        state_machine,
+        node,
+        nao_settings=nao_settings,
+        session=session,
+        phrase_manager=phrase_manager,
     )
 
     generated_word_logger = logging.getLogger("word_logger")
@@ -1416,11 +1435,14 @@ if __name__ == "__main__":
     generated_word_logger = configure_logging(generated_word_logger)
 
     state_manager = StateManager(
-        nao_settings,
         device_manager,
         publish_manager,
         subscriber_callbacks,
         generated_word_logger,
+        node,
+        session,
+        nao_settings,
+        phrase_manager,
     )
 
     # Add interaction states to state machine
@@ -1450,112 +1472,24 @@ if __name__ == "__main__":
     state_machine.set_start("STARTING_INTERACTION")
     info_for_start_state = {"state_came_from": None}
 
-    # Commented method/function out because not presently in use
-    # TODO: reintegrate or remove
-    # state_machine.add_state("WAITING_FOR_ROBOT_TO_CONNECT",
-    #                         state_manager.wait_for_robot_to_connect)
-    # publish_shape currently removed as we received it in a broken state
-    # state_machine.add_state("PUBLISHING_LETTER", state_manager.publish_shape)
-    # respond_to_feedback currently removed as it was not in use
-    # state_machine.add_state("RESPONDING_TO_FEEDBACK",
-    #                         state_manager.respond_to_feedback)
-    # state_machine.add_state("RESPONDING_TO_DEMONSTRATION",
-    #                         state_manager.respond_to_demonstration)
-    # state_machine.add_state("RESPONDING_TO_TEST_CARD",
-    #                         state_manager.respond_to_test_card)
-    # stateMachine.add_state("RESPONDING_TO_TABLET_DISCONNECT", respondToTabletDisconnect)
-    # state_machine.add_state("WAITING_FOR_TABLET_TO_CONNECT",
-    #                         state_manager.wait_for_tablet_to_connect)
-
     # Set nao up for interaction
     nao_settings.set_nao_interaction()
 
     # Init subscribers
     # listen for a new child signal
-    new_child_subscriber = rospy.Subscriber(
-        SubscriberTopics.NEW_CHILD_TOPIC,
-        String,
-        subscriber_callbacks.on_new_child_received,
-    )
-
-    # listen for words to write
-    words_subscriber = rospy.Subscriber(
-        SubscriberTopics.WORDS_TOPIC,
-        String,
-        subscriber_callbacks.on_word_received,
-    )
-
-    # listen for test time
-    test_subscriber = rospy.Subscriber(
-        SubscriberTopics.TEST_TOPIC,
-        Empty,
-        subscriber_callbacks.on_test_request_received,
-    )
-
-    # listen for when to stop
-    stop_subscriber = rospy.Subscriber(
-        SubscriberTopics.STOP_TOPIC,
-        Empty,
-        subscriber_callbacks.on_stop_request_received,
-    )
-
-    # listen for user-drawn shapes
-    shape_subscriber = rospy.Subscriber(
-        SubscriberTopics.PROCESSED_USER_SHAPE_TOPIC,
-        ShapeMsg,
-        subscriber_callbacks.on_user_drawn_shape_received,
-    )
-
-    # listen for user-drawn finger gestures
-    gesture_subscriber = rospy.Subscriber(
-        SubscriberTopics.GESTURE_TOPIC,
-        PointStamped,
-        subscriber_callbacks.on_set_active_shape_gesture,
-    )
-
-    shape_finished_subscriber = rospy.Subscriber(
-        SubscriberTopics.SHAPE_FINISHED_TOPIC,
-        String,
-        subscriber_callbacks.on_shape_finished,
-    )
-
-    # Commented method/function out because not presently in use
-    # TODO: reintegrate or remove
-    # listen for request to clear screen (from tablet)
-    # clear_subscriber = rospy.Subscriber(SubscriberTopics.CLEAR_SURFACE_TOPIC,
-    #                                     Empty,
-    #                                     subscriber_callbacks.on_clear_screen_received)
-
-    TOPIC_GPT_INPUT = "chatgpt_input"
-    rospy.Subscriber(
-        TOPIC_GPT_INPUT, String, subscriber_callbacks.on_user_chat_received
-    )
-
-    START_SENDING_VOICE = "speech_rec"
-    rospy.Subscriber(
-        START_SENDING_VOICE, String, subscriber_callbacks.on_feedback_received
-    )
-
-    # initialise display manager for shapes (manages positioning of shapes)
-
-    rospy.loginfo("Waiting for display manager services to become available")
-    rospy.wait_for_service("clear_all_shapes")
-
-    rospy.sleep(2.0)  # Allow some time for the subscribers to do t heir thing,
-    # or the first message will be missed (eg. first traj on tablet, first clear request locally)
 
     # TODO: Make a ROS server so that *everyone* can access the connection statuses
 
     # robot_watchdog = Watchdog('watchdog_clear/robot', 0.8)
 
-    rospy.loginfo(
+    node.get_logger().info(
         "Nao configuration: writing=%s, speaking=%s (%s), standing=%s, handedness=%s"
         % (
-            nao_settings.nao_writing,
-            nao_settings.nao_speaking,
-            nao_settings.LANGUAGE,
-            nao_settings.nao_standing,
-            nao_settings.NAO_HANDEDNESS,
+            nao_settings.get("nao_writing"),
+            nao_settings.get("nao_speaking"),
+            nao_settings.get("LANGUAGE"),
+            nao_settings.get("nao_standing"),
+            nao_settings.get("NAO_HANDEDNESS"),
         )
     )
 
@@ -1566,7 +1500,9 @@ if __name__ == "__main__":
     # Start the interaction
     state_machine.run(info_for_start_state)
 
-    rospy.spin()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
 
     device_manager.tablet_watchdog.stop()
     # robot_watchdog.stop()

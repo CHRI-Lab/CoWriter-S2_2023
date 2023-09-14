@@ -1,363 +1,297 @@
-#!/usr/bin/env python3
-# coding: utf-8
+# #!/usr/bin/env python3
+# # coding: utf-8
 
-import rospy
-import sys
-import openai
-import os.path
-sys.path.insert(
-    0, 
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), '../include'))
-from interaction_settings import InteractionSettings
-from std_msgs.msg import String
-import sounddevice as sd
-from scipy.io.wavfile import write
+# from .interaction_settings import InteractionSettings
+
+# # from std_msgs.msg import String
+# # import sounddevice as sd
+# # from scipy.io.wavfile import write
 
 
-class PhraseManager:
-    """
-    A wrapper class for managing phrases that the NAO robot uses during
-    interaction. The class stores a set of phrases and their
-    corresponding counters for different interaction scenarios, such as
-    introduction, demo response, asking for feedback, word response,
-    and more. The phrases are fetched from the InteractionSettings
-    class based on the provided language.
+# class NaoSettings:
+#     """
+#     NaoSettings is a class that handles the configuration and
+#     interaction settings for a NAO robot, including its handedness,
+#     language, speaking, writing, and connection status. It also
+#     provides methods for controlling the robot's behavior, such as
+#     speaking, looking at a tablet, and asking for feedback.
 
-    Args:
-        language (str): The language used for the phrases.
-    """
+#     The class uses ROS parameters to get the values for various
+#     settings. Some parameters are treated as constants and stored as
+#     class variables, while others are fetched during the instance
+#     initialization.
 
-    def __init__(self, language: str):
+#     Constant attributes:
+#         NAO_IP (str): The IP address of the NAO robot.
+#         FRONT_INTERACTION (bool): Flag indicating if the interaction is
+#                                   from the front of the robot.
+#         NAO_HANDEDNESS (str): The handedness of the NAO robot (either
+#                               'right' or 'left').
+#     """
 
-        (self.intro_phrase, self.demo_response_phrases,
-         self.asking_phrases_after_feedback, self.asking_phrases_after_word,
-         self.word_response_phrases, self.word_again_response_phrases,
-         self.test_phrase, self.thank_you_phrase) = \
-            InteractionSettings.get_phrases(language)
+#     # Following parameters treated as constants so for now they are not
+#     # passed in as arguments, but treated as class variables.
 
-        self.demo_response_phrases_counter: int = 0
-        self.asking_phrases_after_feedback_counter: int = 0
-        self.asking_phrases_after_word_counter: int = 0
-        self.word_response_phrases_counter: int = 0
-        self.word_again_response_phrases_counter: int = 0
+#     # Default behaviour is to connect to simulator locally
+#     NAO_IP: str = rospy.get_param("~nao_ip", "127.0.0.1")
+#     NAO_PORT = 9559
+#     FRONT_INTERACTION: bool = True
+#     NAO_HANDEDNESS: str = rospy.get_param("~nao_handedness", "right")
 
-class PhraseManagerGPT(PhraseManager):
-    """
-    Class for managing phrases and conversation with a GPT-based model.
+#     def __init__(self) -> None:
+#         # Nao parameters
+#         self.LANGUAGE: str = rospy.get_param("~language", "english")
+#         # whether or not the robot should stand or rest on its knees
+#         self.nao_standing: bool = rospy.get_param("~nao_standing", True)
+#         # whether or not the robot is being used for the interaction
+#         self.nao_connected: bool = rospy.get_param(
+#             "~use_robot_in_interaction", True
+#         )
 
-    This class handles the conversation flow with the model, ensuring
-    that the interactions are appropriate and conform to the set
-    language. It uses an API key to facilitate communication with the
-    model and manages the message history of the conversation.
+#         # speaking and writing conjunct with conn as stronger property
+#         # whether or not the robot should speak
+#         self.nao_speaking: bool = (
+#             rospy.get_param("~nao_speaking", True) and self.nao_connected
+#         )
+#         # whether or not the robot should move its arms
+#         self.nao_writing: bool = (
+#             rospy.get_param("~nao_writing", True) and self.nao_connected
+#         )
 
-    Attributes:
-        language (str): The language to be used in the conversation.
-        messages (list): The history of conversation with the model.
+#         # Set effector based on handedness
+#         self.set_effector()
 
-    Methods:
-        get_gpt_response(input_text: str) -> str: Given the input text,
-            this function generates a conversational response from the
-            GPT model.
-    """
+#         self.set_phrase_manager()
+#         self.set_orientation_params()
 
-    def __init__(self, language):
-        super().__init__(language)
-        # NOTE: The openai api key below will need to be replaced for ChatGPT functionality
-        #       to work past 06/2023. 
-        openai.api_key = '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'
-        self.language = language
-        self.messages = [{"role": "system", "content": 
-            "You are a handwriting student of a child."}]
-            
-    def get_gpt_response(self, input_text):
-        """
-        Given input text (generated from a conversation with a child), 
-        gets a conversational response from the GPT model.
+#     def set_effector(self) -> None:
+#         """
+#         Sets the effector for the nao settings class based on nao
+#         handedness.
+#         """
+#         if self.NAO_HANDEDNESS.lower() == "right":
+#             self.effector: str = "RArm"
+#         elif self.NAO_HANDEDNESS.lower() == "left":
+#             self.effector: str = "LArm"
+#         else:
+#             print("error in handedness param")
 
-        The input text is added to the message history, and a response
-        is generated from the GPT model. The response is then added to
-        the message history and returned.
+#     def set_phrase_manager(self) -> None:
+#         """
+#         Sets the phrase manager for the nao settings based on nao
+#         language.
+#         """
+#         self.phrase_manager: PhraseManager = PhraseManager(self.LANGUAGE)
 
-        Args:
-            input_text (str): The input text from the child's
-                              conversation.
+#     def set_orientation_params(self):
+#         """
+#         Set parameters for head angles, side person is one, whether to
+#         alternate which side nao is looking at, and the next side to
+#         look at if alternating.
+#         """
 
-        Returns:
-            response_message (str): The response message generated from
-                                    the GPT model.
-        """
-        # Add input text to message history
-        self.messages.append({"role": "user", "content": "Don't break lines in your reponse and use short and simple sentences answering the fllowing question: "+input_text})
-        # Get chatgpt response
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo", messages=self.messages)
-        # Add response to message history
-        response_message = response["choices"][0]["message"].content
-        response_message = response_message.replace('\n', ' ')
-        response_message = response_message.replace('\\', '')
-        self.messages.append({"role": "assistant", "content": response_message})
-        return response_message
+#         # Get appropriate angles for looking at things
+#         (
+#             self.head_angles_look_at_tablet_down,
+#             self.head_angles_look_at_tablet_right,
+#             self.head_angles_look_at_tablet_left,
+#             self.head_angles_look_at_person_front,
+#             self.head_angles_look_at_person_right,
+#             self.head_angles_look_at_person_left,
+#         ) = InteractionSettings.get_head_angles()
 
-class NaoSettings:
-    """
-    NaoSettings is a class that handles the configuration and
-    interaction settings for a NAO robot, including its handedness,
-    language, speaking, writing, and connection status. It also
-    provides methods for controlling the robot's behavior, such as
-    speaking, looking at a tablet, and asking for feedback.
+#         # Get the side of where the person is (left/right)
+#         self.person_side = rospy.get_param(
+#             "~person_side", self.NAO_HANDEDNESS.lower()
+#         )
 
-    The class uses ROS parameters to get the values for various
-    settings. Some parameters are treated as constants and stored as
-    class variables, while others are fetched during the instance
-    initialization.
+#         # Using default values for params below, as in original code
+#         # if alternate sides, nao looks to a different side each time.
+#         # Not well tested
+#         self.alternate_sides_looking_at: bool = False
+#         self.next_side_to_look_at: str = "Right"
 
-    Constant attributes:
-        NAO_IP (str): The IP address of the NAO robot.
-        FRONT_INTERACTION (bool): Flag indicating if the interaction is
-                                  from the front of the robot.
-        NAO_HANDEDNESS (str): The handedness of the NAO robot (either
-                              'right' or 'left').
-    """
+#     def set_nao_interaction(self):
+#         """
+#         Sets the parameters for interaction with the robot.
 
-    # Following parameters treated as constants so for now they are not
-    # passed in as arguments, but treated as class variables.
+#         Must initialise an instance of NaoSettings and call this method
+#         in main for the interaction to work.
+#         """
 
-    # Default behaviour is to connect to simulator locally
-    NAO_IP: str = rospy.get_param('~nao_ip', '127.0.0.1')
-    NAO_PORT = 9559
-    FRONT_INTERACTION: bool = True
-    NAO_HANDEDNESS: str = rospy.get_param('~nao_handedness', 'right')
+#         if self.nao_connected:
+#             import qi
 
-    def __init__(self) -> None:
+#             qi_url = f"tcp://{self.NAO_IP}:{self.NAO_PORT}"
+#             print(f"[RobotController] Connecting to qi_url={qi_url}")
+#             app = qi.Application(url=qi_url)
+#             app.start()
+#             # app.run()
+#             print(f"[RobotController] app started")
 
-        # Nao parameters
-        self.LANGUAGE: str = rospy.get_param('~language', 'english')
-        # whether or not the robot should stand or rest on its knees
-        self.nao_standing: bool = rospy.get_param('~nao_standing', True)
-        # whether or not the robot is being used for the interaction
-        self.nao_connected: bool = rospy.get_param(
-            '~use_robot_in_interaction', True)
+#             self.session = app.session
+#             self.nextSideToLookAt = "Right"
 
-        # speaking and writing conjunct with conn as stronger property
-        # whether or not the robot should speak
-        self.nao_speaking: bool = rospy.get_param(
-            '~nao_speaking', True) and self.nao_connected
-        # whether or not the robot should move its arms
-        self.nao_writing: bool = rospy.get_param(
-            '~nao_writing', True) and self.nao_connected
+#             # ? all services needed
+#             self.motion_proxy = self.session.service("ALMotion")
+#             # return
+#             self.posture_proxy = self.session.service("ALRobotPosture")
+#             self.text_to_speech = self.session.service("ALTextToSpeech")
+#             self.text_to_speech.setLanguage(self.LANGUAGE.capitalize())
+#             # textToSpeech.setVolume(1.0)
+#             if self.nao_writing:
+#                 if self.nao_standing:
+#                     self.posture_proxy.goToPosture("StandInit", 0.2)
+#                     self.motion_proxy.wbEnableEffectorControl(
+#                         self.effector, True
+#                     )  # turn whole body motion control on
+#                 else:
+#                     self.motion_proxy.rest()
+#                     self.motion_proxy.setStiffnesses(
+#                         ["Head", "LArm", "RArm"], 0.5
+#                     )
+#                     self.motion_proxy.setStiffnesses(
+#                         [
+#                             "LHipYawPitch",
+#                             "LHipRoll",
+#                             "LHipPitch",
+#                             "RHipYawPitch",
+#                             "RHipRoll",
+#                             "RHipPitch",
+#                         ],
+#                         0.8,
+#                     )
+#                     self.motion_proxy.wbEnableEffectorControl(
+#                         self.effector, False
+#                     )  # turn whole body motion control off
 
-        # Set effector based on handedness
-        self.set_effector()
+#                 self.arm_joints_stand_init = self.motion_proxy.getAngles(
+#                     self.effector, True
+#                 )
 
-        self.set_phrase_manager()
-        self.set_orientation_params()
+#     def nao_speak_and_log_phrase(self, phrase: str) -> None:
+#         """
+#         Makes NAO speak the phrase, and logs the phrase.
 
-    def set_effector(self) -> None:
-        """
-        Sets the effector for the nao settings class based on nao
-        handedness.
-        """
-        if self.NAO_HANDEDNESS.lower() == 'right':
-            self.effector: str = "RArm"
-        elif self.NAO_HANDEDNESS.lower() == 'left':
-            self.effector: str = "LArm"
-        else:
-            print('error in handedness param')
+#         Args:
+#             phrase (str): The phrase for NAO to speak and log.
+#         """
+#         rospy.loginfo(f"NAO: {phrase}")
+#         self.text_to_speech.say(phrase)
 
-    def set_phrase_manager(self) -> None:
-        """
-        Sets the phrase manager for the nao settings based on nao
-        language.
-        """
-        self.phrase_manager: PhraseManager = PhraseManager(self.LANGUAGE)
+#     def look_at_tablet(self):
+#         """
+#         Makes the NAO robot look at the tablet by adjusting its head
+#         angles.
 
-    def set_orientation_params(self):
-        """
-        Set parameters for head angles, side person is one, whether to
-        alternate which side nao is looking at, and the next side to
-        look at if alternating.
-        """
+#         The method considers the interaction orientation (front or side)
+#         and the handedness of the robot to determine the direction in
+#         which the robot should look.
 
-        # Get appropriate angles for looking at things
-        (self.head_angles_look_at_tablet_down,
-         self.head_angles_look_at_tablet_right,
-         self.head_angles_look_at_tablet_left,
-         self.head_angles_look_at_person_front,
-         self.head_angles_look_at_person_right,
-         self.head_angles_look_at_person_left) = \
-            InteractionSettings.get_head_angles()
+#         The head angles are set using the 'motion_proxy.setAngles'
+#         method.
+#         """
+#         if self.FRONT_INTERACTION:
+#             self.motion_proxy.setAngles(
+#                 ["HeadYaw", "HeadPitch"],
+#                 self.head_angles_look_at_tablet_down,
+#                 0.2,
+#             )
 
-        # Get the side of where the person is (left/right)
-        self.person_side = rospy.get_param('~person_side',
-                                           self.NAO_HANDEDNESS.lower())
+#         else:
+#             if self.effector == "RArm":  # Tablet will be on our right
+#                 self.motion_proxy.setAngles(
+#                     ["HeadYaw", "HeadPitch"],
+#                     self.head_angles_look_at_tablet_right,
+#                     0.2,
+#                 )
+#             else:
+#                 self.motion_proxy.setAngles(
+#                     ["HeadYaw", "HeadPitch"],
+#                     self.head_angles_look_at_tablet_left,
+#                     0.2,
+#                 )
 
-        # Using default values for params below, as in original code
-        # if alternate sides, nao looks to a different side each time.
-        # Not well tested
-        self.alternate_sides_looking_at: bool = False
-        self.next_side_to_look_at: str = 'Right'
+#     def look_and_ask_for_feedback(self, to_say: str, side: str) -> None:
+#         """
+#         Makes the NAO robot look at a person and ask for feedback by
+#         adjusting its head angles and speaking the provided phrase.
 
-    def set_nao_interaction(self):
-        """
-        Sets the parameters for interaction with the robot.
+#         The method considers the interaction orientation
+#         (front or side), the provided side (right or left),
+#         and the robot's speaking and writing states.
 
-        Must initialise an instance of NaoSettings and call this method
-        in main for the interaction to work.
-        """
+#         Args:
+#             to_say (str): The phrase for the NAO robot to speak when
+#                           asking for feedback.
+#             side (str): The side the person is on, either "right" or
+#                         "left".
+#         """
+#         if self.nao_connected:
+#             if self.nao_writing:
+#                 # Put arm down
+#                 self.motion_proxy.angleInterpolationWithSpeed(
+#                     self.effector, self.arm_joints_stand_init, 0.3
+#                 )
 
-        if self.nao_connected:
+#             if self.FRONT_INTERACTION:
+#                 self.motion_proxy.setAngles(
+#                     ["HeadYaw", "HeadPitch"],
+#                     self.head_angles_look_at_person_front,
+#                     0.2,
+#                 )
+#             else:
+#                 if side == "right":  # Person will be on our right
+#                     self.motion_proxy.setAngles(
+#                         ["HeadYaw", "HeadPitch"],
+#                         self.head_angles_look_at_person_right,
+#                         0.2,
+#                     )
+#                 else:  # Person will be on our left
+#                     self.motion_proxy.setAngles(
+#                         ["HeadYaw", "HeadPitch"],
+#                         self.head_angles_look_at_person_left,
+#                         0.2,
+#                     )
 
-            import qi
-            qi_url = f'tcp://{self.NAO_IP}:{self.NAO_PORT}'
-            print(f'[RobotController] Connecting to qi_url={qi_url}')
-            app = qi.Application(url=qi_url)
-            app.start()
-            # app.run()
-            print(f'[RobotController] app started')
-            
-            self.session = app.session
-            self.nextSideToLookAt = 'Right'
-            
-            #? all services needed
-            self.motion_proxy = self.session.service('ALMotion')
-            # return
-            self.posture_proxy = self.session.service('ALRobotPosture')
-            self.text_to_speech = self.session.service('ALTextToSpeech')
-            self.text_to_speech.setLanguage(self.LANGUAGE.capitalize())
-            # textToSpeech.setVolume(1.0)
-            if self.nao_writing:
-                if self.nao_standing:
-                    self.posture_proxy.goToPosture("StandInit", 0.2)
-                    self.motion_proxy.wbEnableEffectorControl(
-                        self.effector, True)  # turn whole body motion control on
-                else:
-                    self.motion_proxy.rest()
-                    self.motion_proxy.setStiffnesses(
-                        ["Head", "LArm", "RArm"], 0.5)
-                    self.motion_proxy.setStiffnesses(
-                        ["LHipYawPitch", "LHipRoll", "LHipPitch", "RHipYawPitch", "RHipRoll", "RHipPitch"], 0.8)
-                    self.motion_proxy.wbEnableEffectorControl(
-                        self.effector, False)  # turn whole body motion control off
+#             if self.nao_speaking:
+#                 self.nao_speak_and_log_phrase(to_say)
 
-                self.arm_joints_stand_init = self.motion_proxy.getAngles(
-                    self.effector, True)
+#     def handle_look_and_ask_for_feedback(self, phrase: str) -> None:
+#         """
+#         Helper method that calls look_and_ask_forfeedback either
+#         alternating sides or using a fixed side, depending on value of
+#         alternate_sides_looking_at and next_side_to_look_at.
 
-    def nao_speak_and_log_phrase(self, phrase: str) -> None:
-        """
-        Makes NAO speak the phrase, and logs the phrase.
+#         Args:
+#             phrase (str): The phrase for NAO to speak and ask for
+#                           feedback.
+#         """
+#         if self.alternate_sides_looking_at:
+#             self.look_and_ask_for_feedback(phrase, self.next_side_to_look_at)
 
-        Args:
-            phrase (str): The phrase for NAO to speak and log.
-        """
-        rospy.loginfo(f'NAO: {phrase}')
-        self.text_to_speech.say(phrase)
+#             # Since alternating, change next side to look at
+#             if self.next_side_to_look_at == "Left":
+#                 self.next_side_to_look_at = "Right"
+#             else:
+#                 self.next_side_to_look_at = "Left"
+#         else:
+#             self.look_and_ask_for_feedback(phrase, self.person_side)
 
-    def look_at_tablet(self):
-        """
-        Makes the NAO robot look at the tablet by adjusting its head
-        angles.
+#     def nao_rest(self):
+#         """
+#         Set NAO robot to the resting state by disabling effector
+#         control and invoking the 'rest' command.
 
-        The method considers the interaction orientation (front or side)
-        and the handedness of the robot to determine the direction in
-        which the robot should look.
-
-        The head angles are set using the 'motion_proxy.setAngles'
-        method.
-        """
-        if self.FRONT_INTERACTION:
-            self.motion_proxy.setAngles(["HeadYaw", "HeadPitch"],
-                                        self.head_angles_look_at_tablet_down,
-                                        0.2)
-
-        else:
-            if (self.effector == "RArm"): # Tablet will be on our right
-                self.motion_proxy.setAngles(
-                    ["HeadYaw", "HeadPitch"],
-                    self.head_angles_look_at_tablet_right,
-                    0.2)
-            else:
-                self.motion_proxy.setAngles(
-                    ["HeadYaw", "HeadPitch"],
-                    self.head_angles_look_at_tablet_left,
-                    0.2)
-
-    def look_and_ask_for_feedback(self, to_say: str, side: str) -> None:
-        """
-        Makes the NAO robot look at a person and ask for feedback by
-        adjusting its head angles and speaking the provided phrase.
-
-        The method considers the interaction orientation 
-        (front or side), the provided side (right or left),
-        and the robot's speaking and writing states.
-
-        Args:
-            to_say (str): The phrase for the NAO robot to speak when
-                          asking for feedback.
-            side (str): The side the person is on, either "right" or
-                        "left".
-        """
-        if self.nao_connected:
-            if self.nao_writing:
-                # Put arm down
-                self.motion_proxy.angleInterpolationWithSpeed(
-                    self.effector, self.arm_joints_stand_init, 0.3)
-
-            if self.FRONT_INTERACTION:
-                self.motion_proxy.setAngles(
-                    ["HeadYaw", "HeadPitch"],
-                    self.head_angles_look_at_person_front,
-                    0.2)
-            else:
-                if (side == "right"): # Person will be on our right
-                    self.motion_proxy.setAngles(
-                        ["HeadYaw", "HeadPitch"],
-                        self.head_angles_look_at_person_right,
-                        0.2)
-                else:                   # Person will be on our left
-                    self.motion_proxy.setAngles(
-                        ["HeadYaw", "HeadPitch"],
-                        self.head_angles_look_at_person_left,
-                        0.2)
-
-            if self.nao_speaking:
-                self.nao_speak_and_log_phrase(to_say)
-
-    def handle_look_and_ask_for_feedback(self, phrase: str) -> None:
-        """
-        Helper method that calls look_and_ask_forfeedback either
-        alternating sides or using a fixed side, depending on value of
-        alternate_sides_looking_at and next_side_to_look_at.
-
-        Args:
-            phrase (str): The phrase for NAO to speak and ask for
-                          feedback.
-        """
-        if self.alternate_sides_looking_at:
-            self.look_and_ask_for_feedback(phrase, self.next_side_to_look_at)
-
-            # Since alternating, change next side to look at
-            if self.next_side_to_look_at == 'Left':
-                self.next_side_to_look_at = 'Right'
-            else:
-                self.next_side_to_look_at = 'Left'
-        else:
-            self.look_and_ask_for_feedback(phrase, self.person_side)
-
-    def nao_rest(self):
-        """
-        Set NAO robot to the resting state by disabling effector
-        control and invoking the 'rest' command.
-
-        This method first checks if the NAO robot is connected by
-        verifying the 'nao_connected' attribute. If connected, it
-        disables the whole body effector control for the specified
-        effector (stored in 'self.effector') by calling
-        'wbEnableEffectorControl' with 'False' as the second argument.
-        Finally, the 'rest' command is sent to the robot using the 
-        'motion_proxy.rest()' method, putting the NAO robot into a 
-        resting state.
-        """
-        if self.nao_connected:
-            self.motion_proxy.wbEnableEffectorControl(
-                self.effector, False)
-            self.motion_proxy.rest()
+#         This method first checks if the NAO robot is connected by
+#         verifying the 'nao_connected' attribute. If connected, it
+#         disables the whole body effector control for the specified
+#         effector (stored in 'self.effector') by calling
+#         'wbEnableEffectorControl' with 'False' as the second argument.
+#         Finally, the 'rest' command is sent to the robot using the
+#         'motion_proxy.rest()' method, putting the NAO robot into a
+#         resting state.
+#         """
+#         if self.nao_connected:
+#             self.motion_proxy.wbEnableEffectorControl(self.effector, False)
+#             self.motion_proxy.rest()

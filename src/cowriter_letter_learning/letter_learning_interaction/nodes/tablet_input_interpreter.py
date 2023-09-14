@@ -1,88 +1,26 @@
 #!/usr/bin/env python3
 
-"""
-ROS node for interpreting tablet input events & generating appropriate
-messages for shape_learning interaction nodes.
-
-This node listens for interaction events from a tablet and processes
-them into messages for shape_learning interaction nodes.
-It is responsible for handling user-drawn shapes, touch and long-touch
-gestures, and determining which shape is being shown by the
-display_manager.
-
-Key Features:
-- Processes user-drawn shapes, represented as a series of Path messages
-of strokes, by keeping only the longest stroke and determining the
-intended shape based on the display_manager.
-- Handles tablet gesture inputs to set the active shape for
-  demonstration, determining which shape to prioritize if the
-  demonstration is drawn next to multiple shapes (using the
-  'based_on_closest_shape_to_position' method).
-- Processes touch and long-touch gestures to provide feedback for the
-  learning algorithm.
-
-Node:
-    tablet_input_interpreter
-
-Subscribed Topics:
-    gesture_info (geometry_msgs/PointStamped):
-        Tablet gestures representing the active shape for demonstration
-    user_drawn_shapes (nav_msgs/Path):
-        User-drawn raw shapes on the tablet.
-
-Published Topics:
-    user_shapes_processed (letter_learning_interaction/Shape):
-        Processed user-drawn shapes after preprocessing and analysis.
-
-Services:
-    shape_at_location (letter_learning_interaction/shape_at_location):
-        Service for querying the shape at a given location.
-    possible_to_display_shape (letter_learning_interaction/possible_to_display_shape): 
-        Service for checking if it's possible to display a shape.
-    closest_shapes_to_location (letter_learning_interaction/closest_shapes_to_location):
-        Service for querying the closest shapes to a location.
-    display_shape_at_location (letter_learning_interaction/display_shape_at_location):
-        Service for displaying a shape at a given location.
-    index_of_location (letter_learning_interaction/index_of_location):
-        Service for getting the index of a given location.
-
-Parameters:
-    ~gesture_info_topic (str, default: "gesture_info"):
-        Topic name for receiving gesture information.
-    ~user_drawn_shapes_topic (str, default: "user_drawn_shapes"):
-        Topic name for receiving user-drawn shapes.
-    ~processed_user_shape_topic (str, default: "user_shapes_processed"):
-        Topic name for publishing processed user shapes.
-"""
-
-import os.path
+import os
 import logging
-import rospy
 import numpy as np
 from nav_msgs.msg import Path
 from std_msgs.msg import String, Empty, Int32MultiArray
 from geometry_msgs.msg import PointStamped
 from typing import List, Optional
-import os.path
-import sys
 from letter_learning_interaction.msg import Shape as ShapeMsg  # type: ignore
 
-sys.path.insert(
-    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-)
-from srv import *
+from ..srv import *
 
-sys.path.insert(
-    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../include")
-)
-from shape_learner_manager import ShapeLearnerManager, Shape
-from shape_modeler import ShapeModeler
+from ..include.shape_learner_manager import ShapeLearnerManager, Shape
+from ..include.shape_modeler import ShapeModeler
 
+import rclpy
+from rclpy.node import Node
 
 word_logger = logging.getLogger("word_logger")
 
 
-class TabletInputInterpreter:
+class TabletInputInterpreter(Node):
     """
     Interprets interaction events from the tablet and converts them
     into appropriate messages for shape_learning interaction nodes.
@@ -106,10 +44,44 @@ class TabletInputInterpreter:
             Active shape type for the user's demonstrations.
     """
 
-    def __init__(
-        self, publish_shapes: rospy.Publisher, path: Optional[str] = None
-    ):
-        self.publish_shapes = publish_shapes
+    def __init__(self, path: Optional[str] = None):
+        super().__init__("tablet_input_interpreter")
+        self.publish_shapes = self.create_publisher(
+            ShapeMsg, "user_shapes_processed", 10
+        )
+        self.clear_all_shapes_service = self.create_client(
+            ShapeAtLocation, "shape_at_location"
+        )
+        self.clear_all_shapes_service.wait_for_service(timeout_sec=1.0)
+
+        GESTURE_TOPIC = self.declare_parameter(
+            "gesture_info_topic", "gesture_info"
+        )
+        USER_DRAWN_SHAPES_TOPIC = self.declare_parameter(
+            "user_drawn_shapes_topic", "user_drawn_shapes"
+        )
+        PROCESSED_USER_SHAPE_TOPIC = self.declare_parameter(
+            "processed_user_shape_topic", "user_shapes_processed"
+        )
+
+        # Init shape publisher and tablet interpreter
+        publish_shapes = self.create_publisher(
+            ShapeMsg, PROCESSED_USER_SHAPE_TOPIC, 10
+        )
+        interpreter = TabletInputInterpreter(publish_shapes)
+
+        # Listen for gesture representing active demo shape
+        self.create_subscription(
+            PointStamped, GESTURE_TOPIC, interpreter.on_set_active_shape_gesture
+        )
+
+        # Listen for user-drawn shapes
+        self.create_subscription(
+            Int32MultiArray,
+            USER_DRAWN_SHAPES_TOPIC,
+            interpreter.user_shape_preprocessor,
+        )
+
         self.word_logger = logging.getLogger("word_logger")
         self.configure_logging(path)
         self.position_to_shape_mapping_method: str = (
@@ -118,6 +90,33 @@ class TabletInputInterpreter:
         self.shape_preprocessing_method: str = "merge"
         self.strokes: List = []
         self.active_shape_for_demonstration_type: Optional[int] = None
+
+        self.shape_at_location_client = self.create_client(
+            ShapeAtLocation, "shape_at_location"
+        )
+        self.possible_to_display_shape_client = self.create_client(
+            IsPossibleToDisplayNewShape, "possible_to_display_shape"
+        )
+        self.closest_shapes_to_location_client = self.create_client(
+            ClosestShapesToLocation, "closest_shapes_to_location"
+        )
+        self.display_shape_at_location_client = self.create_client(
+            DisplayShapeAtLocation, "display_shape_at_location"
+        )
+        self.index_of_location_client = self.create_client(
+            IndexOfLocation, "index_of_location"
+        )
+
+    def shape_at_location(self, request):
+        while not self.clear_all_shapes_service.wait_for_service(
+            timeout_sec=1.0
+        ):
+            self.get_logger().info("Service is not available, waiting...")
+
+        future = self.clear_all_shapes_service.call_async(request)
+        rclpy.spin_until_future_complete(self, future)
+
+        return future.result()
 
     def configure_logging(self, path: Optional[str] = None) -> None:
         """
@@ -303,67 +302,25 @@ class TabletInputInterpreter:
                                     the gesture's position.
         """
         gesture_location = [message.point.x, message.point.y]
-        try:
-            shape_at_location = rospy.ServiceProxy(
-                "shape_at_location", shape_at_location
-            )  # type: ignore
-            request = shapeAtLocationRequest()
-            request.location.x = gesture_location[0]
-            request.location.y = gesture_location[1]
-            response = shape_at_location(request)
-            shape_type_code = response.shape_type_code
-            shape_id = response.shape_id
-        except rospy.ServiceException as e:
-            rospy.logerr(f"Service call failed: {e}")
+        request = shapeAtLocationRequest()
+        request.location.x = gesture_location[0]
+        request.location.y = gesture_location[1]
+        response = self.shape_at_location(request)
+        shape_type_code = response.shape_type_code
+        shape_id = response.shape_id
 
         if shape_type_code != -1 and shape_id != -1:  # type: ignore
             self.active_shape_for_demonstration_type = shape_type_code  # type: ignore
 
-            rospy.loginfo(
+            self.get_logger().info(
                 f"Setting active shape to shape \
                 {shape_type_code}"
             )  # type: ignore
 
 
 if __name__ == "__main__":
-    rospy.init_node("tablet_input_interpreter")
-
-    # Name of topic to get gestures representing the active shape for demonstration
-    GESTURE_TOPIC = rospy.get_param("~gesture_info_topic", "gesture_info")
-
-    # Name of topic to get user drawn raw shapes on
-    USER_DRAWN_SHAPES_TOPIC = rospy.get_param(
-        "~user_drawn_shapes_topic", "user_drawn_shapes"
-    )
-
-    # Name of topic to publish processed shapes on
-    PROCESSED_USER_SHAPE_TOPIC = rospy.get_param(
-        "~processed_user_shape_topic", "user_shapes_processed"
-    )
-
-    # Init shape publisher and tablet interpreter
-    publish_shapes = rospy.Publisher(
-        PROCESSED_USER_SHAPE_TOPIC, ShapeMsg, queue_size=10
-    )
-    interpreter = TabletInputInterpreter(publish_shapes)
-
-    # Listen for gesture representing active demo shape
-    gesture_subscriber = rospy.Subscriber(
-        GESTURE_TOPIC, PointStamped, interpreter.on_set_active_shape_gesture
-    )
-
-    # Listen for user-drawn shapes
-    shape_subscriber = rospy.Subscriber(
-        USER_DRAWN_SHAPES_TOPIC,
-        Int32MultiArray,
-        interpreter.user_shape_preprocessor,
-    )
-
-    # initialise display manager for shapes (manages positioning of shapes)
-    rospy.wait_for_service("shape_at_location")
-    rospy.wait_for_service("possible_to_display_shape")
-    rospy.wait_for_service("closest_shapes_to_location")
-    rospy.wait_for_service("display_shape_at_location")
-    rospy.wait_for_service("index_of_location")
-
-    rospy.spin()
+    rclpy.init()
+    node = TabletInputInterpreter()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()

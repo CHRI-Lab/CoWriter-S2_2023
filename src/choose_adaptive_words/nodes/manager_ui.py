@@ -210,6 +210,6 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     window = Manager_UI()
     window.show()
-    sys.exit(app.exec_())
     rclpy.spin(window.node)
     rclpy.shutdown()
+    sys.exit(app.exec_())
