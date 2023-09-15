@@ -16,8 +16,8 @@ import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
 
-import tf
-import motion
+from tf2_ros.transform_listener import TransformListener
+# import motion
 import math
 
 
@@ -61,7 +61,7 @@ class nao_writer_naoqi(Node):
         self.memoryProxy = self.session.service('ALMemory')
         self.postureProxy = self.session.service('ALRobotPosture')
         self.ttsProxy = self.session.service('ALTextToSpeech')
-        self.tl = tf.TransformListener()
+        self.tl = TransformListener()
         self.space = 2 # {FRAME_TORSO = 0, FRAME_WORLD = 1, FRAME_ROBOT = 2}
         self.isAbsolute = True
 

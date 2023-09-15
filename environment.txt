@@ -42,12 +42,13 @@ git clone https://github.com/ros-naoqi/libqi \
 ==== install libqi-python ====
 sudo apt install python3-pip -y \
 && pip install qibuild scikit-build toml
+export PATH=$PATH:$HOME/.local/bin
 
 git clone https://github.com/aldebaran/libqi-python.git \
 && cd libqi-python \
 && sed -i "s+'-DQIPYTHON_STANDALONE:BOOL=ON'+'-DQIPYTHON_STANDALONE:BOOL=ON', '-DBOOST_ROOT:PATH=$HOME/boost_1_77_0', '-DBoost_INCLUDE_DIR:PATH=$HOME/boost_1_77_0/include', '-DBoost_LIBRARY_DIR:PATH=$HOME/boost_1_77_0/lib'+g" setup.py \
 && python3 ./setup.py bdist_wheel -j 4 \
-&& pip3 install dist/*.whl
+&& pip install dist/*.whl
 ==============================
 
 ==== install choregraphe ====
@@ -66,7 +67,6 @@ https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html
 =============================
 
 sudo apt install vim
-sudo apt install python3-pip
 sudo apt install python3.10-venv
 
 pip 

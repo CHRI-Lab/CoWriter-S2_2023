@@ -12,11 +12,12 @@ from rclpy.duration import Duration
 
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped
-import tf
+import tf2_ros
+import tf_transformations
 import math
 
 from visualization_msgs.msg import Marker, InteractiveMarkerControl
-tf_broadcaster = tf.TransformBroadcaster()
+tf_broadcaster = tf2_ros.TransformBroadcaster()
 
 from interactive_markers.interactive_marker_server import *
 
@@ -199,7 +200,7 @@ if __name__=="__main__":
         #frame has y horizontal and x vertical (graphics coordinate system) and
         #needs to be changed to 'robotics' coordinate system
         
-        tf_listener = tf.TransformListener(True, Duration(seconds=10))
+        tf_listener = tf2_ros.transform_listener.TransformListener(True, Duration(seconds=10))
         node.get_clock().sleep_for(Duration(seconds=0.5))
         rate = node.create_rate(50)
         while rclpy.ok():
@@ -208,7 +209,7 @@ if __name__=="__main__":
                 tf_listener.waitForTransform("map", TAG_FRAME, node.get_clock().now(), Duration(seconds=5))
                 t = tf_listener.getLatestCommonTime("map", TAG_FRAME)
                 (trans,rot) = tf_listener.lookupTransform("map", TAG_FRAME, t)
-            except (tf.Exception, tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            except (tf2_ros.Exception, tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 continue
                 
             #rotate coordinate system of tag to match the desired one for the tablet
@@ -217,7 +218,7 @@ if __name__=="__main__":
             
             if(ROTATE_TAG_FRAME):
                 #convert 'x up, y to the right' of chilitag from to 'y up, x to the right' for the writing surface
-                orientation = tf.transformations.quaternion_from_euler(3.14159,0,3.14159/2)
+                orientation = tf_transformations.quaternion_from_euler(3.14159,0,3.14159/2)
 
             surfacePose.pose.orientation.x=orientation[0]
             surfacePose.pose.orientation.y=orientation[1]
