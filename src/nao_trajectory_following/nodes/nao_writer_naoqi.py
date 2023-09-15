@@ -11,25 +11,22 @@ from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path
 from std_msgs.msg import String, Empty, Header
 from copy import deepcopy
-import rospy
-import tf
-import motion
+
+import rclpy
+from rclpy.node import Node
+from rclpy.duration import Duration
+
+from tf2_ros.transform_listener import TransformListener
+# import motion
 import math
 
-SHAPE_TOPIC = rospy.get_param('~trajectory_nao_topic','write_traj')
-# TRAJ_TOPIC = rospy.get_param('~trajectory_nao_input_topic','/write_traj_nao')  
-NAO_IP = rospy.get_param('~nao_ip','127.0.0.1')
-PORT = int(rospy.get_param('~nao_port','9559'))
-NAO_HANDEDNESS = rospy.get_param('~nao_handedness','right')
 
-class nao_writer_naoqi:
-    def __init__(self, naoIP, naoPort, effector='RArm', naoWriting=True, naoSpeaking=True, naoStanding=True, language='english', isFrontInteraction=True, alternateSidesLookingAt=False) -> None:
+class nao_writer_naoqi(Node):
+    def __init__(self, effector='RArm', naoWriting=True, naoSpeaking=True, naoStanding=True, language='english', isFrontInteraction=True, alternateSidesLookingAt=False) -> None:
         """
         Initialize the RobotController object.
 
         Parameters:
-        - naoIP (str): The IP address of the NAO robot.
-        - naoPort (int): The port number to connect to the NAO robot.
         - effector (str, optional): The effector to use for writing. Defaults to 'RArm'.
         - naoWriting (bool, optional): Flag indicating whether the NAO robot is capable of writing. Defaults to True.
         - naoSpeaking (bool, optional): Flag indicating whether the NAO robot is capable of speaking. Defaults to True.
@@ -38,31 +35,37 @@ class nao_writer_naoqi:
         - isFrontInteraction (bool, optional): Flag indicating whether the interaction is in front of the robot. Defaults to True.
         - alternateSidesLookingAt (bool, optional): Flag indicating whether the robot should alternate sides when looking at objects. Defaults to False.
         """
-        rospy.init_node("nao_writer") 
+        super().__init__("nao_writer")
+
+        SHAPE_TOPIC = self.declare_parameter('~trajectory_nao_topic','write_traj').value
+        # TRAJ_TOPIC = rospy.get_param('~trajectory_nao_input_topic','/write_traj_nao')  
+        NAO_IP = self.declare_parameter('~nao_ip','127.0.0.1').value
+        PORT = int(self.declare_parameter('~nao_port','9559').value)
+        NAO_HANDEDNESS = self.declare_parameter('~nao_handedness','right').value
 
         if(NAO_HANDEDNESS.lower()=='right'):
             self.effector = "RArm"
         elif(NAO_HANDEDNESS.lower()=='left'):
             self.effector = "LArm"
         else: 
-            rospy.loginfo('error in handedness param')
+            self.get_logger().info('error in handedness param')
 
         self.qi_url = f'tcp://{NAO_IP}:{PORT}'
-        rospy.loginfo(f'[RobotController] Connecting to qi_url={self.qi_url}')
+        self.get_logger().info(f'[RobotController] Connecting to qi_url={self.qi_url}')
         self.app = qi.Application(url=self.qi_url)
         self.app.start()
         # app.run()
-        rospy.loginfo(f'[RobotController] app started')
+        self.get_logger().info(f'[RobotController] app started')
         self.session = self.app.session
         self.motionProxy = self.session.service('ALMotion')
         self.memoryProxy = self.session.service('ALMemory')
         self.postureProxy = self.session.service('ALRobotPosture')
         self.ttsProxy = self.session.service('ALTextToSpeech')
-        self.tl = tf.TransformListener()
+        self.tl = TransformListener()
         self.space = 2 # {FRAME_TORSO = 0, FRAME_WORLD = 1, FRAME_ROBOT = 2}
         self.isAbsolute = True
 
-        rospy.Subscriber(SHAPE_TOPIC, Path, self.on_traj)
+        self.create_subscription(Path, SHAPE_TOPIC, self.on_traj, rclpy.qos.QoSProfile())
     
     def point_dist(self, p1, p2):
         return math.sqrt((p1[0] - p2[0]) * (p1[0] - p2[0]) +
@@ -81,7 +84,7 @@ class nao_writer_naoqi:
         Returns:
         None
         """
-        rospy.loginfo("got traj at "+str(rospy.Time.now())) 
+        self.get_logger().info("got traj at "+str(self.get_clock().now())) 
         AXIS_MASK_X = 1
         AXIS_MASK_Y = 2
         AXIS_MASK_Z = 4
@@ -148,12 +151,12 @@ class nao_writer_naoqi:
             # times.append(trajp.header.stamp.to_sec() )#- timeToStartPosition) 
             last_point = point
         #wait until time instructed to start executing
-        rospy.sleep(traj.header.stamp-rospy.Time.now())#+rospy.Duration(timeToStartPosition)) 
-        rospy.loginfo("executing rest of traj at "+str(rospy.Time.now()))
-        startTime = rospy.Time.now()
+        self.get_clock().sleep_for(Duration(seconds=traj.header.stamp-self.get_clock().now()))#+rospy.Duration(timeToStartPosition)) 
+        self.get_logger().info("executing rest of traj at "+str(self.get_clock().now()))
+        startTime = self.get_clock().now()
         
         self.motionProxy.positionInterpolations([self.effector],self.space,self.traj_to_path(path),axisMask,times,self.isAbsolute)
-        rospy.loginfo("Time taken for rest of trajectory: "+str((rospy.Time.now()-startTime).to_sec()))
+        self.get_logger().info("Time taken for rest of trajectory: "+str((self.get_clock().now()-startTime).to_sec()))
 
     # normalize a path for nao robot so it can write comfortablely
     # lot of random numbers due to artistic freedom
@@ -193,6 +196,13 @@ class nao_writer_naoqi:
 
         return converted_pts
 
+def main():
+    rclpy.init()
+    writer = nao_writer_naoqi()
+    rclpy.spin(writer)
+
+    writer.destroy_node()
+    rclpy.shutdown()
+
 if __name__ == "__main__":
-    writer = nao_writer_naoqi(NAO_IP, PORT)
-    rospy.spin()
+    main()

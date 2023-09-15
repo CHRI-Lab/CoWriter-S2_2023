@@ -6,14 +6,18 @@ chilitag).
 '''
 
 # import roslib; roslib.load_manifest("interactive_markers")
-import rospy
+import rclpy
+from rclpy.node import Node
+from rclpy.duration import Duration
+
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped
-import tf
+import tf2_ros
+import tf_transformations
 import math
 
 from visualization_msgs.msg import Marker, InteractiveMarkerControl
-tf_broadcaster = tf.TransformBroadcaster()
+tf_broadcaster = tf2_ros.TransformBroadcaster()
 
 from interactive_markers.interactive_marker_server import *
 
@@ -175,36 +179,37 @@ def make6DofMarker( fixed = False ):
     server.insert(int_marker, processFeedback)
 
 if __name__=="__main__":
-    rospy.init_node("writing_surface_positioner")
+    rclpy.init()
+    node = rclpy.create_node("writing_surface_positioner")
         
     #method used for positioning the writing surface frame
-    POSITIONING_METHOD = rospy.get_param('~positioning_method', 'interactive_marker')
+    POSITIONING_METHOD = node.declare_parameter('~positioning_method', 'interactive_marker').value
     
     #name of frame to publish as writing surface origin (at bottom left, with x horizontal and y vertical)
-    FRAME_ID = rospy.get_param('~writing_surface_frame_id','writing_surface') 
+    FRAME_ID = node.declare_parameter('~writing_surface_frame_id', 'writing_surface').value
 
     #size of marker to be displayed (default values for the galaxy note 10.1 
     #in landscape orientation
-    SURFACE_WIDTH = rospy.get_param('~surface_width',0.217) 
-    SURFACE_HEIGHT = rospy.get_param('~surface_height',0.136)
+    SURFACE_WIDTH = node.declare_parameter('~surface_width', 0.217).value
+    SURFACE_HEIGHT = node.declare_parameter('~surface_height', 0.136).value
     
     if(POSITIONING_METHOD.lower() == "fiducial_marker_detection"):
-        TAG_FRAME = rospy.get_param('~tag_frame_id','tag_1') #name of frame to 
+        TAG_FRAME = node.declare_parameter('~tag_frame_id','tag_1').value #name of frame to 
                                                 #detect writing surface with 
-        ROTATE_TAG_FRAME = rospy.get_param('~rotate_tag_frame',True) #chilitag 
+        ROTATE_TAG_FRAME = node.declare_parameter('~rotate_tag_frame',True).value #chilitag 
         #frame has y horizontal and x vertical (graphics coordinate system) and
         #needs to be changed to 'robotics' coordinate system
         
-        tf_listener = tf.TransformListener(True, rospy.Duration(10))
-        rospy.sleep(.5)
-        rate = rospy.Rate(50)
-        while not rospy.is_shutdown():
+        tf_listener = tf2_ros.transform_listener.TransformListener(True, Duration(seconds=10))
+        node.get_clock().sleep_for(Duration(seconds=0.5))
+        rate = node.create_rate(50)
+        while rclpy.ok():
         #tf_broadcaster.sendTransform((0,0,0),(0,0,0,1),rospy.Time.now(),"v4l_frame","gaze") #manually "attach" the webcam to the robot's frame (for testing)
             try:
-                tf_listener.waitForTransform("map", TAG_FRAME, rospy.Time.now(), rospy.Duration(5.0))
+                tf_listener.waitForTransform("map", TAG_FRAME, node.get_clock().now(), Duration(seconds=5))
                 t = tf_listener.getLatestCommonTime("map", TAG_FRAME)
                 (trans,rot) = tf_listener.lookupTransform("map", TAG_FRAME, t)
-            except (tf.Exception, tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            except (tf2_ros.Exception, tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                 continue
                 
             #rotate coordinate system of tag to match the desired one for the tablet
@@ -213,7 +218,7 @@ if __name__=="__main__":
             
             if(ROTATE_TAG_FRAME):
                 #convert 'x up, y to the right' of chilitag from to 'y up, x to the right' for the writing surface
-                orientation = tf.transformations.quaternion_from_euler(3.14159,0,3.14159/2)
+                orientation = tf_transformations.quaternion_from_euler(3.14159,0,3.14159/2)
 
             surfacePose.pose.orientation.x=orientation[0]
             surfacePose.pose.orientation.y=orientation[1]
@@ -222,14 +227,14 @@ if __name__=="__main__":
             surfacePose = tf_listener.transformPose("map",surfacePose)
             o=surfacePose.pose.orientation
             #publish writing surface's frame w.r.t. map
-            tf_broadcaster.sendTransform(trans,(o.x,o.y,o.z,o.w),rospy.Time.now(),FRAME_ID,"map")
+            tf_broadcaster.sendTransform(trans,(o.x,o.y,o.z,o.w),node.get_clock().now(),FRAME_ID,"map")
             pub_markers.publish(writing_surface()) #show writing surface
 
         rate.sleep()
     
     # we are going here !!!
     elif(POSITIONING_METHOD.lower() == "interactive_marker"):
-        NAO_HANDEDNESS = rospy.get_param('~nao_handedness','right')
+        NAO_HANDEDNESS = node.declare_parameter('~nao_handedness','right').value
         
         #assign default values of pose
         frame_pose = Pose()
@@ -251,7 +256,7 @@ if __name__=="__main__":
             frame_pose.position.y = 0.032+SURFACE_WIDTH
             frame_pose.position.z = 0.27
         else:
-            rospy.logerr('error in handedness input')
+            node.get_logger().error('error in handedness input')
         
         server = InteractiveMarkerServer("writing_surface_placer")
 
@@ -260,8 +265,8 @@ if __name__=="__main__":
         # 'commit' changes and send to all clients
         server.applyChanges()
 
-        rate = rospy.Rate(10.0)
-        while not rospy.is_shutdown():
+        rate = node.create_rate(10.0)
+        while rclpy.ok():
             if frame_pose:
                 p = frame_pose.position
                 o = frame_pose.orientation
@@ -272,7 +277,7 @@ if __name__=="__main__":
                 o.w /= tot
                 tf_broadcaster.sendTransform((p.x, p.y, p.z),
                                 (o.x, o.y, o.z, o.w),
-                                rospy.Time.now(),
+                                node.get_clock().now(),
                                 FRAME_ID,
                                 "map")
             rate.sleep()
