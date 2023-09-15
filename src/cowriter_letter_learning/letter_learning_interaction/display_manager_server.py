@@ -5,18 +5,14 @@ well as several handler functions for the services provided by this
 node.
 """
 
-import os
-import sys
-
-from letter_learning_interaction.srv import *
+from interface.srv import *
 
 import rclpy
 from rclpy.node import Node
 
-sys.path.insert(
-    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../include")
+from letter_learning_interaction.shape_display_manager import (
+    ShapeDisplayManager,
 )
-from shape_display_manager import ShapeDisplayManager
 
 # Being used as a global variable, should refactor to a class
 # Not doing now to minimise knock on changes
@@ -59,11 +55,9 @@ class DisplayManagerServer(Node):
             "possible_to_display_shape",
             self.handle_possible_to_display,
         )
+        self.get_logger().info("Display manager server initialised")
 
-    def handle_clear_all_shapes(
-        self,
-        request: ClearAllShapesRequest,
-    ) -> ClearAllShapesResponse:
+    def handle_clear_all_shapes(self, request, response):
         """
         Handler function for the `clear_all_shapes` service.
 
@@ -79,15 +73,9 @@ class DisplayManagerServer(Node):
         """
         shape_display_manager.clear_all_shapes()
         self.get_logger().info("Shapes cleared")
-        response = ClearAllShapesResponse()
-        response.success.data = True
-
         return response
 
-    def handle_display_new_shape(
-        self,
-        request: DisplayNewShapeRequest,
-    ) -> DisplayNewShapeResponse:
+    def handle_display_new_shape(self, request, response):
         """
         Handler function for the `display_new_shape` service.
 
@@ -105,17 +93,12 @@ class DisplayManagerServer(Node):
         location = shape_display_manager.display_new_shape(
             request.shape_type_code
         )
-        response = DisplayNewShapeResponse()
         response.location.x = location[0]
         response.location.y = location[1]
         self.get_logger.info(f"Shape added at {location}")
-
         return response
 
-    def handle_index_of_location(
-        self,
-        request: IndexOfLocationRequest,
-    ) -> IndexOfLocationResponse:
+    def handle_index_of_location(self, request, response):
         """
         Handler function for the `index_of_location` service.
 
@@ -132,19 +115,14 @@ class DisplayManagerServer(Node):
         """
         location = [request.location.x, request.location.y]
         row, column = shape_display_manager.index_of_location(location)
-        response = IndexOfLocationResponse()
         response.row = row
         response.column = column
         self.get_logger.info(
             f"Index returned: {response.row}, {response.column}"
         )
-
         return response
 
-    def handle_shape_at_location(
-        self,
-        request: ShapeAtLocationRequest,
-    ) -> ShapeAtLocationResponse:
+    def handle_shape_at_location(self, request, response):
         """
         Handler function for the `shape_at_location` service.
 
@@ -160,7 +138,6 @@ class DisplayManagerServer(Node):
                                             service.
         """
         location = [request.location.x, request.location.y]
-        response = ShapeAtLocationResponse()
         shape_type_code, shape_id = shape_display_manager.shape_at_location(
             location
         )
@@ -169,13 +146,9 @@ class DisplayManagerServer(Node):
         self.get_logger.info(
             f"Shape at location returned: {response.shape_type_code}_{response.shape_id}"
         )
-
         return response
 
-    def handle_closest_shapes_to_location(
-        self,
-        request: ClosestShapesToLocationRequest,
-    ) -> ClosestShapesToLocationResponse:
+    def handle_closest_shapes_to_location(self, request, response):
         """
         Handler function for the `closest_shapes_to_location` service.
 
@@ -191,7 +164,6 @@ class DisplayManagerServer(Node):
             The response object for the service.
         """
         location = [request.location.x, request.location.y]
-        response = ClosestShapesToLocationResponse()
         [
             response.shape_type_code,
             response.shape_id,
@@ -199,13 +171,9 @@ class DisplayManagerServer(Node):
         self.get_logger.info(
             f"Closest shape(s) to location returned: {response.shape_type_code}_{response.shape_id}"
         )
-
         return response
 
-    def handle_possible_to_display(
-        self,
-        request,
-    ) -> IsPossibleToDisplayNewShapeResponse:
+    def handle_possible_to_display(self, request, response):
         """
         Handle the service request for determining if a new shape of a
         given type can be displayed given the current state of the
@@ -219,7 +187,6 @@ class DisplayManagerServer(Node):
             An IsPossibleToDisplayNewShapeResponse object indicating
             whether it is possible to display the new shape.
         """
-        response = IsPossibleToDisplayNewShapeResponse()
         response.is_possible.data = (
             shape_display_manager.is_possible_to_display_new_shape(
                 request.shape_type_code
@@ -228,13 +195,9 @@ class DisplayManagerServer(Node):
         self.get_logger.info(
             f"If possible returned {response.is_possible.data}"
         )
-
         return response
 
-    def handle_display_shape_at_location(
-        self,
-        request: DisplayShapeAtLocationRequest,
-    ) -> DisplayShapeAtLocationResponse:
+    def handle_display_shape_at_location(self, request, response):
         """
         Handle the service request for displaying a new shape of a given
         type at a specified location.
@@ -248,22 +211,20 @@ class DisplayManagerServer(Node):
             A DisplayShapeAtLocationResponse object indicating whether the
             shape was successfully displayed.
         """
-        response = DisplayShapeAtLocationResponse()
         location = [request.location.x, request.location.y]
-
         response.success.data = shape_display_manager.display_shape_at_location(
             request.shape_type_code, location
         )
         self.get_logger.info(f"Shape added at : {location}")
-
         return response
 
 
 def main(args=None):
     rclpy.init(args=args)
     display_manager_server = DisplayManagerServer()
+    display_manager_server.get_logger().info("Node up and running")
     rclpy.spin(display_manager_server)
-
+    display_manager_server.get_logger().info("Node shutting down")
     display_manager_server.destroy_node()
     rclpy.shutdown()
 

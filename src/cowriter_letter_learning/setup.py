@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import setup
 
-package_name = "my_package"
+package_name = "letter_learning_interaction"
 
 setup(
     name=package_name,
@@ -21,7 +21,7 @@ setup(
         # Include all launch files.
         (
             os.path.join("share", package_name, "launch"),
-            glob(os.path.join("launch", "*.launch.py")),
+            glob(os.path.join(package_name, "launch", "*.launch.py")),
         ),
     ],
     # This is important as well
@@ -43,6 +43,11 @@ setup(
     # Like the CMakeLists add_executable macro, you can add your python
     # scripts here.
     entry_points={
-        "console_scripts": ["my_script = my_package.my_script:main"],
+        "console_scripts": [
+            "display_manager_server = letter_learning_interaction.display_manager_server:main",
+            "learning_words_nao = letter_learning_interaction.learning_words_nao:main",
+            "tablet_input_interpreter = letter_learning_interaction.tablet_input_interpreter:main",
+            "word_card_detector = letter_learning_interaction.word_card_detector:main",
+        ]
     },
 )

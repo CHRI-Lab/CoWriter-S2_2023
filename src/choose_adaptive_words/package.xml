@@ -17,5 +17,6 @@
 
   <!-- This tag can be used for exporting information for other tools -->
   <export>
+    <build_type>ament_python</build_type>
   </export>
 </package>

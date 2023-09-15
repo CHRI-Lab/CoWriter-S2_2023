@@ -1,27 +1,71 @@
-from launch import LaunchDescription
-from launch_ros.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+import os
+
 from ament_index_python.packages import get_package_share_directory
+
+from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
+    choose_adaptive_words = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                os.path.join(
+                    get_package_share_directory("choose_adaptive_words"),
+                    "launch",
+                ),
+                "/adaptive.launch.py",
+            ]
+        )
+    )
+    letter_learning_interaction = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                os.path.join(
+                    get_package_share_directory("letter_learning_interaction"),
+                    "launch",
+                ),
+                "/cowriter.launch.py",
+            ]
+        )
+    )
+    #    turtlesim_world_2 = IncludeLaunchDescription(
+    #       PythonLaunchDescriptionSource([os.path.join(
+    #          get_package_share_directory('launch_tutorial'), 'launch'),
+    #          '/turtlesim_world_2.launch.py'])
+    #       )
+    #    broadcaster_listener_nodes = IncludeLaunchDescription(
+    #       PythonLaunchDescriptionSource([os.path.join(
+    #          get_package_share_directory('launch_tutorial'), 'launch'),
+    #          '/broadcaster_listener.launch.py']),
+    #       launch_arguments={'target_frame': 'carrot1'}.items(),
+    #       )
+    #    mimic_node = IncludeLaunchDescription(
+    #       PythonLaunchDescriptionSource([os.path.join(
+    #          get_package_share_directory('launch_tutorial'), 'launch'),
+    #          '/mimic.launch.py'])
+    #       )
+    #    fixed_frame_node = IncludeLaunchDescription(
+    #       PythonLaunchDescriptionSource([os.path.join(
+    #          get_package_share_directory('launch_tutorial'), 'launch'),
+    #          '/fixed_broadcaster.launch.py'])
+    #       )
+    #    rviz_node = IncludeLaunchDescription(
+    #       PythonLaunchDescriptionSource([os.path.join(
+    #          get_package_share_directory('launch_tutorial'), 'launch'),
+    #          '/turtlesim_rviz.launch.py'])
+    #       )
+
     return LaunchDescription(
         [
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    [
-                        get_package_share_directory("choose_adaptative_words"),
-                        "/launch/launch_adaptative.py",
-                    ]
-                ),
-            ),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    [
-                        get_package_share_directory("cowriter_letter_learning"),
-                        "letter_learning_interaction/launch/package_2_launch.py",
-                    ]
-                ),
-            ),
+            choose_adaptive_words,
+            letter_learning_interaction
+            #   turtlesim_world_1,
+            #   turtlesim_world_2,
+            #   broadcaster_listener_nodes,
+            #   mimic_node,
+            #   fixed_frame_node,
+            #   rviz_node
         ]
     )

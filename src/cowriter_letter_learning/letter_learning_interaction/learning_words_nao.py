@@ -16,23 +16,25 @@ from rclpy.node import Node
 
 from requests import Session
 
-from ..include.wrapper_class import (
+from letter_learning_interaction.include.wrapper_class import (
     DeviceManager,
     PublisherManager,
     SubscriberTopics,
 )
 
-# from ..include.nao_settings import NaoSettings
-from ..include.phrase_manager import PhraseManagerGPT
-from ..include.phrase_manager import PhraseManager
-from ..include.watchdog import Watchdog
+# from .letter_learning_interaction.include.nao_settings import NaoSettings
+from letter_learning_interaction.include.phrase_manager import PhraseManagerGPT
+from letter_learning_interaction.include.phrase_manager import PhraseManager
+from letter_learning_interaction.include.watchdog import Watchdog
 
-from ..include.interaction_settings import InteractionSettings
-from ..include.state_machine import StateMachine
-from ..include.shape_modeler import ShapeModeler
+from letter_learning_interaction.include.interaction_settings import (
+    InteractionSettings,
+)
+from letter_learning_interaction.include.state_machine import StateMachine
+from letter_learning_interaction.include.shape_modeler import ShapeModeler
 
-from letter_learning_interaction.msg import Shape as ShapeMsg  # type: ignore
-from letter_learning_interaction.srv import *
+from interface.msg import Shape as ShapeMsg  # type: ignore
+from interface.srv import *
 
 
 from nav_msgs.msg import Path
@@ -1381,7 +1383,7 @@ def get_nao_settings(session):
     return session.get("http://localhost:5000/nao_settings").json()
 
 
-if __name__ == "__main__":
+def main(args=None):
     # Init node inside main to avoid running node if imported
     # rospy.init_node("learning_words_nao")
     session = Session()
@@ -1506,3 +1508,7 @@ if __name__ == "__main__":
 
     device_manager.tablet_watchdog.stop()
     # robot_watchdog.stop()
+
+
+if __name__ == "__main__":
+    main()

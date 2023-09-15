@@ -248,7 +248,7 @@ class Child_UI(QtWidgets.QMainWindow, Node):
         self.update_drawings()
 
 
-if __name__ == "__main__":
+def main(args=None):
     rclpy.init()
 
     app = QtWidgets.QApplication(sys.argv)
@@ -262,3 +262,7 @@ if __name__ == "__main__":
     rclpy.shutdown()
 
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()

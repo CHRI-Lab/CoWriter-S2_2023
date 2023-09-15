@@ -7,7 +7,7 @@ time_between_clears seconds.
 import argparse
 
 
-from ..include.watchdog import WatchdogClearer
+from .include.watchdog import WatchdogClearer
 
 import rclpy
 from rclpy.node import Node

@@ -7,12 +7,12 @@ def generate_launch_description():
         [
             Node(
                 package="letter_learning_interaction",
-                executable="display_manager_server.py",
+                executable="display_manager_server",
                 name="display_manager_server",
             ),
             Node(
                 package="letter_learning_interaction",
-                executable="learning_words_nao.py",
+                executable="learning_words_nao",
                 name="learning_words_nao",
                 parameters=[
                     {
@@ -23,12 +23,12 @@ def generate_launch_description():
             ),
             Node(
                 package="letter_learning_interaction",
-                executable="tablet_input_interpreter.py",
+                executable="tablet_input_interpreter",
                 name="tablet_input_interpreter",
             ),
             Node(
                 package="letter_learning_interaction",
-                executable="word_card_detector.py",
+                executable="word_card_detector",
                 name="word_card_detector",
             ),
         ]

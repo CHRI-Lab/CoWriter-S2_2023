@@ -3,7 +3,6 @@ import PyQt5.QtCore as QtCore
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtCore import QObject, QRect, Qt, QSize, QDate
 from PyQt5.QtGui import QIcon
-from ChildProfile import ChildProfile
 from datetime import datetime
 from os.path import expanduser
 from nav_msgs.msg import Path
@@ -20,16 +19,14 @@ from geometry_msgs.msg import PoseStamped
 import numpy as np
 import os
 
-from parameters import *
 import sys
 
 import rclpy
 from rclpy.node import Node
 
-sys.path.insert(
-    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../nodes")
-)
-from audio_processor import AudioProcessor
+from choose_adaptive_words.audio_processor import AudioProcessor
+from choose_adaptive_words.ChildProfile import ChildProfile
+from choose_adaptive_words.parameters import *
 
 TOPIC_WORDS_TO_WRITE = "words_to_write"
 TOPIC_MANAGER_ERASE = "manager_erase"
@@ -205,7 +202,7 @@ class Manager_UI(QtWidgets.QDialog, Node):
         self.publish_shape_finished.publish("finish")
 
 
-if __name__ == "__main__":
+def main(args=None):
     rclpy.init()
     app = QtWidgets.QApplication(sys.argv)
     window = Manager_UI()
@@ -213,3 +210,7 @@ if __name__ == "__main__":
     rclpy.spin(window.node)
     rclpy.shutdown()
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()

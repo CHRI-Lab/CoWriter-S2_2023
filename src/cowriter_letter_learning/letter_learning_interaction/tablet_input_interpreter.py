@@ -7,12 +7,15 @@ from nav_msgs.msg import Path
 from std_msgs.msg import String, Empty, Int32MultiArray
 from geometry_msgs.msg import PointStamped
 from typing import List, Optional
-from letter_learning_interaction.msg import Shape as ShapeMsg  # type: ignore
+from interface.msg import Shape as ShapeMsg  # type: ignore
 
-from ..srv import *
+from interface.srv import *
 
-from ..include.shape_learner_manager import ShapeLearnerManager, Shape
-from ..include.shape_modeler import ShapeModeler
+from letter_learning_interaction.include.shape_learner_manager import (
+    ShapeLearnerManager,
+    Shape,
+)
+from letter_learning_interaction.include.shape_modeler import ShapeModeler
 
 import rclpy
 from rclpy.node import Node
@@ -46,40 +49,45 @@ class TabletInputInterpreter(Node):
 
     def __init__(self, path: Optional[str] = None):
         super().__init__("tablet_input_interpreter")
-        self.publish_shapes = self.create_publisher(
-            ShapeMsg, "user_shapes_processed", 10
-        )
+        # self.publish_shapes = self.create_publisher(
+        #     ShapeMsg, "user_shapes_processed", 10
+        # )
         self.clear_all_shapes_service = self.create_client(
             ShapeAtLocation, "shape_at_location"
         )
         self.clear_all_shapes_service.wait_for_service(timeout_sec=1.0)
 
-        GESTURE_TOPIC = self.declare_parameter(
-            "gesture_info_topic", "gesture_info"
-        )
-        USER_DRAWN_SHAPES_TOPIC = self.declare_parameter(
-            "user_drawn_shapes_topic", "user_drawn_shapes"
-        )
-        PROCESSED_USER_SHAPE_TOPIC = self.declare_parameter(
-            "processed_user_shape_topic", "user_shapes_processed"
-        )
+        GESTURE_TOPIC = "gesture_info"
+        # only 1 argument
+
+        # self.get_parameter(
+        #     "gesture_info_topic", "gesture_info"
+        # ).value
+        USER_DRAWN_SHAPES_TOPIC = "user_drawn_shapes"
+        # self.declare_parameter(
+        #     "user_drawn_shapes_topic", "user_drawn_shapes"
+        # ).value
+        PROCESSED_USER_SHAPE_TOPIC = "user_shapes_processed"
+        # self.declare_parameter(
+        #     "processed_user_shape_topic", "user_shapes_processed"
+        # ).value
 
         # Init shape publisher and tablet interpreter
-        publish_shapes = self.create_publisher(
+        self.publish_shapes = self.create_publisher(
             ShapeMsg, PROCESSED_USER_SHAPE_TOPIC, 10
         )
-        interpreter = TabletInputInterpreter(publish_shapes)
 
         # Listen for gesture representing active demo shape
         self.create_subscription(
-            PointStamped, GESTURE_TOPIC, interpreter.on_set_active_shape_gesture
+            PointStamped, GESTURE_TOPIC, self.on_set_active_shape_gesture, 10
         )
 
         # Listen for user-drawn shapes
         self.create_subscription(
             Int32MultiArray,
             USER_DRAWN_SHAPES_TOPIC,
-            interpreter.user_shape_preprocessor,
+            self.user_shape_preprocessor,
+            10,
         )
 
         self.word_logger = logging.getLogger("word_logger")
@@ -318,9 +326,13 @@ class TabletInputInterpreter(Node):
             )  # type: ignore
 
 
-if __name__ == "__main__":
-    rclpy.init()
+def main(args=None):
+    rclpy.init(args=args)
     node = TabletInputInterpreter()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

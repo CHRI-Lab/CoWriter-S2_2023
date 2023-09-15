@@ -18,7 +18,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.time import Time
 from rclpy.clock import Duration
-import tf
+import tf2_ros as tf
 from std_msgs.msg import String, Empty
 
 # import operator
@@ -97,7 +97,7 @@ def last_seen_since(
         return 10000
 
 
-if __name__ == "__main__":
+def main(args=None):
     rclpy.init()
     node = Node("word_detector")
     rclpy.spin(node)
@@ -220,3 +220,7 @@ if __name__ == "__main__":
         rate.sleep()
     node.destroy_node()
     rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

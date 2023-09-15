@@ -6,6 +6,10 @@ ENV PROJECT_DIR=${MAIN_DIR}/NAOHW-Boxjelly
 USER root
 
 RUN apt-get update && apt-get install -y sudo python3-pip git
+RUN apt-get install -y ros-humble-turtle-tf2-py ros-humble-tf2-tools ros-humble-tf-transformations
+RUN apt-get install  -y ffmpeg libsm6 libxext6
+RUN sudo apt-get install libportaudio2
+
 
 RUN pip3 install qibuild scikit-build toml \
     matplotlib openai google-cloud scikit-learn \
