@@ -46,7 +46,7 @@ class Watchdog:
         else:
             self.handler: Callable = user_handler
         self.subscriber = self.ros_node.create_subscription(
-            Empty, self.clear_topic, self.on_clear
+            Empty, self.clear_topic, self.on_clear, 10
         )
 
         self.ros_node.get_logger().info("Starting new timer")
