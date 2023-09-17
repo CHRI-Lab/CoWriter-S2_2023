@@ -39,7 +39,7 @@ class NaoSettings:
     FRONT_INTERACTION = True
     NAO_HANDEDNESS = "right"
 
-    def __init__(self) -> None:
+    def __init__(self):
         # Nao parameters
         self.LANGUAGE = "english"
         # whether or not the robot should stand or rest on its knees
@@ -59,7 +59,7 @@ class NaoSettings:
         # self.set_phrase_manager()
         self.set_orientation_params()
 
-    def get_settings(self) -> dict:
+    def get_settings(self):
         return {
             "nao_writing": self.nao_writing,
             "nao_speaking": self.nao_speaking,
@@ -71,7 +71,7 @@ class NaoSettings:
             "person_side": self.person_side,
         }
 
-    def set_effector(self) -> None:
+    def set_effector(self):
         """
         Sets the effector for the nao settings class based on nao
         handedness.
@@ -83,7 +83,7 @@ class NaoSettings:
         else:
             print("error in handedness param")
 
-    # def set_phrase_manager(self) -> None:
+    # def set_phrase_manager(self):
     #     """
     #     Sets the phrase manager for the nao settings based on nao
     #     language.
@@ -172,7 +172,7 @@ class NaoSettings:
                     self.effector, True
                 )
 
-    def nao_speak_and_log_phrase(self, phrase: str) -> None:
+    def nao_speak_and_log_phrase(self, phrase: str):
         """
         Makes NAO speak the phrase, and logs the phrase.
 
@@ -215,7 +215,7 @@ class NaoSettings:
                     0.2,
                 )
 
-    def look_and_ask_for_feedback(self, to_say: str, side: str) -> None:
+    def look_and_ask_for_feedback(self, to_say: str, side: str):
         """
         Makes the NAO robot look at a person and ask for feedback by
         adjusting its head angles and speaking the provided phrase.
@@ -260,7 +260,7 @@ class NaoSettings:
             if self.nao_speaking:
                 self.nao_speak_and_log_phrase(to_say)
 
-    def handle_look_and_ask_for_feedback(self, phrase: str) -> None:
+    def handle_look_and_ask_for_feedback(self, phrase: str):
         """
         Helper method that calls look_and_ask_forfeedback either
         alternating sides or using a fixed side, depending on value of
@@ -300,16 +300,7 @@ class NaoSettings:
             self.motion_proxy.rest()
 
 
-def get_head_angles() -> (
-    Tuple[
-        Tuple[float, float],
-        Tuple[float, float],
-        Tuple[float, float],
-        Tuple[float, float],
-        Tuple[float, float],
-        Tuple[float, float],
-    ]
-):
+def get_head_angles():
     """
     Get the head angles for NAO to look at different positions.
 
