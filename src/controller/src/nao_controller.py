@@ -2,7 +2,6 @@
 # coding: utf-8
 
 # from .interaction_settings import InteractionSettings
-from typing import Tuple
 
 # from std_msgs.msg import String
 # import sounddevice as sd
@@ -127,11 +126,11 @@ class NaoSettings:
         if self.nao_connected:
             import qi
 
-            qi_url = f"tcp://{self.NAO_IP}:{self.NAO_PORT}"
-            print(f"[RobotController] Connecting to qi_url={qi_url}")
+            qi_url = "tcp://%s:%s" % (self.NAO_IP, self.NAO_PORT)
+            print("[RobotController] Connecting to qi_url=%s" % qi_url)
             self.session = qi.Session()
             self.session.connect(qi_url)
-            print(f"[RobotController] app started")
+            print("[RobotController] app started")
 
             self.nextSideToLookAt = "Right"
 
@@ -172,7 +171,7 @@ class NaoSettings:
                     self.effector, True
                 )
 
-    def nao_speak_and_log_phrase(self, phrase: str):
+    def nao_speak_and_log_phrase(self, phrase):
         """
         Makes NAO speak the phrase, and logs the phrase.
 
@@ -215,7 +214,7 @@ class NaoSettings:
                     0.2,
                 )
 
-    def look_and_ask_for_feedback(self, to_say: str, side: str):
+    def look_and_ask_for_feedback(self, to_say, side):
         """
         Makes the NAO robot look at a person and ask for feedback by
         adjusting its head angles and speaking the provided phrase.
@@ -260,7 +259,7 @@ class NaoSettings:
             if self.nao_speaking:
                 self.nao_speak_and_log_phrase(to_say)
 
-    def handle_look_and_ask_for_feedback(self, phrase: str):
+    def handle_look_and_ask_for_feedback(self, phrase):
         """
         Helper method that calls look_and_ask_forfeedback either
         alternating sides or using a fixed side, depending on value of
@@ -309,21 +308,21 @@ def get_head_angles():
                at tablet down, tablet right, tablet left, person
                front, person right, and person left.
     """
-    head_angles_look_at_tablet_down: Tuple[float, float] = (-0.01538, 0.512)
-    head_angles_look_at_tablet_right: Tuple[float, float] = (
+    head_angles_look_at_tablet_down = (-0.01538, 0.512)
+    head_angles_look_at_tablet_right = (
         -0.2,
         0.08125996589660645,
     )
-    head_angles_look_at_tablet_left: Tuple[float, float] = (
+    head_angles_look_at_tablet_left = (
         0.2,
         0.08125996589660645,
     )
-    head_angles_look_at_person_front: Tuple[float, float] = (-0.0123, 0.1825)
-    head_angles_look_at_person_right: Tuple[float, float] = (
+    head_angles_look_at_person_front = (-0.0123, 0.1825)
+    head_angles_look_at_person_right = (
         -0.9639739513397217,
         0.08125996589660645,
     )
-    head_angles_look_at_person_left: Tuple[float, float] = (
+    head_angles_look_at_person_left = (
         0.9639739513397217,
         0.08125996589660645,
     )

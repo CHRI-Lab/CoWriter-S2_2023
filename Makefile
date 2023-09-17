@@ -6,6 +6,7 @@ run:
 	docker run -it \
 		--name boxjelly-ros2 \
 		--user nao \
+		--network="host" \
 		-v ./src:/home/nao/NAOHW-RedBack/src \
 		boxjelly-ros2 bash
 
@@ -13,6 +14,7 @@ run-controller:
 	docker run -it \
 		--name boxjelly-controller \
 		--user nao \
+		--network="host" \
 		-v ./src/controller:/home/nao/controller \
 		boxjelly-controller bash
 rm-container:

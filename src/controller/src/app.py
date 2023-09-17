@@ -109,4 +109,5 @@ def position_interpolation():
 
 
 def main():
+    nao_settings.set_nao_interaction()
     app.run(debug=True, port=5000)
