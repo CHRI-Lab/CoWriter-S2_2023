@@ -70,6 +70,12 @@ source ./install/setup.bash
 ros2 launch choose_adaptive_words adaptive.launch.py
 ros2 run choose_adaptive_words temp_backend
 
+ros2 launch letter_learning_interaction cowriter.launch.py  
+ros2 run letter_learning_interaction temp_backend
+ros2 run letter_learning_interaction temp_backend
+
+
+
 check installed ros2 packages:
 ros2 pkg list | package_name
 

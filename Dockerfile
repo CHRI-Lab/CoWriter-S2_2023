@@ -37,6 +37,10 @@ RUN colcon build --packages-select choose_adaptive_words
 RUN colcon build --packages-select nao_trajectory_following
 RUN colcon build --packages-select letter_learning_interaction
 
+# Note: I don't know why, but for letter_learning_interaction, the command "source install/setup.bash"
+# doesn't add the package to the AMENT_PREFIX_PATH, so we add it manually
+ENV AMENT_PREFIX_PATH=${AMENT_PREFIX_PATH}:/home/nao/NAOHW-Boxjelly/install/letter_learning_interaction
+
 RUN chown -R nao:nao ${PROJECT_DIR}/src/
 RUN chmod 755 ${PROJECT_DIR}/src/
 

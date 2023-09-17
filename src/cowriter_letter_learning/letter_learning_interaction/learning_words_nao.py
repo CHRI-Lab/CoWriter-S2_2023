@@ -1380,7 +1380,7 @@ class StateManager:
 
 
 def get_nao_settings(session):
-    return session.get("http://localhost:5000/nao_settings").json()
+    return session.get("http://localhost:5000/get_settings").json()
 
 
 def main(args=None):
