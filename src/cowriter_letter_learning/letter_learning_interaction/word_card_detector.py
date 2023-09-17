@@ -102,22 +102,28 @@ def main(args=None):
     node = Node("word_detector")
     rclpy.spin(node)
     # Get parameters or set defaults for different topics and frames
-    words_topic: str = node.get_parameter(
-        "detected_words_topic", "words_to_write"
-    )
-    special_topic: str = node.get_parameter(
-        "~special_cards_topic", "special_symbols"
-    )
-    stop_topic: str = node.get_parameter(
-        "~stop_card_detected_topic", "stop_learning"
-    )
-    test_topic: str = node.get_parameter(
-        "~test_card_detected_topic", "test_learning"
-    )
-    camera_frame: str = node.get_parameter("~detector_frame_id", "camera_frame")
+    words_topic: str = "words_to_write"
+    # node.get_parameter(
+    #     "detected_words_topic", "words_to_write"
+    # )
+    special_topic: str = "special_symbols"
+    # node.get_parameter(
+    #     "~special_cards_topic", "special_symbols"
+    # )
+    stop_topic: str = "stop_learning"
+    # node.get_parameter(
+    #     "~stop_card_detected_topic", "stop_learning"
+    # )
+    test_topic: str = "test_learning"
+    # node.get_parameter(
+    #     "~test_card_detected_topic", "test_learning"
+    # )
+    camera_frame: str = "camera_frame"
+    # node.get_parameter("~detector_frame_id", "camera_frame")
     camera_frame = "v4l_frame"
 
-    language: str = node.get_parameter("~language", "english")
+    language: str = "english"
+    # node.get_parameter("~language", "english")
 
     # Create publishers for different topics
     pub_words = node.create_publisher(String, words_topic, queue_size=10)

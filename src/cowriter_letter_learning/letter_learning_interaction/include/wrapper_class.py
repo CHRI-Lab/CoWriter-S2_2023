@@ -21,28 +21,33 @@ class PublisherManager:
         self.ros_node = ros_node
         # Controls the camera based on the interaction state
         # (turn it off for writing b/c CPU gets maxed)
-        self.PUBLISH_STATUS_TOPIC = self.ros_node.get_parameter(
-            "camera_publishing_status_topic", "camera_publishing_status"
-        )
+        self.PUBLISH_STATUS_TOPIC = "camera_publishing_status"
+        # self.ros_node.get_parameter(
+        #     "camera_publishing_status_topic", "camera_publishing_status"
+        # )
         # Name of topic to publish shapes to
-        self.SHAPE_TOPIC = self.ros_node.get_parameter(
-            "~trajectory_output_topic", "/write_traj"
-        )
+        self.SHAPE_TOPIC = "/write_traj"
+        # self.ros_node.get_parameter(
+        #     "~trajectory_output_topic", "/write_traj"
+        # )
 
         # Name of topic to publish bounding boxes of letters to
-        self.BOUNDING_BOXES_TOPIC = self.ros_node.get_parameter(
-            "~bounding_boxes_topic", "/boxes_to_draw"
-        )
+        self.BOUNDING_BOXES_TOPIC = "/boxes_to_draw"
+        # self.ros_node.get_parameter(
+        #     "~bounding_boxes_topic", "/boxes_to_draw"
+        # )
 
         # Name of topic to publish downsampled shapes to
-        self.SHAPE_TOPIC_DOWNSAMPLED = self.ros_node.get_parameter(
-            "~trajectory_output_nao_topic", "/write_traj_downsampled"
-        )
+        self.SHAPE_TOPIC_DOWNSAMPLED = "/write_traj_downsampled"
+        # self.ros_node.get_parameter(
+        #     "~trajectory_output_nao_topic", "/write_traj_downsampled"
+        # )
 
         # Clear tablet publisher topic
-        self.CLEAR_SURFACE_TOPIC = self.ros_node.get_parameter(
-            "~clear_writing_surface_topic", "clear_screen"
-        )
+        self.CLEAR_SURFACE_TOPIC = "clear_screen"
+        # self.ros_node.get_parameter(
+        #     "~clear_writing_surface_topic", "clear_screen"
+        # )
 
     def init_publishers(self):
         """
@@ -78,43 +83,51 @@ class SubscriberTopics:
 
     def __init__(self, ros_node: Node) -> None:
         self.ros_node = ros_node
-        self.CLEAR_SURFACE_TOPIC: str = self.ros_node.get_parameter(
-            "~clear_writing_surface_topic", "clear_screen"
-        )
+        self.CLEAR_SURFACE_TOPIC: str = "clear_screen"
+        # self.ros_node.get_parameter(
+        #     "~clear_writing_surface_topic", "clear_screen"
+        # )
 
         # Welcome a new teacher but don't reset learning algorithm's 'memory'
-        self.NEW_CHILD_TOPIC: str = self.ros_node.get_parameter(
-            "~new_teacher_topic", "new_child"
-        )
+        self.NEW_CHILD_TOPIC: str = "new_child"
+        # self.ros_node.get_parameter(
+        #     "~new_teacher_topic", "new_child"
+        # )
 
-        self.WORDS_TOPIC: str = self.ros_node.get_parameter(
-            "~words_to_write_topic", "words_to_write"
-        )
+        self.WORDS_TOPIC: str = "words_to_write"
+        # self.ros_node.get_parameter(
+        #     "~words_to_write_topic", "words_to_write"
+        # )
 
         # Name of topic to listen for when test card has been shown to the robot
-        self.TEST_TOPIC: str = self.ros_node.get_parameter(
-            "~test_request_topic", "test_learning"
-        )
+        self.TEST_TOPIC: str = "test_learning"
+        # self.ros_node.get_parameter(
+        #     "~test_request_topic", "test_learning"
+        # )
 
         # Name of topic to listen for when stop card has been shown to the robot
-        self.STOP_TOPIC: str = self.ros_node.get_parameter(
-            "~stop_request_topic", "stop_learning"
-        )
+        self.STOP_TOPIC: str = "stop_learning"
+        # self.ros_node.get_parameter(
+        #     "~stop_request_topic", "stop_learning"
+        # )
 
         # Name of topic to listen for user shapes
-        self.PROCESSED_USER_SHAPE_TOPIC: str = self.ros_node.get_parameter(
-            "~processed_user_shape_topic", "user_shapes_processed"
-        )
+        self.PROCESSED_USER_SHAPE_TOPIC: str = "user_shapes_processed"
+        # self.ros_node.get_parameter(
+        #     "~processed_user_shape_topic", "user_shapes_processed"
+        # )
 
         # Name of topic to get gestures representing the active shape for demonstration
-        self.GESTURE_TOPIC: str = self.ros_node.get_parameter(
-            "~gesture_info_topic", "gesture_info"
-        )
+        self.GESTURE_TOPIC: str = "gesture_info"
+        # self.ros_node.get_parameter(
+        #     "~gesture_info_topic", "gesture_info"
+        # )
 
         # tablet param
-        self.SHAPE_FINISHED_TOPIC = self.ros_node.get_parameter(
-            "~shape_writing_finished_topic", "shape_finished"
-        )
+        self.SHAPE_FINISHED_TOPIC = "shape_finished"
+        # self.ros_node.get_parameter(
+        #     "~shape_writing_finished_topic", "shape_finished"
+        # )
 
 
 class DeviceManager:
@@ -132,7 +145,8 @@ class DeviceManager:
 
     def __init__(self, ros_node: Node):
         self.ros_node = ros_node
-        self.SHAPE_LOGGING_PATH = self.ros_node.get_parameter("~shape_log", "")
+        self.SHAPE_LOGGING_PATH = ""
+        # self.ros_node.get_parameter("~shape_log", "")
         self.word_manager = ShapeLearnerManager(
             InteractionSettings.generate_settings, self.SHAPE_LOGGING_PATH
         )
