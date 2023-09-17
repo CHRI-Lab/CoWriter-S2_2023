@@ -13,7 +13,7 @@ ENV PYTHONPATH=${PYTHONPATH}:${NAOQI_DIR}/pynaoqi-python2.7-2.8.6.23-linux64-201
 
 RUN pip install flask
 
-COPY ./src/controller/nao_controller.py ${MAIN_DIR}/controller/nao_controller.py
+COPY ./src/controller/ ${MAIN_DIR}/controller/
 
 RUN chown -R nao:nao ${MAIN_DIR}
 RUN chmod 755 ${MAIN_DIR}
