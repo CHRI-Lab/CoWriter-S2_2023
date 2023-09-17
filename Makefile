@@ -7,7 +7,7 @@ run:
 		--name boxjelly-ros2 \
 		--user nao \
 		--network="host" \
-		-v ./src:/home/nao/NAOHW-RedBack/src \
+		-v ./src:/home/nao/NAOHW-Boxjelly/src \
 		boxjelly-ros2 bash
 
 run-controller:
