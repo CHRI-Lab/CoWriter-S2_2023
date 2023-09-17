@@ -34,24 +34,24 @@ class NaoSettings:
     # passed in as arguments, but treated as class variables.
 
     # Default behaviour is to connect to simulator locally
-    NAO_IP: str = "127.0.0.1"
+    NAO_IP = "127.0.0.1"
     NAO_PORT = 9559
-    FRONT_INTERACTION: bool = True
-    NAO_HANDEDNESS: str = "right"
+    FRONT_INTERACTION = True
+    NAO_HANDEDNESS = "right"
 
     def __init__(self) -> None:
         # Nao parameters
-        self.LANGUAGE: str = "english"
+        self.LANGUAGE = "english"
         # whether or not the robot should stand or rest on its knees
-        self.nao_standing: bool = True
+        self.nao_standing = True
         # whether or not the robot is being used for the interaction
-        self.nao_connected: bool = True
+        self.nao_connected = True
 
         # speaking and writing conjunct with conn as stronger property
         # whether or not the robot should speak
-        self.nao_speaking: bool = True
+        self.nao_speaking = True
 
-        self.nao_writing: bool = True
+        self.nao_writing = True
 
         # Set effector based on handedness
         self.set_effector()
@@ -77,9 +77,9 @@ class NaoSettings:
         handedness.
         """
         if self.NAO_HANDEDNESS.lower() == "right":
-            self.effector: str = "RArm"
+            self.effector = "RArm"
         elif self.NAO_HANDEDNESS.lower() == "left":
-            self.effector: str = "LArm"
+            self.effector = "LArm"
         else:
             print("error in handedness param")
 
@@ -113,8 +113,8 @@ class NaoSettings:
         # Using default values for params below, as in original code
         # if alternate sides, nao looks to a different side each time.
         # Not well tested
-        self.alternate_sides_looking_at: bool = False
-        self.next_side_to_look_at: str = "Right"
+        self.alternate_sides_looking_at = False
+        self.next_side_to_look_at = "Right"
 
     def set_nao_interaction(self):
         """
