@@ -1383,6 +1383,23 @@ def get_nao_settings(session):
     return session.get("http://localhost:5000/get_settings").json()
 
 
+def clear_all_shapes(node: Node):
+    while not node.client.wait_for_service(timeout_sec=1.0):
+        node.get_logger().info("Service is not available, waiting...")
+
+    request = ClearAllShapesRequest()
+    # Fill in any data you need to the request if necessary
+
+    future = node.client.call_async(request)
+    rclpy.spin_until_future_complete(node, future)
+
+    if future.result() is not None:
+        # Process the service response
+        pass
+    else:
+        node.get_logger().error("Service call failed.")
+
+
 def main(args=None):
     # Init node inside main to avoid running node if imported
     # rospy.init_node("learning_words_nao")
@@ -1391,7 +1408,13 @@ def main(args=None):
     phrase_manager = PhraseManager(nao_settings.get("LANGUAGE"))
 
     rclpy.init(args=None)
-    node = LearningWordsNao(session)
+
+    # init node
+    node = Node("learning_words_nao")
+    session = session
+    node.declare_parameter("dataset_directory", "default")
+    topics = SubscriberTopics(node)
+   
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(node)
 
@@ -1431,6 +1454,85 @@ def main(args=None):
         session=session,
         phrase_manager=phrase_manager,
     )
+
+    new_child_subscriber = node.create_subscription(
+        String,
+        topics.NEW_CHILD_TOPIC,
+        subscriber_callbacks.on_new_child_received,
+    )
+
+    # listen for words to write
+    words_subscriber = node.create_subscription(
+        String,
+        topics.WORDS_TOPIC,
+        subscriber_callbacks.on_word_received,
+    )
+
+    # listen for test time
+    test_subscriber = node.create_subscription(
+        Empty,
+        topics.TEST_TOPIC,
+        subscriber_callbacks.on_test_request_received,
+    )
+
+    # listen for when to stop
+    stop_subscriber = node.create_subscription(
+        Empty,
+        topics.STOP_TOPIC,
+        subscriber_callbacks.on_stop_request_received,
+    )
+
+    # listen for user-drawn shapes
+    shape_subscriber = node.create_subscription(
+        ShapeMsg,
+        topics.PROCESSED_USER_SHAPE_TOPIC,
+        subscriber_callbacks.on_user_drawn_shape_received,
+    )
+
+    # listen for user-drawn finger gestures
+    gesture_subscriber = node.create_subscription(
+        PointStamped,
+        topics.GESTURE_TOPIC,
+        subscriber_callbacks.on_set_active_shape_gesture,
+    )
+
+    shape_finished_subscriber = node.create_subscription(
+        String,
+        topics.SHAPE_FINISHED_TOPIC,
+        subscriber_callbacks.on_shape_finished,
+    )
+
+    # Commented method/function out because not presently in use
+    # TODO: reintegrate or remove
+    # listen for request to clear screen (from tablet)
+    # clear_subscriber = self.create_subscription(SubscriberTopics.CLEAR_SURFACE_TOPIC,
+    #                                     Empty,
+    #                                     subscriber_callbacks.on_clear_screen_received)
+
+    TOPIC_GPT_INPUT = "chatgpt_input"
+    node.create_subscription(
+        String, TOPIC_GPT_INPUT, subscriber_callbacks.on_user_chat_received
+    )
+
+    START_SENDING_VOICE = "speech_rec"
+    node.create_subscription(
+        String,
+        START_SENDING_VOICE,
+        subscriber_callbacks.on_feedback_received,
+    )
+
+    # initialise display manager for shapes (manages positioning of shapes)
+    clear_all_shapes_service = node.create_client(
+        ClearAllShapes, "clear_all_shapes"
+    )
+    node.get_logger().info(
+        "Waiting for display manager services to become available"
+    )
+    clear_all_shapes_service.wait_for_service()
+
+    sleep(2.0)  # Allow some time for the subscribers to do t heir thing,
+    # or the first message will be missed (eg. first traj on tablet, first clear request locally)
+
 
     generated_word_logger = logging.getLogger("word_logger")
     # HACK: should properly configure the path from an option
