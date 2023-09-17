@@ -34,26 +34,25 @@ class NaoSettings:
     # passed in as arguments, but treated as class variables.
 
     # Default behaviour is to connect to simulator locally
-    NAO_IP: str =  "127.0.0.1"
+    NAO_IP: str = "127.0.0.1"
     NAO_PORT = 9559
     FRONT_INTERACTION: bool = True
-    NAO_HANDEDNESS: str = "right" 
+    NAO_HANDEDNESS: str = "right"
 
     def __init__(self) -> None:
         # Nao parameters
-        self.LANGUAGE: str =  "english" 
+        self.LANGUAGE: str = "english"
         # whether or not the robot should stand or rest on its knees
-        self.nao_standing: bool = True 
+        self.nao_standing: bool = True
         # whether or not the robot is being used for the interaction
-        self.nao_connected: bool = True 
-        
+        self.nao_connected: bool = True
 
         # speaking and writing conjunct with conn as stronger property
         # whether or not the robot should speak
         self.nao_speaking: bool = True
-       
+
         self.nao_writing: bool = True
-        
+
         # Set effector based on handedness
         self.set_effector()
 
@@ -71,6 +70,7 @@ class NaoSettings:
             "LANGUAGE": self.LANGUAGE,
             "person_side": self.person_side,
         }
+
     def set_effector(self) -> None:
         """
         Sets the effector for the nao settings class based on nao
@@ -300,26 +300,48 @@ class NaoSettings:
             self.motion_proxy.rest()
 
 
-def get_head_angles() -> Tuple[Tuple[float, float], Tuple[float, float], Tuple[float, float], Tuple[float, float], Tuple[float, float], Tuple[float, float]]:
-        """
-        Get the head angles for NAO to look at different positions.
+def get_head_angles() -> (
+    Tuple[
+        Tuple[float, float],
+        Tuple[float, float],
+        Tuple[float, float],
+        Tuple[float, float],
+        Tuple[float, float],
+        Tuple[float, float],
+    ]
+):
+    """
+    Get the head angles for NAO to look at different positions.
 
-        Returns:
-            tuple: A tuple containing the head angles for NAO to look
-                   at tablet down, tablet right, tablet left, person
-                   front, person right, and person left.
-        """
-        head_angles_look_at_tablet_down: Tuple[float,
-                                               float] = (-0.01538, 0.512)
-        head_angles_look_at_tablet_right: Tuple[float,
-                                                float] = (-0.2, 0.08125996589660645)
-        head_angles_look_at_tablet_left: Tuple[float, float] = (
-            0.2, 0.08125996589660645)
-        head_angles_look_at_person_front: Tuple[float,
-                                                float] = (-0.0123, 0.1825)
-        head_angles_look_at_person_right: Tuple[float,
-                                                float] = (-0.9639739513397217, 0.08125996589660645)
-        head_angles_look_at_person_left: Tuple[float, float] = (
-            0.9639739513397217, 0.08125996589660645)
+    Returns:
+        tuple: A tuple containing the head angles for NAO to look
+               at tablet down, tablet right, tablet left, person
+               front, person right, and person left.
+    """
+    head_angles_look_at_tablet_down: Tuple[float, float] = (-0.01538, 0.512)
+    head_angles_look_at_tablet_right: Tuple[float, float] = (
+        -0.2,
+        0.08125996589660645,
+    )
+    head_angles_look_at_tablet_left: Tuple[float, float] = (
+        0.2,
+        0.08125996589660645,
+    )
+    head_angles_look_at_person_front: Tuple[float, float] = (-0.0123, 0.1825)
+    head_angles_look_at_person_right: Tuple[float, float] = (
+        -0.9639739513397217,
+        0.08125996589660645,
+    )
+    head_angles_look_at_person_left: Tuple[float, float] = (
+        0.9639739513397217,
+        0.08125996589660645,
+    )
 
-        return head_angles_look_at_tablet_down, head_angles_look_at_tablet_right, head_angles_look_at_tablet_left, head_angles_look_at_person_front, head_angles_look_at_person_right, head_angles_look_at_person_left
+    return (
+        head_angles_look_at_tablet_down,
+        head_angles_look_at_tablet_right,
+        head_angles_look_at_tablet_left,
+        head_angles_look_at_person_front,
+        head_angles_look_at_person_right,
+        head_angles_look_at_person_left,
+    )

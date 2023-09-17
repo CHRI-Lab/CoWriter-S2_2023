@@ -25,15 +25,16 @@ ENV AMENT_PREFIX_PATH=/opt/ros/humble
 ENV PYTHONPATH=/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages
 
 COPY ./src ${PROJECT_DIR}/src
-WORKDIR ${PROJECT_DIR}/src/packages
-WORKDIR ${PROJECT_DIR}/src/packages/interactive_markers
+WORKDIR ${PROJECT_DIR}/src
+RUN git clone https://github.com/ros-visualization/interactive_markers.git/
+WORKDIR ${PROJECT_DIR}/src/interactive_markers
 RUN git checkout ros2
 WORKDIR ${PROJECT_DIR}/src/
 # isolation of the build environment for each module, otherwise the build remains stuck ?
 RUN colcon build --packages-select choose_adaptative_words
 RUN colcon build --packages-select interactive_markers
 RUN colcon build --packages-select nao_trajectory_following
-RUN colcon build --packages-select cowriter_letter_learning
+RUN colcon build --packages-select letter_learning_interaction
 
 RUN chown -R nao:nao ${PROJECT_DIR}/src/
 RUN chmod 755 ${PROJECT_DIR}/src/
