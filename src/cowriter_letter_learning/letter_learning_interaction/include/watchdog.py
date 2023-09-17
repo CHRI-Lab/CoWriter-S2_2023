@@ -130,7 +130,7 @@ class WatchdogClearer:
         self.clear_topic: str = clear_topic
         self.time_between_clears_sec: float = time_between_clears_sec
         self.publisher = self.ros_node.create_publisher(
-            Empty, self.clear_topic, queue_size=10
+            Empty, self.clear_topic, 10
         )
         self.timer: Timer = Timer(
             self.time_between_clears_sec, self.clear_watchdog

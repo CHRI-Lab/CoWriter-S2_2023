@@ -126,10 +126,10 @@ def main(args=None):
     # node.get_parameter("~language", "english")
 
     # Create publishers for different topics
-    pub_words = node.create_publisher(String, words_topic, queue_size=10)
-    pub_special = node.create_publisher(String, special_topic, queue_size=10)
-    pub_stop = node.create_publisher(Empty, stop_topic, queue_size=10)
-    pub_test = node.create_publisher(Empty, test_topic, queue_size=10)
+    pub_words = node.create_publisher(String, words_topic, 10)
+    pub_special = node.create_publisher(String, special_topic, 10)
+    pub_stop = node.create_publisher(Empty, stop_topic, 10)
+    pub_test = node.create_publisher(Empty, test_topic, 10)
 
     # Initialize the TransformListener
     tf_listener = tf.TransformListener(True, Duration(nanoseconds=500000000))

@@ -56,23 +56,23 @@ class PublisherManager:
 
         # Init publishers
         self.pub_camera_status = self.ros_node.create_publisher(
-            Bool, self.PUBLISH_STATUS_TOPIC, queue_size=10
+            Bool, self.PUBLISH_STATUS_TOPIC, 10
         )
 
         self.pub_traj = self.ros_node.create_publisher(
-            self.SHAPE_TOPIC, Path, queue_size=10
+            self.SHAPE_TOPIC, Path, 10
         )
 
         self.pub_bounding_boxes = self.ros_node.create_publisher(
-            Float64MultiArray, self.BOUNDING_BOXES_TOPIC, queue_size=10
+            Float64MultiArray, self.BOUNDING_BOXES_TOPIC, 10
         )
 
         self.pub_traj_downsampled = self.ros_node.create_publisher(
-            Path, self.SHAPE_TOPIC_DOWNSAMPLED, queue_size=10
+            Path, self.SHAPE_TOPIC_DOWNSAMPLED, 10
         )
 
         self.pub_clear = self.ros_node.create_publisher(
-            Empty, self.CLEAR_SURFACE_TOPIC, queue_size=10
+            Empty, self.CLEAR_SURFACE_TOPIC, 10
         )
 
 
