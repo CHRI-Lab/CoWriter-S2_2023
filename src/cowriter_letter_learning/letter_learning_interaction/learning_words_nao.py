@@ -1414,7 +1414,7 @@ def main(args=None):
     session = session
     node.declare_parameter("dataset_directory", "default")
     topics = SubscriberTopics(node)
-   
+
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(node)
 
@@ -1532,7 +1532,6 @@ def main(args=None):
 
     sleep(2.0)  # Allow some time for the subscribers to do t heir thing,
     # or the first message will be missed (eg. first traj on tablet, first clear request locally)
-
 
     generated_word_logger = logging.getLogger("word_logger")
     # HACK: should properly configure the path from an option
