@@ -92,6 +92,7 @@ class LearningWordsNao(Node):
             String,
             self.topics.NEW_CHILD_TOPIC,
             subscriber_callbacks.on_new_child_received,
+            10,
         )
 
         # listen for words to write
@@ -99,6 +100,7 @@ class LearningWordsNao(Node):
             String,
             self.topics.WORDS_TOPIC,
             subscriber_callbacks.on_word_received,
+            10,
         )
 
         # listen for test time
@@ -106,6 +108,7 @@ class LearningWordsNao(Node):
             Empty,
             self.topics.TEST_TOPIC,
             subscriber_callbacks.on_test_request_received,
+            10,
         )
 
         # listen for when to stop
@@ -113,6 +116,7 @@ class LearningWordsNao(Node):
             Empty,
             self.topics.STOP_TOPIC,
             subscriber_callbacks.on_stop_request_received,
+            10,
         )
 
         # listen for user-drawn shapes
@@ -120,6 +124,7 @@ class LearningWordsNao(Node):
             ShapeMsg,
             self.topics.PROCESSED_USER_SHAPE_TOPIC,
             subscriber_callbacks.on_user_drawn_shape_received,
+            10,
         )
 
         # listen for user-drawn finger gestures
@@ -127,12 +132,14 @@ class LearningWordsNao(Node):
             PointStamped,
             self.topics.GESTURE_TOPIC,
             subscriber_callbacks.on_set_active_shape_gesture,
+            10,
         )
 
         self.shape_finished_subscriber = self.create_subscription(
             String,
             self.topics.SHAPE_FINISHED_TOPIC,
             subscriber_callbacks.on_shape_finished,
+            10,
         )
 
         # Commented method/function out because not presently in use
@@ -144,7 +151,10 @@ class LearningWordsNao(Node):
 
         TOPIC_GPT_INPUT = "chatgpt_input"
         self.create_subscription(
-            String, TOPIC_GPT_INPUT, subscriber_callbacks.on_user_chat_received
+            String,
+            TOPIC_GPT_INPUT,
+            subscriber_callbacks.on_user_chat_received,
+            10,
         )
 
         START_SENDING_VOICE = "speech_rec"
@@ -152,6 +162,7 @@ class LearningWordsNao(Node):
             String,
             START_SENDING_VOICE,
             subscriber_callbacks.on_feedback_received,
+            10,
         )
 
         # initialise display manager for shapes (manages positioning of shapes)
@@ -1459,13 +1470,12 @@ def main(args=None):
         String,
         topics.NEW_CHILD_TOPIC,
         subscriber_callbacks.on_new_child_received,
+        10,
     )
 
     # listen for words to write
     words_subscriber = node.create_subscription(
-        String,
-        topics.WORDS_TOPIC,
-        subscriber_callbacks.on_word_received,
+        String, topics.WORDS_TOPIC, subscriber_callbacks.on_word_received, 10
     )
 
     # listen for test time
@@ -1473,6 +1483,7 @@ def main(args=None):
         Empty,
         topics.TEST_TOPIC,
         subscriber_callbacks.on_test_request_received,
+        10,
     )
 
     # listen for when to stop
@@ -1480,6 +1491,7 @@ def main(args=None):
         Empty,
         topics.STOP_TOPIC,
         subscriber_callbacks.on_stop_request_received,
+        10,
     )
 
     # listen for user-drawn shapes
@@ -1487,6 +1499,7 @@ def main(args=None):
         ShapeMsg,
         topics.PROCESSED_USER_SHAPE_TOPIC,
         subscriber_callbacks.on_user_drawn_shape_received,
+        10,
     )
 
     # listen for user-drawn finger gestures
@@ -1494,12 +1507,14 @@ def main(args=None):
         PointStamped,
         topics.GESTURE_TOPIC,
         subscriber_callbacks.on_set_active_shape_gesture,
+        10,
     )
 
     shape_finished_subscriber = node.create_subscription(
         String,
         topics.SHAPE_FINISHED_TOPIC,
         subscriber_callbacks.on_shape_finished,
+        10,
     )
 
     # Commented method/function out because not presently in use
@@ -1511,7 +1526,7 @@ def main(args=None):
 
     TOPIC_GPT_INPUT = "chatgpt_input"
     node.create_subscription(
-        String, TOPIC_GPT_INPUT, subscriber_callbacks.on_user_chat_received
+        String, TOPIC_GPT_INPUT, subscriber_callbacks.on_user_chat_received, 10
     )
 
     START_SENDING_VOICE = "speech_rec"
@@ -1519,6 +1534,7 @@ def main(args=None):
         String,
         START_SENDING_VOICE,
         subscriber_callbacks.on_feedback_received,
+        10,
     )
 
     # initialise display manager for shapes (manages positioning of shapes)
