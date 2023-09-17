@@ -59,8 +59,34 @@ def set_stiffness():
     return jsonify({'status': 'success'})
 
 @app.route('/go_to_posture', methods=['POST'])
-def go_to_posture(posture, speed):
-    nao_settings.posture_proxy.goToPosture(posture, speed)
+def go_to_posture():
+    data = request.get_json()
+    nao_settings.posture_proxy.goToPosture(data.get("posture"), data.get("speed"))
+    return jsonify({'status': 'success'})
+
+@app.route('/open_hand', methods=['POST'])
+def open_hand():
+    data = request.get_json()
+    nao_settings.motion_proxy.openHand(data.get("hand"))
+    return jsonify({'status': 'success'})
+
+@app.route('/close_hand', methods=['POST'])
+def close_hand():
+    data = request.get_json()
+    nao_settings.motion_proxy.closeHand(data.get("hand"))
+    return jsonify({'status': 'success'})
+
+@app.route('/position_interpolation', methods=['POST'])
+def position_interpolation():
+    data = request.get_json()
+    nao_settings.motion_proxy.positionInterpolation(
+        data.get("effector"),
+        data.get("space"),
+        data.get("path"),
+        data.get("axisMask"),
+        data.get("times"),
+        data.get("isAbsolute"),
+    )
     return jsonify({'status': 'success'})
 
 

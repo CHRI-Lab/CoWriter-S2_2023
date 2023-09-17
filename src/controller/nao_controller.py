@@ -66,6 +66,7 @@ class NaoSettings:
             "nao_speaking": self.nao_speaking,
             "nao_standing": self.nao_standing,
             "nao_connected": self.nao_connected,
+            "nao_handedness": self.NAO_HANDEDNESS,
             "alternate_sides_looking_at": self.alternate_sides_looking_at,
             "LANGUAGE": self.LANGUAGE,
             "person_side": self.person_side,

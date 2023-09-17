@@ -1,14 +1,16 @@
+# https://docs.ros.org/en/foxy/How-To-Guides/Developing-a-ROS-2-Package.html
+
 import os
 from glob import glob
 from setuptools import setup
 
-package_name = "letter_learning_interaction"
+package_name = "nao_trajectory_following"
 
 setup(
     name=package_name,
     version="0.0.0",
     # Packages to export
-    packages=[package_name, package_name + "/include"],
+    packages=[package_name],
     # Files we want to install, specifically launch files
     data_files=[
         # Install marker file in the package index
@@ -44,10 +46,8 @@ setup(
     # scripts here.
     entry_points={
         "console_scripts": [
-            "display_manager_server = letter_learning_interaction.display_manager_server:main",
-            "learning_words_nao = letter_learning_interaction.learning_words_nao:main",
-            "tablet_input_interpreter = letter_learning_interaction.tablet_input_interpreter:main",
-            "word_card_detector = letter_learning_interaction.word_card_detector:main",
+            "nao_writer_naoqi = nao_trajectory_following.nao_writer_naoqi:main",
+            "writing_surface_positioner = nao_trajectory_following.writing_surface_positioner:main",
         ]
     },
 )

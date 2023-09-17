@@ -17,6 +17,7 @@ RUN pip3 install qibuild scikit-build toml \
     git+https://github.com/openai/whisper.git 
 COPY ./requirements.txt ./requirements.txt
 RUN pip3 install -r requirements.txt
+RUN pip3 install transforms3d
 
 WORKDIR ${PROJECT_DIR}/src/
 ENV CMAKE_PREFIX_PATH=/opt/ros/humble
@@ -25,9 +26,8 @@ ENV PYTHONPATH=/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/loca
 
 COPY ./src ${PROJECT_DIR}/src
 WORKDIR ${PROJECT_DIR}/src/packages
-RUN git clone https://github.com/ros-visualization/interactive_markers.git/
 WORKDIR ${PROJECT_DIR}/src/packages/interactive_markers
-RUN git checkout humble
+RUN git checkout ros2
 WORKDIR ${PROJECT_DIR}/src/
 # isolation of the build environment for each module, otherwise the build remains stuck ?
 RUN colcon build --packages-select choose_adaptative_words
