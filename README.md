@@ -29,3 +29,10 @@ When the pull is finished, open 3 terminals and execute the following instructio
 ## Comments
 
 Need to solve the issue with tensorflow
+
+Successfully run outside of docker.
+Need to solve the issue with audio device permision issue.
+
+For audio-common package,
+Please use apt install ros-noetic-audio-common instead of catkin_make from source.
+
