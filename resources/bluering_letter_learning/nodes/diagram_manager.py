@@ -206,7 +206,7 @@ class ROSAudioStream(object):
             # buffer = io.BytesIO(content)
             # buffer.name = 'testy.wav'
             # transcribed_txt = openai.Audio.transcribe("whisper-1", buffer)
-            # rospy.loginfo(f'[+][ROSAudioStream][audio_callback] transcribed_txt : {transcribed_txt}')
+            rospy.loginfo(f'[+][ROSAudioStream][audio_callback] transcribed_txt : {transcribed_txt}')
 
             # rospy.loginfo(f'   [ROSAudioStream][audio_callback] time_taken : {time.time() - start_time:.2f} secs')
             rospy.loginfo(f'   [ROSAudioStream][audio_callback] self.listening_word_to_write : {self.listening_word_to_write}')
