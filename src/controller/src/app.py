@@ -5,7 +5,7 @@ nao_settings = NaoSettings()
 app = Flask(__name__)
 
 
-@app.route("/get_settings", methods=["POST"])
+@app.route("/get_settings", methods=["GET"])
 def get_settings():
     return jsonify(nao_settings.get_settings())
 

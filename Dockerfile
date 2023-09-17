@@ -29,11 +29,11 @@ WORKDIR ${PROJECT_DIR}/src
 RUN git clone https://github.com/ros-visualization/interactive_markers.git/
 WORKDIR ${PROJECT_DIR}/src/interactive_markers
 RUN git checkout ros2
-WORKDIR ${PROJECT_DIR}/src/
+WORKDIR ${PROJECT_DIR}
 # isolation of the build environment for each module, otherwise the build remains stuck ?
 RUN colcon build --packages-select interface
 RUN colcon build --packages-select interactive_markers
-RUN colcon build --packages-select choose_adaptative_words
+RUN colcon build --packages-select choose_adaptive_words
 RUN colcon build --packages-select nao_trajectory_following
 RUN colcon build --packages-select letter_learning_interaction
 
