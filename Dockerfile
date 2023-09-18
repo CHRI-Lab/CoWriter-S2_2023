@@ -24,15 +24,15 @@ ENV CMAKE_PREFIX_PATH=/opt/ros/humble
 ENV AMENT_PREFIX_PATH=/opt/ros/humble
 ENV PYTHONPATH=/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages
 
-COPY ./src ${PROJECT_DIR}/src
 WORKDIR ${PROJECT_DIR}/src
 RUN git clone https://github.com/ros-visualization/interactive_markers.git/
 WORKDIR ${PROJECT_DIR}/src/interactive_markers
 RUN git checkout ros2
 WORKDIR ${PROJECT_DIR}
-# isolation of the build environment for each module, otherwise the build remains stuck ?
-RUN colcon build --packages-select interface
 RUN colcon build --packages-select interactive_markers
+# isolation of the build environment for each module, otherwise the build remains stuck ?
+COPY ./src ${PROJECT_DIR}/src
+RUN colcon build --packages-select interface
 RUN colcon build --packages-select choose_adaptive_words
 RUN colcon build --packages-select nao_trajectory_following
 RUN colcon build --packages-select letter_learning_interaction

@@ -14,6 +14,7 @@ from geometry_msgs.msg import Pose
 from geometry_msgs.msg import PoseStamped
 import tf2_ros
 import tf_transformations
+from tf2_ros.buffer import Buffer
 from geometry_msgs.msg import TransformStamped
 import math
 from visualization_msgs.msg import Marker, InteractiveMarkerControl
@@ -216,9 +217,7 @@ def main(args=None):
         # frame has y horizontal and x vertical (graphics coordinate system) and
         # needs to be changed to 'robotics' coordinate system
 
-        tf_listener = tf2_ros.transform_listener.TransformListener(
-            True, Duration(seconds=10)
-        )
+        tf_listener = tf2_ros.transform_listener.TransformListener(Buffer(), node) #True, Duration(seconds=10))
         node.get_clock().sleep_for(Duration(seconds=0.5))
         rate = node.create_rate(50)
         while rclpy.ok():

@@ -12,6 +12,8 @@ from std_msgs.msg import (
 
 import rclpy
 from rclpy.node import Node
+import pkg_resources
+
 
 WINDOW_DEFAULT_SIZE = (960, 540)
 MIN_SIZE = (400, 300)
@@ -27,14 +29,15 @@ TOPIC_USER_DRAWN_SHAPES = "user_drawn_shapes"
 
 class Child_UI(QtWidgets.QMainWindow, Node):
     def __init__(self):
-        Node.__init__(self, "child_ui")
-        super().__init__()
+        super().__init__(node_name="child_ui")
+        # Node.__init__(self, "child_ui")
         working_dr = os.getcwd()
         self.pathWriter = working_dr + "/ui_database"
 
-        choose_adaptive_words_path = os.path.dirname(
-            os.path.dirname(os.path.realpath(__file__))
-        )
+        # choose_adaptive_words_path = os.path.dirname(
+        #     os.path.dirname(os.path.realpath(__file__))
+        # )
+        choose_adaptive_words_path = pkg_resources.resource_filename(__name__,"design")
 
         # set window
         self.setWindowTitle("Child UI")
@@ -53,7 +56,7 @@ class Child_UI(QtWidgets.QMainWindow, Node):
             QSize(ERASR_SIZE[0] - ERASR_OFFSET, ERASR_SIZE[1] - ERASR_OFFSET)
         )
         self.button_erase.setIcon(
-            QtGui.QIcon(choose_adaptive_words_path + "/design/assets/gomme.png")
+            QtGui.QIcon(choose_adaptive_words_path + "/assets/gomme.png")
         )
         self.button_erase.clicked.connect(self.button_erase_clicked)
 
@@ -63,7 +66,7 @@ class Child_UI(QtWidgets.QMainWindow, Node):
             QSize(ERASR_SIZE[0] - ERASR_OFFSET, ERASR_SIZE[1] - ERASR_OFFSET)
         )
         self.button_feedback.setIcon(
-            QtGui.QIcon(choose_adaptive_words_path + "/design/assets/send.svg")
+            QtGui.QIcon(choose_adaptive_words_path + "/assets/send.svg")
         )
         self.button_feedback.clicked.connect(self.feedback_clicked)
 

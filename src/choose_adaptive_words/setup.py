@@ -12,6 +12,8 @@ setup(
     # Packages to export
     packages=[package_name],
     # Files we want to install, specifically launch files
+    # package_data={'': ['*.svg', "*.ui", "*.png"]},
+    # include_package_data=True,
     data_files=[
         # Install marker file in the package index
         (
@@ -25,6 +27,8 @@ setup(
             os.path.join("share", package_name, "launch"),
             glob(os.path.join(package_name, "launch", "*.launch.py")),
         ),
+        (os.path.join('lib/python3.10/site-packages/choose_adaptive_words/design/assets'), glob(package_name+'/design/assets/*')),
+        (os.path.join('lib/python3.10/site-packages/choose_adaptive_words/design/'), glob(package_name+'/design/*.ui')),
     ],
     # This is important as well
     install_requires=["setuptools"],

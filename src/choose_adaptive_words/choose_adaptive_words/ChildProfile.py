@@ -2,7 +2,7 @@ from PyQt5 import uic, QtWidgets
 from PyQt5.QtCore import QObject, QRect, Qt, QDate, QDateTime, pyqtSignal
 from PyQt5.QtGui import QPainter, QColor, QFont, QBrush, QPen, QPixmap, QPalette
 import os
-
+import pkg_resources
 
 class ChildProfile(QtWidgets.QDialog):
 
@@ -16,11 +16,13 @@ class ChildProfile(QtWidgets.QDialog):
 		self.male = True
 		self.section = 4
 
-		choose_adaptive_words_path = os.path.dirname(
-			os.path.dirname(os.path.realpath(__file__)))
+		# choose_adaptive_words_path = os.path.dirname(
+		# 	os.path.dirname(os.path.realpath(__file__)))
+		choose_adaptive_words_path = pkg_resources.resource_filename(__name__,"design")
+		
 
 		super(ChildProfile, self).__init__(parent)
-		uic.loadUi(choose_adaptive_words_path + '/design/childProfile.ui', self)
+		uic.loadUi(choose_adaptive_words_path + '/childProfile.ui', self)
 
 		# connect slots
 		self.e_firstName.textChanged.connect(self.firstNameChanged)

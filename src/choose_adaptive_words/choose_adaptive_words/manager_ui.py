@@ -20,6 +20,7 @@ import numpy as np
 import os
 
 import sys
+import pkg_resources
 
 import rclpy
 from rclpy.node import Node
@@ -37,14 +38,15 @@ TOPIC_SHAPE_FINISHED = "shape_finished"
 
 class Manager_UI(QtWidgets.QDialog, Node):
     def __init__(self):
-        self.node = rclpy.create_node("manager_ui")
-        self.choose_adaptive_words_path = os.path.dirname(
-            os.path.dirname(os.path.realpath(__file__))
-        )
-
-        super(Manager_UI, self).__init__()
+        super().__init__(node_name="manager_ui")
+        #self = rclpy.create_node("manager_ui")
+        # self.choose_adaptive_words_path = os.path.dirname(
+        #     os.path.dirname(os.path.realpath(__file__))
+        # )
+        self.choose_adaptive_words_path = pkg_resources.resource_filename(__name__,"design")
+        # super(Manager_UI, self).__init__()
         uic.loadUi(
-            self.choose_adaptive_words_path + "/design/manager_view.ui", self
+            self.choose_adaptive_words_path + "/manager_view.ui", self
         )
         self.show()
         # define QtWidgets
@@ -65,29 +67,29 @@ class Manager_UI(QtWidgets.QDialog, Node):
         self.buttonStop.clicked.connect(self.buttonStopCliked)
 
         self.labelLeariningPace.setText(str(self.sliderLearningPace.value()))
-        self.ap = AudioProcessor("english", self.node)
+        self.ap = AudioProcessor("english", self)
 
         ## init publisher
         # self.publish_word_to_write = rospy.Publisher(TOPIC_WORDS_TO_WRITE, String, queue_size=10)
-        self.publish_word_to_write = self.node.create_publisher(
+        self.publish_word_to_write = self.create_publisher(
             String, TOPIC_WORDS_TO_WRITE, 10
         )
-        self.publish_simple_learning_pace = self.node.create_publisher(
+        self.publish_simple_learning_pace = self.create_publisher(
             Float32, TOPIC_LEARNING_PACE, 10
         )
-        self.publish_manager_erase = self.node.create_publisher(
+        self.publish_manager_erase = self.create_publisher(
             String, TOPIC_MANAGER_ERASE, 10
         )
-        self.publish_chatgpt_input = self.node.create_publisher(
+        self.publish_chatgpt_input = self.create_publisher(
             String, TOPIC_GPT_INPUT, 10
         )
-        self.publish_shape_finished = self.node.create_publisher(
+        self.publish_shape_finished = self.create_publisher(
             String, TOPIC_SHAPE_FINISHED, 10
         )
-        self.transcription_publisher = self.node.create_publisher(
+        self.transcription_publisher = self.create_publisher(
             String, "speech_rec", 10
         )
-        self.stop_publisher = self.node.create_publisher(
+        self.stop_publisher = self.create_publisher(
             Empty, "stop_learning", 10
         )
 
@@ -207,7 +209,7 @@ def main(args=None):
     app = QtWidgets.QApplication(sys.argv)
     window = Manager_UI()
     window.show()
-    rclpy.spin(window.node)
+    rclpy.spin(window)
     rclpy.shutdown()
     sys.exit(app.exec_())
 

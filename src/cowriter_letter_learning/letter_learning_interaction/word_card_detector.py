@@ -19,6 +19,8 @@ from rclpy.node import Node
 from rclpy.time import Time
 from rclpy.clock import Duration
 import tf2_ros as tf
+from tf2_ros.buffer import Buffer
+
 from std_msgs.msg import String, Empty
 
 # import operator
@@ -132,7 +134,7 @@ def main(args=None):
     pub_test = node.create_publisher(Empty, test_topic, 10)
 
     # Initialize the TransformListener
-    tf_listener = tf.TransformListener(True, Duration(nanoseconds=500000000))
+    tf_listener = tf.TransformListener(Buffer(), node) #,True, Duration(nanoseconds=500000000))
     sleep(0.5)
     rate = node.create_rate(10)
     prev_word: str = ""

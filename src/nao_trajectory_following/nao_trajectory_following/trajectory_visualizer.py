@@ -57,11 +57,11 @@ class TrajectoryVisualizer(Node):
         self.shapeCount = 0
         # when we get a trajectory, start publishing the animation
         traj_subscriber = self.create_subscription(
-            Path, SHAPE_TOPIC, self.on_traj, rclpy.qos.QoSProfile()
+            Path, SHAPE_TOPIC, self.on_traj, 10
         )
         # when we get a clear request, delete previously drawn shapes
         clear_subscriber = self.create_subscription(
-            Empty, CLEAR_TOPIC, self.on_clear, rclpy.qos.QoSProfile()
+            Empty, CLEAR_TOPIC, self.on_clear, 10
         )
 
     def visualize_traj(self, points):

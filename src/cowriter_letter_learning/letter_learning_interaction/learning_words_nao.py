@@ -361,17 +361,17 @@ class SubscriberCallbacks:
             if self.nao_settings.get("nao_standing"):
                 self.session.post(
                     "http://localhost:5000/go_to_posture",
-                    {"posture": "StandInit", "speed": 0.3},
+                    json={"posture": "StandInit", "speed": 0.3},
                 )
             else:
                 self.session.post("http://localhost:5000/rest")
                 self.session.post(
                     "http://localhost:5000/set_stiffness",
-                    {"joints": ["Head", "LArm", "RArm"], "set_stiffness": 0.5},
+                    json={"joints": ["Head", "LArm", "RArm"], "set_stiffness": 0.5},
                 )
                 self.session.post(
                     "http://localhost:5000/set_stiffness",
-                    {
+                    json={
                         "joints": [
                             "LHipYawPitch",
                             "LHipRoll",
@@ -487,12 +487,12 @@ class SubscriberCallbacks:
                 and self.chatGPT_to_say_enabled
             ):
                 self.session.post(
-                    "http://localhost:5000/say", {"phrase": self.response}
+                    "http://localhost:5000/say", json={"phrase": self.response}
                 )
         else:
             self.response = "feedback"
             self.session.post(
-                "http://localhost:5000/say", {"phrase": "Thanks for feedback"}
+                "http://localhost:5000/say", json={"phrase": "Thanks for feedback"}
             )
 
         self.feedback_received = self.response
@@ -548,9 +548,10 @@ class StateManager:
         # shape params
         # Frame ID to publish points in
         # FRAME = rospy.get_param("~writing_surface_frame_id", "writing_surface")
-        self.frame = self.ros_node.get_parameter(
-            "writing_surface_frame_id"
-        ).value
+        self.frame = "writing_surface"
+        #self.ros_node.get_parameter(
+        #     "writing_surface_frame_id"
+        # ).value
 
         # Name of topic to receive feedback on
         # FEEDBACK_TOPIC = rospy.get_param('~shape_feedback_topic', 'shape_feedback')
@@ -650,7 +651,7 @@ class StateManager:
 
             self.session.post(
                 "http://localhost:5000/nao_speak_and_log_phrase",
-                {"phrase": to_say},
+                json={"phrase": to_say},
             )
 
         # 1- Update the shape models with the incoming demos
@@ -870,7 +871,7 @@ class StateManager:
         if self.nao_settings.get("nao_speaking"):
             self.session.post(
                 "http://localhost:5000/nao_speak_and_log_phrase",
-                {"phrase": self.phrase_manager.thank_you_phrase[0]},
+                json={"phrase": self.phrase_manager.thank_you_phrase[0]},
             )
 
         # Set nao to rest
@@ -906,7 +907,7 @@ class StateManager:
         if self.nao_settings.get("nao_speaking"):
             self.session.post(
                 "http://localhost:5000/handle_look_and_ask_for_feedback",
-                {"phrase": self.phrase_manager.intro_phrase},
+                json={"phrase": self.phrase_manager.intro_phrase},
             )
 
         next_state = "WAITING_FOR_WORD"
@@ -1140,7 +1141,7 @@ class StateManager:
 
             self.session.post(
                 "http://localhost:5000/nao_speak_and_log_phrase",
-                {"phrase": to_say},
+                json={"phrase": to_say},
             )
 
         # Clear screen
@@ -1592,7 +1593,8 @@ def main(args=None):
     info_for_start_state = {"state_came_from": None}
 
     # Set nao up for interaction
-    nao_settings.set_nao_interaction()
+    # nao_settings.set_nao_interaction()
+    session.post("http://localhost:5000/set_interaction")
 
     # Init subscribers
     # listen for a new child signal

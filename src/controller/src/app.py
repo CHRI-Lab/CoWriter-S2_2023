@@ -18,7 +18,7 @@ def set_interaction():
 
 @app.route("/speak_and_log_phrases", methods=["POST"])
 def nao_speak_and_log_phrase():
-    data = request.get_json()
+    data = request.json
     nao_settings.speak_and_log_phrase(data.get("phrase"))
     return jsonify({"status": "success"})
 
@@ -31,14 +31,14 @@ def look_at_tablet():
 
 @app.route("/look_and_ask_for_feedback", methods=["POST"])
 def look_and_ask_for_feedback():
-    data = request.get_json()
+    data = request.json
     nao_settings.look_and_ask_for_feedback(data.get("phrase"), data.get("side"))
     return jsonify({"status": "success"})
 
 
 @app.route("/handle_look_and_ask_for_feedback", methods=["POST"])
 def handle_look_and_ask_for_feedback():
-    data = request.get_json()
+    data = request.json
     nao_settings.handle_look_and_ask_for_feedback(data.get("phrase"))
     return jsonify({"status": "success"})
 
@@ -51,7 +51,7 @@ def nao_rest():
 
 @app.route("/say", methods=["POST"])
 def say():
-    data = request.get_json()
+    data = request.json
     nao_settings.text_to_speech.say(data.get("phrase"))
     return jsonify({"status": "success"})
 
@@ -64,7 +64,7 @@ def rest():
 
 @app.route("/set_stiffness", methods=["POST"])
 def set_stiffness():
-    data = request.get_json()
+    data = request.json
     nao_settings.posture_proxy.motion_proxy.setStiffnesses(
         data.get("joints"), data.get("stiffness")
     )
@@ -73,7 +73,7 @@ def set_stiffness():
 
 @app.route("/go_to_posture", methods=["POST"])
 def go_to_posture():
-    data = request.get_json()
+    data = request.json
     nao_settings.posture_proxy.goToPosture(
         data.get("posture"), data.get("speed")
     )
@@ -82,21 +82,21 @@ def go_to_posture():
 
 @app.route("/open_hand", methods=["POST"])
 def open_hand():
-    data = request.get_json()
+    data = request.json
     nao_settings.motion_proxy.openHand(data.get("hand"))
     return jsonify({"status": "success"})
 
 
 @app.route("/close_hand", methods=["POST"])
 def close_hand():
-    data = request.get_json()
+    data = request.json
     nao_settings.motion_proxy.closeHand(data.get("hand"))
     return jsonify({"status": "success"})
 
 
 @app.route("/position_interpolation", methods=["POST"])
 def position_interpolation():
-    data = request.get_json()
+    data = request.json
     nao_settings.motion_proxy.positionInterpolation(
         data.get("effector"),
         data.get("space"),

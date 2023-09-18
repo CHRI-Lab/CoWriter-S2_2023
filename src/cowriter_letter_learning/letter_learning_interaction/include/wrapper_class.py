@@ -60,7 +60,7 @@ class PublisherManager:
         )
 
         self.pub_traj = self.ros_node.create_publisher(
-            self.SHAPE_TOPIC, Path, 10
+            Path, self.SHAPE_TOPIC,  10
         )
 
         self.pub_bounding_boxes = self.ros_node.create_publisher(

@@ -8,6 +8,7 @@ run:
 		--user nao \
 		--network="host" \
 		-v ./src:/home/nao/NAOHW-Boxjelly/src \
+		-v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=${DISPLAY} \
 		boxjelly-ros2 bash
 
 run-controller:

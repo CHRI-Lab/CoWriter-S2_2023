@@ -16,7 +16,7 @@ from rclpy.node import Node
 from rclpy.duration import Duration
 
 from tf2_ros.transform_listener import TransformListener
-
+from tf2_ros.buffer import Buffer
 from requests import Session
 
 # import motion
@@ -53,7 +53,7 @@ class nao_writer_naoqi(Node):
             "~trajectory_nao_topic", "write_traj"
         ).value
         self.nao_settings = session.get(
-            "htpp://localhost:5000/get_settings"
+            "http://localhost:5000/get_settings"
         ).json()
         TRAJ_TOPIC = "write_traj_nao"  # rospy.get_param('~trajectory_nao_input_topic','/write_traj_nao')
         # NAO_IP = self.declare_parameter("~nao_ip", "127.0.0.1").value
@@ -82,12 +82,12 @@ class nao_writer_naoqi(Node):
         # self.memoryProxy = self.session.service("ALMemory")
         # self.postureProxy = self.session.service("ALRobotPosture")
         # self.ttsProxy = self.session.service("ALTextToSpeech")
-        self.tl = TransformListener()
+        self.tl = TransformListener(Buffer(), self)#, True, Duration(seconds=10))
         self.space = 2  # {FRAME_TORSO = 0, FRAME_WORLD = 1, FRAME_ROBOT = 2}
         self.isAbsolute = True
 
         self.create_subscription(
-            Path, SHAPE_TOPIC, self.on_traj, rclpy.qos.QoSProfile()
+            Path, SHAPE_TOPIC, self.on_traj, 10
         )
 
     def point_dist(self, p1, p2):
@@ -119,10 +119,10 @@ class nao_writer_naoqi(Node):
 
         if self.effector == "LArm":
             self.session.post(
-                "http://localhost:5000/open_hand", {"hand": "LHand"}
+                "http://localhost:5000/open_hand", json={"hand": "LHand"}
             )
             self.session.post(
-                "http://localhost:5000/close_hand", {"hand": "LHand"}
+                "http://localhost:5000/close_hand", json={"hand": "LHand"}
             )
 
             roll = (
@@ -130,10 +130,10 @@ class nao_writer_naoqi(Node):
             )  # rotate wrist to the left (about the x axis, w.r.t. robot frame)
         else:
             self.session.post(
-                "http://localhost:5000/open_hand", {"hand": "RHand"}
+                "http://localhost:5000/open_hand", json={"hand": "RHand"}
             )
             self.session.post(
-                "http://localhost:5000/close_hand", {"hand": "RHand"}
+                "http://localhost:5000/close_hand", json={"hand": "RHand"}
             )
             roll = 1.7  # rotate wrist to the right (about the x axis, w.r.t. robot frame)
 
@@ -201,7 +201,7 @@ class nao_writer_naoqi(Node):
 
         self.session.post(
             "http://localhost:5000/position_interpolation",
-            {
+            json={
                 "effector": self.effector,
                 "space": self.space,
                 "path": self.traj_to_path(path),

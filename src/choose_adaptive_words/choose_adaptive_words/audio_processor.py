@@ -60,7 +60,7 @@ class AudioProcessor:
 
     def __init__(self, language, ros_node: Node):
         super().__init__()
-        self.ros_node_logger = ros_node.logger
+        self.ros_node_logger = ros_node.get_logger()
         self.language: str = language
         self.record_file = os.getcwd() + "/record.wav"
         self.speech_transcriber = SpeechTranscriber(self.language)

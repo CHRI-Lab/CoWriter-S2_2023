@@ -115,7 +115,7 @@ class NaoSettings:
         self.alternate_sides_looking_at = False
         self.next_side_to_look_at = "Right"
 
-    def set_nao_interaction(self):
+    def set_interaction(self):
         """
         Sets the parameters for interaction with the robot.
 
