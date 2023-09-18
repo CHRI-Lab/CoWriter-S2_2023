@@ -25,6 +25,9 @@ import pkg_resources
 import rclpy
 from rclpy.node import Node
 
+from threading import Thread
+from rclpy.executors import MultiThreadedExecutor
+
 from choose_adaptive_words.audio_processor import AudioProcessor
 from choose_adaptive_words.ChildProfile import ChildProfile
 from choose_adaptive_words.parameters import *
@@ -36,41 +39,38 @@ TOPIC_GPT_INPUT = "chatgpt_input"
 TOPIC_SHAPE_FINISHED = "shape_finished"
 
 
-class Manager_UI(QtWidgets.QDialog, Node):
+class Manager_UI(QtWidgets.QDialog, QtWidgets.QMainWindow):
     def __init__(self):
-        super().__init__(node_name="manager_ui")
+        # super().__init__(node_name=")
         #self = rclpy.create_node("manager_ui")
         # self.choose_adaptive_words_path = os.path.dirname(
         #     os.path.dirname(os.path.realpath(__file__))
         # )
         self.choose_adaptive_words_path = pkg_resources.resource_filename(__name__,"design")
-        # super(Manager_UI, self).__init__()
-        uic.loadUi(
+        super(Manager_UI, self).__init__()
+        self.ui = uic.loadUi(
             self.choose_adaptive_words_path + "/manager_view.ui", self
         )
         self.show()
         # define QtWidgets
-        self.buttonPredict.clicked.connect(self.buttonPredictClicked)
-        self.buttonSendRobot.clicked.connect(self.buttonSendRobotClicked)
-        self.buttonErase.clicked.connect(self.buttonEraseClicked)
-        self.buttonProfile.clicked.connect(self.buttonProfileClicked)
-        self.buttonPathDialog.clicked.connect(self.buttonPathDialogClicked)
-        self.buttonWordToWrite.clicked.connect(self.buttonWordToWriteClicked)
-        self.buttonGptText.clicked.connect(self.buttonGptTextClicked)
-        self.buttonRobotFinished.clicked.connect(
-            self.buttonRobotFinishedClicked
-        )
-        self.sliderLearningPace.sliderReleased.connect(
-            self.sliderLearningPaceUpdated
-        )
-        self.buttonTalkToMe.clicked.connect(self.buttonTalkToMeCliked)
-        self.buttonStop.clicked.connect(self.buttonStopCliked)
 
         self.labelLeariningPace.setText(str(self.sliderLearningPace.value()))
-        self.ap = AudioProcessor("english", self)
+        
 
         ## init publisher
         # self.publish_word_to_write = rospy.Publisher(TOPIC_WORDS_TO_WRITE, String, queue_size=10)
+        
+        ## init path
+        self.pathText.setText(PATH_DB)
+
+
+
+
+class ManagerUINode(Node):
+    def __init__(self, gui: Manager_UI):
+        super().__init__("manager_ui")
+        self.gui = gui
+        self.ap = AudioProcessor("english", self)
         self.publish_word_to_write = self.create_publisher(
             String, TOPIC_WORDS_TO_WRITE, 10
         )
@@ -93,34 +93,55 @@ class Manager_UI(QtWidgets.QDialog, Node):
             Empty, "stop_learning", 10
         )
 
-        ## init path
-        self.pathText.setText(PATH_DB)
+        
+
+        self.gui.buttonStop.clicked.connect(self.buttonStopCliked)
+        self.gui.buttonPredict.clicked.connect(self.buttonPredictClicked)
+        self.gui.buttonSendRobot.clicked.connect(self.buttonSendRobotClicked)
+        self.gui.buttonErase.clicked.connect(self.buttonEraseClicked)
+        self.gui.buttonProfile.clicked.connect(self.buttonProfileClicked)
+        self.gui.buttonPathDialog.clicked.connect(self.buttonPathDialogClicked)
+        self.gui.buttonWordToWrite.clicked.connect(self.buttonWordToWriteClicked)
+        self.gui.buttonGptText.clicked.connect(self.buttonGptTextClicked)
+        self.gui.buttonRobotFinished.clicked.connect(
+            self.buttonRobotFinishedClicked
+        )
+        self.gui.sliderLearningPace.sliderReleased.connect(
+            self.sliderLearningPaceUpdated
+        )
+        self.gui.buttonTalkToMe.clicked.connect(self.buttonTalkToMeCliked)
+
+        # self.publisher_ = self.create_publisher(String, 'topic', 10)
+        # timer_period = 0.5  # seconds
+        # self.timer = self.create_timer(timer_period, self.timer_callback)
+        # self.i = 0
 
     def buttonStopCliked(self):
-        self.stop_publisher.publish()
+        self.stop_publisher.publish(Empty())
 
     def buttonEraseClicked(self):
-        self.publish_manager_erase.publish("erase")
+        self.get_logger().info("erasing child")
+        self.publish_manager_erase.publish(String(data="erased"))
 
     def buttonTalkToMeCliked(self):
         self.ap.run()
-        self.transcription_publisher.publish(self.ap.transcription)
+        self.transcription_publisher.publish(String(data=self.ap.transcription))
 
     def buttonWordToWriteClicked(self):
-        print(
-            "published " + self.wordText.text().lower() + " to /words_to_write"
+        self.get_logger().info(
+            "published " + self.gui.wordText.text().lower() + " to /words_to_write"
         )
-        self.publish_word_to_write.publish(self.wordText.text().lower())
+        self.publish_word_to_write.publish(String(data=self.gui.wordText.text().lower()))
 
     def buttonGptTextClicked(self):
-        print("published " + self.gptText.text() + " to /chatgpt_input")
-        self.publish_chatgpt_input.publish(self.gptText.text())
+        self.get_logger().info("published " + self.gui.gptText.text() + " to /chatgpt_input")
+        self.publish_chatgpt_input.publish(String(data=self.gui.gptText.text()))
 
     def sliderLearningPaceUpdated(self):
         self.publish_simple_learning_pace.publish(
-            np.uint8(self.sliderLearningPace.value() / 100)
+            Float32(data=float(self.gui.sliderLearningPace.value() / 100))
         )
-        self.labelLeariningPace.setText(str(self.sliderLearningPace.value()))
+        self.gui.labelLeariningPace.setText(str(self.gui.sliderLearningPace.value()))
 
     def buttonProfileClicked(self):
         pass
@@ -198,20 +219,45 @@ class Manager_UI(QtWidgets.QDialog, Node):
             None, "Select a folder:", expanduser("~")
         )
         if len(input_dir) > 0:
-            self.pathText.setText(input_dir)
+            self.gui.pathText.setText(input_dir)
 
     def buttonRobotFinishedClicked(self):
-        self.publish_shape_finished.publish("finish")
+        self.publish_shape_finished.publish(String(data="finished"))
+
+
+    # def timer_callback(self):
+    #     msg = String()
+    #     msg.data = 'Hello World: %d' % self.i
+    #     self.publisher_.publish(msg)
+    #     self.get_logger().info('Publishing: "%s"' % msg.data)
+    #     self.i += 1
+
 
 
 def main(args=None):
     rclpy.init()
     app = QtWidgets.QApplication(sys.argv)
     window = Manager_UI()
-    window.show()
-    rclpy.spin(window)
-    rclpy.shutdown()
-    sys.exit(app.exec_())
+    
+    
+    node = ManagerUINode(window)
+
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+    
+    thread = Thread(target=executor.spin)
+    thread.start()
+    node.get_logger().info("node spin")
+
+    try:
+        window.show()
+        sys.exit(app.exec_())
+
+    finally:
+        node.get_logger().info("Shutting down ROS2 Node . . .")
+        node.destroy_node()
+        executor.shutdown()
+
 
 
 if __name__ == "__main__":

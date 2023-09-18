@@ -88,94 +88,10 @@ class LearningWordsNao(Node):
         self.session = session
         self.declare_parameter("dataset_directory", "default")
         self.topics = SubscriberTopics(self)
-        self.new_child_subscriber = self.create_subscription(
-            String,
-            self.topics.NEW_CHILD_TOPIC,
-            subscriber_callbacks.on_new_child_received,
-            10,
-        )
-
-        # listen for words to write
-        self.words_subscriber = self.create_subscription(
-            String,
-            self.topics.WORDS_TOPIC,
-            subscriber_callbacks.on_word_received,
-            10,
-        )
-
-        # listen for test time
-        self.test_subscriber = self.create_subscription(
-            Empty,
-            self.topics.TEST_TOPIC,
-            subscriber_callbacks.on_test_request_received,
-            10,
-        )
-
-        # listen for when to stop
-        self.stop_subscriber = self.create_subscription(
-            Empty,
-            self.topics.STOP_TOPIC,
-            subscriber_callbacks.on_stop_request_received,
-            10,
-        )
-
-        # listen for user-drawn shapes
-        self.shape_subscriber = self.create_subscription(
-            ShapeMsg,
-            self.topics.PROCESSED_USER_SHAPE_TOPIC,
-            subscriber_callbacks.on_user_drawn_shape_received,
-            10,
-        )
-
-        # listen for user-drawn finger gestures
-        self.gesture_subscriber = self.create_subscription(
-            PointStamped,
-            self.topics.GESTURE_TOPIC,
-            subscriber_callbacks.on_set_active_shape_gesture,
-            10,
-        )
-
-        self.shape_finished_subscriber = self.create_subscription(
-            String,
-            self.topics.SHAPE_FINISHED_TOPIC,
-            subscriber_callbacks.on_shape_finished,
-            10,
-        )
-
-        # Commented method/function out because not presently in use
-        # TODO: reintegrate or remove
         # listen for request to clear screen (from tablet)
         # clear_subscriber = self.create_subscription(SubscriberTopics.CLEAR_SURFACE_TOPIC,
         #                                     Empty,
         #                                     subscriber_callbacks.on_clear_screen_received)
-
-        TOPIC_GPT_INPUT = "chatgpt_input"
-        self.create_subscription(
-            String,
-            TOPIC_GPT_INPUT,
-            subscriber_callbacks.on_user_chat_received,
-            10,
-        )
-
-        START_SENDING_VOICE = "speech_rec"
-        self.create_subscription(
-            String,
-            START_SENDING_VOICE,
-            subscriber_callbacks.on_feedback_received,
-            10,
-        )
-
-        # initialise display manager for shapes (manages positioning of shapes)
-        self.clear_all_shapes_service = self.create_client(
-            ClearAllShapes, "clear_all_shapes"
-        )
-        self.get_logger().info(
-            "Waiting for display manager services to become available"
-        )
-        self.clear_all_shapes_service.wait_for_service()
-
-        sleep(2.0)  # Allow some time for the subscribers to do t heir thing,
-        # or the first message will be missed (eg. first traj on tablet, first clear request locally)
 
     def clear_all_shapes(self):
         while not self.client.wait_for_service(timeout_sec=1.0):
@@ -237,16 +153,16 @@ class SubscriberCallbacks:
         self.ros_node = ros_node
         self.phrase_manager = phrase_manager
 
-    def on_user_chat_received(self, in_chat: String) -> None:
+    def on_user_chat_received(self, msg: String) -> None:
         """
         if self.chat_enabled is enabled, send the word to Chatgpt,
         and let robot say() the output
 
         :in_chat: std_msgs.msg.String, input fot chat in .data
         """
-        self.ros_node.get_logger().info("input for GPT: " + in_chat.data)
+        self.ros_node.get_logger().info("input for GPT: " + msg.data)
         if self.chatGPT_enabled:
-            self.response = self.managerGPT.get_gpt_response(in_chat.data)
+            self.response = self.managerGPT.get_gpt_response(msg.data)
             if self.chatGPT_to_say_enabled:
                 self.session.post(
                     "http://localhost:5000/say", json=self.response
@@ -424,6 +340,7 @@ class SubscriberCallbacks:
                 f"Received word: {self.word_received}"
             )
         else:
+            self.get_logger().info("no word received")
             self.word_received = None  # ignore
 
     def on_clear_screen_received(self) -> None:
@@ -1426,9 +1343,6 @@ def main(args=None):
     session = session
     node.declare_parameter("dataset_directory", "default")
     topics = SubscriberTopics(node)
-
-    executor = rclpy.executors.MultiThreadedExecutor()
-    executor.add_node(node)
 
     # dataset_directory = rospy.get_param("~dataset_directory", "default")
     dataset_directory = node.get_parameter("dataset_directory").value

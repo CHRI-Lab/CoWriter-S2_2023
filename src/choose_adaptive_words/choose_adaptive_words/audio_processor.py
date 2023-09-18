@@ -60,7 +60,7 @@ class AudioProcessor:
 
     def __init__(self, language, ros_node: Node):
         super().__init__()
-        self.ros_node_logger = ros_node.get_logger()
+        self.ros_node = ros_node
         self.language: str = language
         self.record_file = os.getcwd() + "/record.wav"
         self.speech_transcriber = SpeechTranscriber(self.language)
@@ -77,17 +77,17 @@ class AudioProcessor:
         """
         Run on a loop, recording audio and processing it.
         """
-        self.ros_node_logger("Starting start_recording().")
+        self.ros_node.get_logger().info("Starting start_recording().")
         self.start_recording()
         # Record for chunk_duration seconds
         time.sleep(self.chunk_duration)
-        self.ros_node_logger("Finished start_recording().")
-        self.ros_node_logger("Starting stop_recording()")
+        self.ros_node.get_logger().info("Finished start_recording().")
+        self.ros_node.get_logger().info("Starting stop_recording()")
         self.stop_recording()
-        self.ros_node_logger("Finished stop_recording()")
-        self.ros_node_logger("Starting process_audio()")
+        self.ros_node.get_logger().info("Finished stop_recording()")
+        self.ros_node.get_logger().info("Starting process_audio()")
         self.process_audio()
-        self.ros_node_logger("Finished process_audio()")
+        self.ros_node.get_logger().info("Finished process_audio()")
 
     def start_recording(self):
         """
@@ -115,7 +115,7 @@ class AudioProcessor:
         transcription_chunk: str = self.speech_transcriber.transcribe_audio(
             self.record_file
         )["text"]
-        self.ros_node_logger("Transcription is %s" % transcription_chunk)
+        self.ros_node.get_logger().info("Transcription is %s" % transcription_chunk)
         self.transcription += transcription_chunk
 
         # If transcription is non-empty & unchanged, publish and reset

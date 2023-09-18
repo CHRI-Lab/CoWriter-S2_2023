@@ -224,6 +224,9 @@ class TabletInputInterpreter(Node):
 
         # Publish shape message
         demo_shape_received = Shape(path=path)
+        # self.get_logger().info(np.float32(demo_shape_received.path))
+
+
         shape_message = self.make_shape_message(demo_shape_received)
         self.publish_shapes.publish(shape_message)
 
@@ -242,7 +245,7 @@ class TabletInputInterpreter(Node):
         """
         shape_message = ShapeMsg()
         if shape.path is not None:
-            shape_message.path = shape.path
+            shape_message.path = [float( point) for point in shape.path]
         if shape.shape_id is not None:
             shape_message.shape_id = shape.shape_id
         if shape.shape_type is not None:

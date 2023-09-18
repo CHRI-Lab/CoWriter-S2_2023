@@ -97,7 +97,7 @@ class UIBackend(Node):
     def offset_shape(shape, x, y):
         return [(p[0] + x, p[1] + y) for p in shape]
 
-    def callback_words_to_write(data):
+    def callback_words_to_write(self,data):
         offset = 0
         for letter in data.data:
             if letter in LETTER.keys():
@@ -120,7 +120,7 @@ class UIBackend(Node):
             points.append((x, y))
         to_draw.append(points)
         print(to_draw)
-        self.publisher_shape_to_draw.publish(self.pack_writing_pts(points))
+        self.publisher_shape_to_draw.publish(Int32MultiArray(data=self.pack_writing_pts(points)))
 
 
 def main(args=None):

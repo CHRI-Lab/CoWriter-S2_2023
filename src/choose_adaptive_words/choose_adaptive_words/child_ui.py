@@ -10,6 +10,9 @@ from std_msgs.msg import (
     MultiArrayLayout,
 )
 
+from threading import Thread
+from rclpy.executors import MultiThreadedExecutor
+
 import rclpy
 from rclpy.node import Node
 import pkg_resources
@@ -27,13 +30,15 @@ TOPIC_LEARNING_PACE = "simple_learning_pace"
 TOPIC_USER_DRAWN_SHAPES = "user_drawn_shapes"
 
 
-class Child_UI(QtWidgets.QMainWindow, Node):
+
+
+class Child_UI(QtWidgets.QMainWindow):
     def __init__(self):
-        super().__init__(node_name="child_ui")
+        super().__init__()
         # Node.__init__(self, "child_ui")
         working_dr = os.getcwd()
         self.pathWriter = working_dr + "/ui_database"
-
+        # self.ros_node = ros_node
         # choose_adaptive_words_path = os.path.dirname(
         #     os.path.dirname(os.path.realpath(__file__))
         # )
@@ -68,7 +73,7 @@ class Child_UI(QtWidgets.QMainWindow, Node):
         self.button_feedback.setIcon(
             QtGui.QIcon(choose_adaptive_words_path + "/assets/send.svg")
         )
-        self.button_feedback.clicked.connect(self.feedback_clicked)
+        
 
         # init pos recording
         self.last_x, self.last_y = None, None
@@ -87,21 +92,7 @@ class Child_UI(QtWidgets.QMainWindow, Node):
         self.child_point_lists = list()
         self.manager_point_lists = list()
 
-        # init subscribers
-        self.create_subscription(
-            Int32MultiArray,
-            TOPIC_SHAPES_TO_DRAW,
-            self.callback_words_to_write,
-            10,
-        )
-        self.create_subscription(
-            String, TOPIC_MANAGER_ERASE, self.callback_manager_erase, 10
-        )
-
-        # init publisher
-        self.publish_user_drawn_shapes = self.create_publisher(
-            Int32MultiArray, TOPIC_USER_DRAWN_SHAPES, 10
-        )
+        
 
     def update_drawings(self):
         # reset canvas
@@ -176,22 +167,7 @@ class Child_UI(QtWidgets.QMainWindow, Node):
 
         return pt_msg
 
-    def feedback_clicked(self):
-        """
-        publish feedback on click
-        """
-        total_list = []
-        i = 0
-
-        for l in self.child_point_lists:
-            total_list.append((i, len(l)))
-            total_list += l
-            i += 1
-        print(total_list)
-        self.publish_user_drawn_shapes.publish(
-            self.pack_writing_pts(total_list)
-        )
-
+    
     def resizeEvent(self, event):
         if hasattr(self, "button_erase"):
             self.button_erase.setGeometry(
@@ -238,33 +214,104 @@ class Child_UI(QtWidgets.QMainWindow, Node):
         self.child_point_lists.append(self.child_point_list)
         self.child_point_list = []
 
+
+
+class ChildGUINode(Node):
+    def __init__(self, gui:Child_UI):
+        super().__init__("child_ui")
+        self.gui = gui
+        # init subscribers
+        self.create_subscription(
+            Int32MultiArray,
+            TOPIC_SHAPES_TO_DRAW,
+            self.callback_words_to_write,
+            10,
+        )
+        self.sub_eraser = self.create_subscription(
+            String, TOPIC_MANAGER_ERASE, self.callback_manager_erase, 10
+        )
+
+        # init publisher
+        self.publish_user_drawn_shapes = self.create_publisher(
+            Int32MultiArray, TOPIC_USER_DRAWN_SHAPES, 10
+        )
+        self.gui.button_feedback.clicked.connect(self.feedback_clicked)
+
+        # self.subscription = self.create_subscription(
+        #     String,
+        #     'topic',
+        #     self.listener_callback,
+        #     10)
+        
+    def listener_callback(self, msg):
+        self.get_logger().info('I heard: "%s"' % msg.data)
+        
     def callback_words_to_write(self, data):
         pts = [
             (data.data[i * 2], data.data[i * 2 + 1])
             for i in range(int(len(data.data) / 2))
         ]
         self.manager_point_lists.append(pts)
-        self.update_drawings()
+        self.gui.update_drawings()
 
     def callback_manager_erase(self, data):
+        self.get_logger().info('I heard: "%s"' % data.data)
+        self.get_logger().info("erasing")
         self.manager_point_lists = list()
-        self.update_drawings()
+        self.gui.update_drawings()
+
+
+    def feedback_clicked(self):
+        """
+        publish feedback on click
+        """
+        total_list = []
+        i = 0
+
+        for l in self.gui.child_point_lists:
+            total_list.append((i, len(l)))
+            total_list += l
+            i += 1
+        print(total_list)
+        self.publish_user_drawn_shapes.publish(
+            self.gui.pack_writing_pts(total_list)
+        )
+
+
+
+
 
 
 def main(args=None):
     rclpy.init()
-
+    
+    
     app = QtWidgets.QApplication(sys.argv)
-
     window = Child_UI()
-    window.show()
 
-    rclpy.spin(window)
+    node = ChildGUINode(window)
+    # node.create_subscription(
+    #         String,
+    #         'topic',
+    #         node.listener_callback,
+    #         10)
 
-    window.destroy_node()
-    rclpy.shutdown()
 
-    sys.exit(app.exec_())
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+    
+    thread = Thread(target=executor.spin)
+    thread.start()
+    node.get_logger().info("node spin")
+
+    try:
+        window.show()
+        sys.exit(app.exec_())
+
+    finally:
+        node.get_logger().info("Shutting down ROS2 Node . . .")
+        node.destroy_node()
+        executor.shutdown()
 
 
 if __name__ == "__main__":
