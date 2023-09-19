@@ -214,7 +214,7 @@ class TabletInputInterpreter(Node):
             xy_paths.append(
                 list(zip(stroke[:number_of_pts], stroke[number_of_pts:]))
             )
-        word_logger.info(str(xy_paths))
+        self.get_logger().info(str(xy_paths))
 
         # Preprocess to turn multiple strokes into one path
         if self.shape_preprocessing_method == "merge":
@@ -234,8 +234,7 @@ class TabletInputInterpreter(Node):
         self.get_logger().info("published processed shape")
 
     # ---------------------------------------- FORMATTING SHAPE OBJECT INTO ROS MSG
-    @staticmethod
-    def make_shape_message(shape: Shape) -> ShapeMsg:
+    def make_shape_message(self, shape: Shape) -> ShapeMsg:
         """
         Converts a Shape object into a ROS Shape message.
 
@@ -248,6 +247,8 @@ class TabletInputInterpreter(Node):
         """
         shape_message = ShapeMsg()
         if shape.path is not None:
+            self.get_logger().info("path is not none")
+            self.get_logger().info(str(shape.path))
             shape_message.path = [float( point) for point in shape.path]
         if shape.shape_id is not None:
             shape_message.shape_id = shape.shape_id

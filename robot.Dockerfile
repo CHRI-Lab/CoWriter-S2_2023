@@ -18,6 +18,6 @@ COPY ./src/controller/ ${MAIN_DIR}/controller/
 RUN chown -R nao:nao ${MAIN_DIR}
 RUN chmod 755 ${MAIN_DIR}
 
-WORKDIR ${MAIN_DIR}
 USER nao
-CMD /bin/bash
+WORKDIR ${MAIN_DIR}/controller
+CMD ["python2", "main.py"]

@@ -321,14 +321,17 @@ class LearningWordsNao(Node):
             path = list(
                 zip(shape.path[:nbpts], [-y for y in shape.path[nbpts:]])
             )
+            self.get_logger().info(str(path))
+            # self.get_logger().info(shape.path)
+
             # Split the path into segments based on a template
             demo_from_template = (
                 self.device_manager.screen_manager.split_path_from_template(
                     path
                 )
             )  # type: ignore
-            self.get_logger().info(demo_from_template)
-            # If the demo_from_template is not empty
+            self.get_logger().info(str(demo_from_template))
+                # If the demo_from_template is not empty
             if demo_from_template:
                 self.get_logger().info(
                     f"Received template demonstration for letters {demo_from_template.keys()}"
@@ -364,6 +367,7 @@ class LearningWordsNao(Node):
                         f"Received demonstration for selected letter {shape.shape_type}"
                     )
                 else:
+                    self.get_logger().info(str(int(len(shape.path) / 2)))
                     # Find the letter corresponding to the shape path
                     letter, bb = self.device_manager.screen_manager.find_letter(
                         shape.path
@@ -998,9 +1002,9 @@ class LearningWordsNao(Node):
             # next_state = 'WAITING_FOR_ROBOT_TO_CONNECT'
 
         if self.demo_shapes_received:
-            self.get_logger().info(
-                self.demo_shapes_received
-            )
+            # self.get_logger().info(
+            #     self.demo_shapes_received
+            # )
             self.get_logger().info(
                 "STATE: WAITING_FOR_FEEDBACK, got demo"
             )
@@ -1008,9 +1012,9 @@ class LearningWordsNao(Node):
                 "demo_shapes_received"
             ] = self.demo_shapes_received
             self.demo_shapes_received = []
-            self.get_logger().info(
-                self.demo_shapes_received
-            )
+            # self.get_logger().info(
+            #     self.demo_shapes_received
+            # )
             next_state = "RESPONDING_TO_DEMONSTRATION_FULL_WORD"
 
             # Commented method/function out because not presently in use
@@ -1206,7 +1210,7 @@ class LearningWordsNao(Node):
 
             self.session.post(
                 "http://localhost:5000/handle_look_and_ask_for_feedback",
-                {"phrase": to_say},
+                json={"phrase": to_say},
             )
             self.session.post("http://localhost:5000/look_at_tablet")
 
@@ -1498,6 +1502,7 @@ class SubscriberCallbacks:
                         f"Received demonstration for selected letter {shape.shape_type}"
                     )
                 else:
+                    self.get_logger().info(str(shape.path))
                     # Find the letter corresponding to the shape path
                     letter, bb = self.device_manager.screen_manager.find_letter(
                         shape.path
