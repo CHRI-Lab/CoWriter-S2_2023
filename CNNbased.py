@@ -1,3 +1,8 @@
+#######################################
+# This method did work well, plz dont use it
+########################################
+
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from PIL import Image

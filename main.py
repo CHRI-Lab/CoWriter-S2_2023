@@ -121,7 +121,7 @@ class Window(Frame):
         x, y = img.size
         img = img.convert('L')
         raw_data = img.load()
-        imageio.imwrite('cat-aq.jpg', img)
+        imageio.imwrite('cat-aq.jpg', img) #rename your file
         plt.imshow(img)
         plt.show()
 
