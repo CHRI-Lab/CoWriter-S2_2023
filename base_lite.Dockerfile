@@ -1,7 +1,9 @@
+# Dockerfile of image chienpul/nao-base-lite:v4
 FROM ros:noetic
 
 # Create the nao user with sudo privileges
 RUN useradd -m nao && echo "nao:nao" | chpasswd && adduser nao sudo
+RUN usermod -aG audio nao
 
 # On building machine
 ENV RESOURCES_DIR=./resources
@@ -19,7 +21,7 @@ ENV CATKIN_SRC_DIR=${CATKIN_DIR}/src
 ENV PYTHONPATH=/opt/ros/noetic/lib/python3/dist-packages
 
 # Install system packages
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     ros-${ROS_DISTRO}-tf \
     ros-${ROS_DISTRO}-cv-bridge \
@@ -29,7 +31,9 @@ RUN apt-get update && apt-get install -y \
     ros-${ROS_DISTRO}-audio-common \
     python3-pip git cmake \
     libyaml-cpp-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
-    alsa-base alsa-utils libsndfile1-dev
+    alsa-base alsa-utils libsndfile1-dev \
+    libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+    libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxkbcommon-x11-0
     # ros-${ROS_DISTRO}-ros-tutorials \
     # ros-${ROS_DISTRO}-common-tutorials \
     # libgmock-dev patchelf

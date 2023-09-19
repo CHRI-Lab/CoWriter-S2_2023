@@ -1,4 +1,5 @@
-FROM chienpul/nao-base-lite:v3
+# Dockerfile of image chienpul/nao-bluering-lite:v4
+FROM chienpul/nao-base-lite:v4
 
 ENV MAIN_DIR=/home/nao
 ENV CATKIN_DIR=${MAIN_DIR}/catkin_ws
@@ -39,17 +40,6 @@ RUN pip3 install PyQt5
 RUN pip3 install tensorflow
 RUN pip3 install pandas
 
-RUN apt-get update && apt-get install -y --no-install-recommends\
-    libxcb-icccm4 \
-    libxcb-image0 \
-    libxcb-keysyms1 \
-    libxcb-randr0 \
-    libxcb-render-util0 \
-    libxcb-shape0 \
-    libxcb-xinerama0 \
-    libxcb-xkb1 \
-    libxkbcommon-x11-0
-
 # Clean
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN rm -rf /tmp/* && rm -rf /root/.cache/*
@@ -59,7 +49,6 @@ RUN chmod +x ./src/bluering_letter_learning/nodes/*
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN chown -R nao:nao /home/nao/catkin_ws/src/bluering_letter_learning/
 RUN chmod 755 /home/nao/catkin_ws/src/bluering_letter_learning/
-RUN usermod -aG audio nao
 USER nao
 RUN echo "source ${CATKIN_DIR}/devel/setup.bash" >> ~/.bashrc
 WORKDIR ${CATKIN_DIR}
