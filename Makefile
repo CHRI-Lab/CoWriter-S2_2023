@@ -1,7 +1,9 @@
 export DOCKER_REPO=aplaire
 export BASE_IMAGE=${DOCKER_REPO}/nao-base:bluering
 export IMAGE=${DOCKER_REPO}/nao-bluering
+export IMAGE_LITE=chienpul/nao-bluering-lite:audio.2
 export CONTAINER=nao-bluering
+export GOOGLE_APPLICATION_CREDENTIALS=/home/nao/credentials/comp90082.json
 
 build-base:
 	docker build --tag ${BASE_IMAGE} -f base.Dockerfile .
@@ -32,3 +34,29 @@ run-gui:
 		${CONTAINER} \
 		bash -c "python3 ./src/choose_adaptive_words/nodes/activity.py"
 
+run-roscore:
+	docker run --rm -it \
+		--network host \
+		--device /dev/snd \
+		-v /tmp/.X11-unix:/tmp/.X11-unix \
+		-v /home/ubuntu/credentials:/home/nao/credentials \
+		-e DISPLAY=unix${DISPLAY} \
+		-e OPENAI_KEY=${OPENAI_KEY} \
+		-e GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS} \
+		--user nao \
+		--name ${CONTAINER} \
+		${IMAGE_LITE} \
+		roscore
+
+run-gui:
+	docker exec -it \
+		--user nao \
+		--workdir /home/nao/catkin_ws/src/choose_adaptive_words/nodes \
+		${CONTAINER} \
+		bash -c "python3 ./activity.py"
+
+run-cowriter:
+	docker exec -it \
+		--user nao \
+		${CONTAINER} \
+		bash
