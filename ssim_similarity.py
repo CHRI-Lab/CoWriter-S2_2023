@@ -7,29 +7,29 @@ from skimage import measure
 from skimage.metrics import structural_similarity
 from reportlab.pdfgen import canvas
 
-weight = [1, 1, 1, 1] # weight for OCR , MSE, SSIM, Hamming Distance
+weight = [1, 1, 1] # weight for OCR , MSE, SSIM, Hamming Distance
 
 input_text = 'a' # the word the children wanna learn
-image_pathC = 'D:/writeboard/cat-ao.jpg' # children writing
-image_pathR = 'D:/writeboard/cat-a.jpg' # robot writing
+image_pathC = '/home/shen/letter/NA-Redback/cat-ao.jpg' # children writing
+image_pathR = '/home/shen/letter/NA-Redback/cat-a.jpg' # robot writing
 # Read images
 child_image = cv2.imread(image_pathC, cv2.IMREAD_GRAYSCALE)
 robot_image = cv2.imread(image_pathR, cv2.IMREAD_GRAYSCALE)
 
-# OCR
-pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
-# Load the image with handwritten text
-img = Image.open(image_pathC)
-# Perform OCR using Tesseract
-custom_config = r'--oem 3 --psm 6'
-text = pytesseract.image_to_string(img,lang='eng', config=custom_config)
-text.replace(' ', '')
-print(text)
-total_characters = len(text)
-correct_characters = sum(1 for i, j in zip(text, input_text) if i == j)
-ocr = (correct_characters / total_characters)
-# Print the result
-print(f"Letter Binary: {ocr:.2f}")
+# # OCR
+# pytesseract.pytesseract.tesseract_cmd = r'/home/shen/letter/NA-Redback/tesseract/tesseract.exe'
+# # Load the image with handwritten text
+# img = Image.open(image_pathC)
+# # Perform OCR using Tesseract
+# custom_config = r'--oem 3 --psm 6'
+# text = pytesseract.image_to_string(img,lang='eng', config=custom_config)
+# text.replace(' ', '')
+# print(text)
+# total_characters = len(text)
+# correct_characters = sum(1 for i, j in zip(text, input_text) if i == j)
+# ocr = (correct_characters / total_characters)
+# # Print the result
+# print(f"Letter Binary: {ocr:.2f}")
 
 # Ensure image has same shape
 if child_image.shape != robot_image.shape:
@@ -45,17 +45,20 @@ print("SSIM:{}".format(score))
 hamming_distance = np.count_nonzero(child_image != robot_image)/20000
 print(f"Hamming Distance：{hamming_distance}")
 
-letterAcc = ocr*weight[0] - mse*weight[1] + ssim*weight[2] - hamming_distance*weight[3]
+letterAcc = -1*mse*weight[0] + ssim*weight[1] - hamming_distance*weight[2]
 print (letterAcc)
 
-f= canvas.Canvas("feedback.pdf")
-def feedback(f):
-    f.drawString(20, 300, "Hello Wolrd")
+# f= canvas.Canvas("feedback.pdf")
+# def feedback(f):
+#     f.drawString(20, 300, "Your hand writing {}")
 
-if letterAcc>0.3:
-    feedback(f)
-    f.showPage()
-    f.save()
+# if letterAcc>0.3:
+#     feedback(f)
+#     f.showPage()
+#     f.save()
+
+if letterAcc<0.3:
+    print("Your hand wrting letter:",input_text, "is not well, and it looks like:",text)
 
 
 
