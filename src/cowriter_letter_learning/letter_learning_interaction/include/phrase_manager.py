@@ -55,16 +55,12 @@ class PhraseManagerGPT(PhraseManager):
 
     def __init__(self, language):
         super().__init__(language)
-        # NOTE: The openai api key below will need to be replaced for ChatGPT functionality
-        #       to work past 06/2023.
-        openai.api_key = "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"
+        openai.api_key = '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'
         self.language = language
         self.messages = [
-            {
-                "role": "system",
-                "content": "You are a handwriting student of a child.",
-            }
-        ]
+            {"role": "system", 
+            "content": "Your name is NAO, and you're learning handwriting from a child aged between 5-10. Make sure to keep the conversation kids-friendly."}
+            ]
 
     def get_gpt_response(self, input_text):
         """
@@ -83,21 +79,34 @@ class PhraseManagerGPT(PhraseManager):
             response_message (str): The response message generated from
                                     the GPT model.
         """
-        # Add input text to message history
-        self.messages.append(
-            {
-                "role": "user",
-                "content": "Don't break lines in your reponse and use short and simple sentences answering the fllowing question: "
-                + input_text,
-            }
+
+        # Check if the input text is kids-safe using moderation model
+        moderation_response = openai.Moderation.create(
+            input=input_text
         )
-        # Get chatgpt response
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo", messages=self.messages
-        )
-        # Add response to message history
-        response_message = response["choices"][0]["message"].content
-        response_message = response_message.replace("\n", " ")
-        response_message = response_message.replace("\\", "")
-        self.messages.append({"role": "assistant", "content": response_message})
-        return response_message
+        flagged = moderation_response["results"][0]["flagged"]
+        
+        # Get GPT response only if the moderation outcome is not flagged
+        if flagged == True:
+            response_message = "Sorry, but I can't assist with that. Why don't you tell me about your favorite animal?"
+            return response_message
+        
+        else:
+            # Add input text to message history
+            self.messages.append({"role": "user", "content": "Answer the following question using simple sentences. Keep your response short and concise: " + input_text})
+            
+            # Get GPT response
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                temperature=0.5,
+                max_tokens=1024,
+                n=1,
+                messages=self.messages
+            )
+            
+            # Add response to message history
+            response_message = response["choices"][0]["message"].content
+            response_message = response_message.replace('\n', ' ')
+            response_message = response_message.replace('\\', '')
+            self.messages.append({"role": "assistant", "content": response_message})
+            return response_message
