@@ -57,6 +57,7 @@ class TabletInputInterpreter(Node):
         )
         self.clear_all_shapes_service.wait_for_service(timeout_sec=1.0)
 
+
         GESTURE_TOPIC = "gesture_info"
         # only 1 argument
 
@@ -160,6 +161,7 @@ class TabletInputInterpreter(Node):
             message (Path): A ROS Path message containing the shape's
                             points.
         """
+        self.get_logger().info("received word")
         pts = [
             (message.data[i * 2], message.data[i * 2 + 1])
             for i in range(int(len(message.data) / 2))
@@ -229,6 +231,7 @@ class TabletInputInterpreter(Node):
 
         shape_message = self.make_shape_message(demo_shape_received)
         self.publish_shapes.publish(shape_message)
+        self.get_logger().info("published processed shape")
 
     # ---------------------------------------- FORMATTING SHAPE OBJECT INTO ROS MSG
     @staticmethod

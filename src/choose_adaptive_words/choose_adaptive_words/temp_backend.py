@@ -120,7 +120,8 @@ class UIBackend(Node):
             points.append((x, y))
         to_draw.append(points)
         print(to_draw)
-        self.publisher_shape_to_draw.publish(Int32MultiArray(data=self.pack_writing_pts(points)))
+        msg = self.pack_writing_pts(points)
+        self.publisher_shape_to_draw.publish(msg)
 
 
 def main(args=None):

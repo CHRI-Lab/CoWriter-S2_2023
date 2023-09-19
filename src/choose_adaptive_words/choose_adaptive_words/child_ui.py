@@ -251,13 +251,13 @@ class ChildGUINode(Node):
             (data.data[i * 2], data.data[i * 2 + 1])
             for i in range(int(len(data.data) / 2))
         ]
-        self.manager_point_lists.append(pts)
+        self.gui.manager_point_lists.append(pts)
         self.gui.update_drawings()
 
     def callback_manager_erase(self, data):
         self.get_logger().info('I heard: "%s"' % data.data)
         self.get_logger().info("erasing")
-        self.manager_point_lists = list()
+        self.gui.manager_point_lists = list()
         self.gui.update_drawings()
 
 

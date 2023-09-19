@@ -16,10 +16,10 @@ def set_interaction():
     return jsonify({"status": "success"})
 
 
-@app.route("/speak_and_log_phrases", methods=["POST"])
+@app.route("/nao_speak_and_log_phrase", methods=["POST"])
 def nao_speak_and_log_phrase():
     data = request.json
-    nao_settings.speak_and_log_phrase(data.get("phrase"))
+    nao_settings.nao_speak_and_log_phrase(data.get("phrase"))
     return jsonify({"status": "success"})
 
 
@@ -97,8 +97,9 @@ def close_hand():
 @app.route("/position_interpolation", methods=["POST"])
 def position_interpolation():
     data = request.json
-    nao_settings.motion_proxy.positionInterpolation(
-        data.get("effector"),
+    
+    nao_settings.motion_proxy.positionInterpolations(
+        [data.get("effector")],
         data.get("space"),
         data.get("path"),
         data.get("axisMask"),

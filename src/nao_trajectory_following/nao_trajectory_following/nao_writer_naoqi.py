@@ -6,7 +6,8 @@ Requires a running robot/simulation with ALNetwork proxies.
 
 """
 import json
-from geometry_msgs.msg import PoseStamped
+# from geometry_msgs.msg import PoseStamped
+from tf2_geometry_msgs import PoseStamped
 from nav_msgs.msg import Path
 from std_msgs.msg import String, Empty, Header
 from copy import deepcopy
@@ -21,7 +22,7 @@ from requests import Session
 
 # import motion
 import math
-
+import time
 
 class nao_writer_naoqi(Node):
     def __init__(
@@ -167,7 +168,7 @@ class nao_writer_naoqi(Node):
             target.pose.position = deepcopy(trajp.pose.position)
             target.pose.orientation = deepcopy(trajp.pose.orientation)
             target.header.frame_id = "base_footprint"
-            target_robot = self.tl.transformPose("base_footprint", target)
+            target_robot = self.tl.buffer.transform(target, "base_footprint", rclpy.duration.Duration(seconds=5.0))
 
             point = [
                 float(target_robot.pose.position.x),
@@ -191,9 +192,11 @@ class nao_writer_naoqi(Node):
             # times.append(trajp.header.stamp.to_sec() )#- timeToStartPosition)
             last_point = point
         # wait until time instructed to start executing
-        self.get_clock().sleep_for(
-            Duration(seconds=traj.header.stamp - self.get_clock().now())
-        )  # +rospy.Duration(timeToStartPosition))
+        # self.get_clock().sleep_for(
+        #     traj.header.stamp - self.get_clock().now()
+        # )  # +rospy.Duration(timeToStartPosition))
+
+        time.sleep(3)
         self.get_logger().info(
             "executing rest of traj at " + str(self.get_clock().now())
         )
@@ -212,7 +215,7 @@ class nao_writer_naoqi(Node):
         )
         self.get_logger().info(
             "Time taken for rest of trajectory: "
-            + str((self.get_clock().now() - startTime).to_sec())
+            #+ str((self.get_clock().now() - startTime).seconds())
         )
 
     # normalize a path for nao robot so it can write comfortablely
