@@ -4,8 +4,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-src/share
-
 # C extensions
 *.so
 
