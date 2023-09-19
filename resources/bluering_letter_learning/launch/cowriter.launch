@@ -94,12 +94,12 @@
 
 
     <!-- Start the wode_card_detector to detect word from card -->
-    <include file="$(find bluering_letter_learning)/launch/word_card_detector.launch">
+    <!-- <include file="$(find bluering_letter_learning)/launch/word_card_detector.launch"> -->
         <!-- all vars that this launch file requires must be set -->
-        <arg name="use_external_camera" value="$(arg use_external_camera)" /> <!-- if false, camera on robot will be used -->
-        <arg name="camera_device" value="$(arg camera_device)" /> <!-- only used if using external camera -->
-        <arg name="detected_words_topic" value="$(arg words_to_write_topic)" />
-    </include>
+        <!-- <arg name="use_external_camera" value="$(arg use_external_camera)" /> --> <!-- if false, camera on robot will be used -->
+        <!-- <arg name="camera_device" value="$(arg camera_device)" /> --> <!-- only used if using external camera -->
+        <!-- <arg name="detected_words_topic" value="$(arg words_to_write_topic)" /> -->
+    <!-- </include> -->
 
 
     <!-- Start the display_manager_server, which will be accessed by the gesture_manager node and
@@ -110,13 +110,13 @@
 
 
     <!-- Start the tablet_input_interpreter, which listens to gestures signals, and maps gestures to the relevant shape -->
-    <include file="$(find bluering_letter_learning)/launch/tablet_input_interpreter.launch">
+    <!-- <include file="$(find bluering_letter_learning)/launch/tablet_input_interpreter.launch"> -->
         <!-- all vars that this launch file requires must be set -->
-        <arg name="shape_feedback_topic" value="$(arg shape_feedback_topic)" />
+        <!-- <arg name="shape_feedback_topic" value="$(arg shape_feedback_topic)" />
         <arg name="gesture_info_topic" value="$(arg gesture_info_topic)" />
         <arg name="touch_info_topic" default="touch_info" />
         <arg name="user_drawn_shapes_topic" value="$(arg user_drawn_shapes_topic)" />
-    </include>
+    </include> -->
 
 
 
