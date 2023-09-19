@@ -110,13 +110,13 @@
 
 
     <!-- Start the tablet_input_interpreter, which listens to gestures signals, and maps gestures to the relevant shape -->
-    <!-- <include file="$(find bluering_letter_learning)/launch/tablet_input_interpreter.launch"> -->
+    <include file="$(find bluering_letter_learning)/launch/tablet_input_interpreter.launch">
         <!-- all vars that this launch file requires must be set -->
-        <!-- <arg name="shape_feedback_topic" value="$(arg shape_feedback_topic)" />
+        <arg name="shape_feedback_topic" value="$(arg shape_feedback_topic)" />
         <arg name="gesture_info_topic" value="$(arg gesture_info_topic)" />
         <arg name="touch_info_topic" default="touch_info" />
         <arg name="user_drawn_shapes_topic" value="$(arg user_drawn_shapes_topic)" />
-    </include> -->
+    </include>
 
 
 
