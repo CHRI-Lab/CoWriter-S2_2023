@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y \
     ros-${ROS_DISTRO}-cv-bridge \
     ros-${ROS_DISTRO}-image-transport \
     ros-${ROS_DISTRO}-image-geometry \
-    ros-${ROS_DISTRO}-interactive_markers \
+    ros-${ROS_DISTRO}-interactive-markers \
     ros-${ROS_DISTRO}-audio-common \
     python3-pip git cmake \
     libyaml-cpp-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \

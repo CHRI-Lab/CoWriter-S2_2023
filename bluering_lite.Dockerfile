@@ -1,4 +1,4 @@
-FROM chienpul/nao-base-lite:audio.2
+FROM chienpul/nao-base-lite:v3
 
 ENV MAIN_DIR=/home/nao
 ENV CATKIN_DIR=${MAIN_DIR}/catkin_ws
@@ -16,7 +16,7 @@ WORKDIR ${CATKIN_SRC_DIR}/shape_learning
 RUN python3 setup.py install
 
 # Install additional ROS dependencies
-WORKDIR ${CATKIN_SRC_DIR}
+# WORKDIR ${CATKIN_SRC_DIR}
 # RUN git clone https://github.com/ros-perception/image_common.git
 # RUN git clone https://github.com/ros-drivers/gscam.git
 # COPY ${RESOURCES_DIR}/v4l.launch ${CATKIN_SRC_DIR}/gscam/launch/v4l.launch  ---> useless if we dont use the camera

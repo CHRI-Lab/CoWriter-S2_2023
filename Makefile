@@ -1,7 +1,7 @@
 export DOCKER_REPO=aplaire
 export BASE_IMAGE=${DOCKER_REPO}/nao-base:bluering
 export IMAGE=${DOCKER_REPO}/nao-bluering
-export IMAGE_LITE=chienpul/nao-bluering-lite:audio.2
+export IMAGE_LITE=chienpul/nao-bluering-lite:v3
 export CONTAINER=nao-bluering
 export GOOGLE_APPLICATION_CREDENTIALS=/home/nao/credentials/comp90082.json
 
@@ -48,10 +48,11 @@ run-roscore:
 		${IMAGE_LITE} \
 		roscore
 
-run-gui:
+run-ui:
 	docker exec -it \
 		--user nao \
 		--workdir /home/nao/catkin_ws/src/choose_adaptive_words/nodes \
+		-e QT_DEBUG_PLUGINS=1 \
 		${CONTAINER} \
 		bash -c "python3 ./activity.py"
 
