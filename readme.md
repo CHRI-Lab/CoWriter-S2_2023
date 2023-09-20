@@ -1,3 +1,5 @@
+Demo vedio here: https://www.youtube.com/watch?v=RNiRpzP787M
+
 This folder consist of two method: 
 
 1. CNN based see in "CNNbased.py", in NAO writing project, we do not apply it to our struggled letter indentifing module, becuase it still in a low accuracy.
