@@ -13,7 +13,8 @@ run-nodes:
 	docker run -it -d \
 		--name ${NODES_CONTAINER} \
 		--user nao \
-		--network="host" \
+		--network host \
+		--device /dev/snd \
 		-v ./src:/home/nao/NAOHW-Boxjelly/src \
 		-v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=${DISPLAY} \
 		${NODES_IMAGE}
