@@ -30,8 +30,6 @@ TOPIC_LEARNING_PACE = "simple_learning_pace"
 TOPIC_USER_DRAWN_SHAPES = "user_drawn_shapes"
 
 
-
-
 class Child_UI(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -42,7 +40,9 @@ class Child_UI(QtWidgets.QMainWindow):
         # choose_adaptive_words_path = os.path.dirname(
         #     os.path.dirname(os.path.realpath(__file__))
         # )
-        choose_adaptive_words_path = pkg_resources.resource_filename(__name__,"design")
+        choose_adaptive_words_path = pkg_resources.resource_filename(
+            __name__, "design"
+        )
 
         # set window
         self.setWindowTitle("Child UI")
@@ -61,7 +61,7 @@ class Child_UI(QtWidgets.QMainWindow):
             QSize(ERASR_SIZE[0] - ERASR_OFFSET, ERASR_SIZE[1] - ERASR_OFFSET)
         )
         self.button_erase.setIcon(
-            QtGui.QIcon(choose_adaptive_words_path + "/assets/gomme.png")
+            QtGui.QIcon(choose_adaptive_words_path + "/assets/robot.png")
         )
         self.button_erase.clicked.connect(self.button_erase_clicked)
 
@@ -73,7 +73,6 @@ class Child_UI(QtWidgets.QMainWindow):
         self.button_feedback.setIcon(
             QtGui.QIcon(choose_adaptive_words_path + "/assets/send.svg")
         )
-        
 
         # init pos recording
         self.last_x, self.last_y = None, None
@@ -91,8 +90,6 @@ class Child_UI(QtWidgets.QMainWindow):
         self.child_point_list = list()
         self.child_point_lists = list()
         self.manager_point_lists = list()
-
-        
 
     def update_drawings(self):
         # reset canvas
@@ -167,7 +164,6 @@ class Child_UI(QtWidgets.QMainWindow):
 
         return pt_msg
 
-    
     def resizeEvent(self, event):
         if hasattr(self, "button_erase"):
             self.button_erase.setGeometry(
@@ -215,9 +211,8 @@ class Child_UI(QtWidgets.QMainWindow):
         self.child_point_list = []
 
 
-
 class ChildGUINode(Node):
-    def __init__(self, gui:Child_UI):
+    def __init__(self, gui: Child_UI):
         super().__init__("child_ui")
         self.gui = gui
         # init subscribers
@@ -242,10 +237,10 @@ class ChildGUINode(Node):
         #     'topic',
         #     self.listener_callback,
         #     10)
-        
+
     def listener_callback(self, msg):
         self.get_logger().info('I heard: "%s"' % msg.data)
-        
+
     def callback_words_to_write(self, data):
         pts = [
             (data.data[i * 2], data.data[i * 2 + 1])
@@ -259,7 +254,6 @@ class ChildGUINode(Node):
         self.get_logger().info("erasing")
         self.gui.manager_point_lists = list()
         self.gui.update_drawings()
-
 
     def feedback_clicked(self):
         """
@@ -278,14 +272,9 @@ class ChildGUINode(Node):
         )
 
 
-
-
-
-
 def main(args=None):
     rclpy.init()
-    
-    
+
     app = QtWidgets.QApplication(sys.argv)
     window = Child_UI()
 
@@ -296,10 +285,9 @@ def main(args=None):
     #         node.listener_callback,
     #         10)
 
-
     executor = MultiThreadedExecutor()
     executor.add_node(node)
-    
+
     thread = Thread(target=executor.spin)
     thread.start()
     node.get_logger().info("node spin")
