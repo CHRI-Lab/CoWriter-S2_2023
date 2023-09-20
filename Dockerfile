@@ -40,12 +40,16 @@ RUN colcon build --packages-select letter_learning_interaction
 # Note: I don't know why, but for letter_learning_interaction, the command "source install/setup.bash"
 # doesn't add the package to the AMENT_PREFIX_PATH, so we add it manually
 ENV AMENT_PREFIX_PATH=${AMENT_PREFIX_PATH}:/home/nao/NAOHW-Boxjelly/install/letter_learning_interaction:/home/nao/NAOHW-Boxjelly/install/interface:/home/nao/NAOHW-Boxjelly/install/choose_adaptive_words:/home/nao/NAOHW-Boxjelly/install/nao_trajectory_following
-RUN apt-get install -y imagemagick
+RUN apt-get install -y \
+    imagemagick \
+    alsa-base alsa-utils libsndfile1-dev
+
 WORKDIR ${PROJECT_DIR}
 RUN mogrify ./install/choose_adaptive_words/lib/python3.10/site-packages/choose_adaptive_words/design/assets/*.png
 
-RUN chown -R nao:nao ${PROJECT_DIR}/src/
-RUN chmod 755 ${PROJECT_DIR}/src/
+RUN chown -R nao:nao ${PROJECT_DIR}
+RUN chmod 755 ${PROJECT_DIR}
+RUN usermod -aG audio nao
 
 USER nao
 
