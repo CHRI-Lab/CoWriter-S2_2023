@@ -43,7 +43,7 @@ class Window(Frame):
         self.master.config(menu=menubar)
 
 
-        self.frame_pad = ttk.LabelFrame(self.master, text="Child Write Area")
+        self.frame_pad = ttk.LabelFrame(self.master, text="Robot Write Area")
         self.frame_pad.place(x=10, y=100, width=128, height=128)
 
         # 创建画布
@@ -73,24 +73,9 @@ class Window(Frame):
         # self.canvas2.create_image(120, 120, image=image2)
         # self.canvas2.pack(fill=tkinter.BOTH, expand=tkinter.YES)
 
-        self.label = ttk.Label(self.master, text="Type a letter:", font=("微软雅黑", 10))
-        self.label.place(x=10, y=0, width=100, height=60)
-
-        self.numEntry = Entry(self.master)
-        self.numEntry.place(x=50, y=0, width=50, height=30)
-
-        word = ttk.Button(self.master, text="Test if good writing", command=self.go)
-        word.place(x=10, y=500, width=50, height=30)
-        word.pack()
-        self.numEntry.pack()
-
         button_save = ttk.Button(self.master, text="Submit", command=self.convImage)
         button_save.place(x=150, y=150, width=70, height=30)
 
-    def go(self):
-        print("Your practice letter is: ", self.numEntry.get())
-        input_word = self.numEntry.get()
-        strugg_letter(input_word)
 # 按住鼠标左键移动，画图
     def onLeftButtonMove(self, event):
         # global lastDraw
@@ -132,9 +117,8 @@ class Window(Frame):
         x, y = img.size
         img = img.convert('L')
         raw_data = img.load()
-        imageio.imwrite('child.jpg', img) #rename your file
-        print("Child writing saved")
-        
+        imageio.imwrite('robot.jpg', img) #rename your file
+        print("Robot writing saved")
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
