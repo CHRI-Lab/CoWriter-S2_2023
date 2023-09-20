@@ -18,4 +18,6 @@ This folder consist of two method:
         MSE (Mean Squared Error):
             It is a common metric used in statistics, machine learning, and image processing to measure the average squared difference between the values predicted by a model or system and the actual observed values. MSE is often used as a measure of the quality of a predictive model or as a cost function to be minimized during the training of machine learning algorithms.
 
+            
+
         
