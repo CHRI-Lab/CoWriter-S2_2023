@@ -39,4 +39,5 @@ Hamming Distance is a metric used to measure the difference between two equal-le
          the weight for three attribute can be adjust manually, if you want, but you also need to adjust the hurdel of struggled letter.
             
 
-        
+python3 /home/shen/letter/NA-Redback/robot_write.py
+python3 /home/shen/letter/NA-Redback/main.py
