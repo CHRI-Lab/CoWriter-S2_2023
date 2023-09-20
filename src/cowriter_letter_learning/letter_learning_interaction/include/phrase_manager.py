@@ -84,10 +84,19 @@ class PhraseManagerGPT(PhraseManager):
         moderation_response = openai.Moderation.create(
             input=input_text
         )
-        flagged = moderation_response["results"][0]["flagged"]
-        
+        # flagged = moderation_response["results"][0]["flagged"]
+        category_scores = moderation_response["results"][0]["category_scores"]
+        flagged = False
+        threshold = 0.05
+
+        # If any of the moderation category got a score higher than the threshold, flag it
+        for category, score in category_scores.items():
+            if category not in ["self-harm/intent", "self-harm/instructions"] and score > threshold:
+                flagged = True
+                break
+
         # Get GPT response only if the moderation outcome is not flagged
-        if flagged == True:
+        if flagged:
             response_message = "Sorry, but I can't assist with that. Why don't you tell me about your favorite animal?"
             return response_message
         
