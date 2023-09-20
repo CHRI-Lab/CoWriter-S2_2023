@@ -61,7 +61,7 @@ class Child_UI(QtWidgets.QMainWindow):
             QSize(ERASR_SIZE[0] - ERASR_OFFSET, ERASR_SIZE[1] - ERASR_OFFSET)
         )
         self.button_erase.setIcon(
-            QtGui.QIcon(choose_adaptive_words_path + "/assets/robot.png")
+            QtGui.QIcon(choose_adaptive_words_path + "/assets/gomme.png")
         )
         self.button_erase.clicked.connect(self.button_erase_clicked)
 
@@ -72,6 +72,21 @@ class Child_UI(QtWidgets.QMainWindow):
         )
         self.button_feedback.setIcon(
             QtGui.QIcon(choose_adaptive_words_path + "/assets/send.svg")
+        )
+
+        self.image = QtWidgets.QLabel(self)
+        self.pixmap = QtGui.QPixmap(
+            choose_adaptive_words_path + "/assets/robot.png"
+        )
+        scale_pixmap = self.pixmap.scaled(
+            QSize(ERASR_SIZE[0] - ERASR_OFFSET, ERASR_SIZE[1] - ERASR_OFFSET)
+        )
+        self.image.setPixmap(scale_pixmap)
+        self.image.setGeometry(
+            self.width() - ERASR_SIZE[0] - ERASR_OFFSET,
+            ERASR_OFFSET,
+            ERASR_SIZE[0],
+            ERASR_SIZE[1],
         )
 
         # init pos recording
