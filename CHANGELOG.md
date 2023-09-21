@@ -12,7 +12,7 @@
 ## Sprint 1 release (2023-09-21)
 ### Confluence
 - Development Envronment (set up guidelines)
-- Personas modified
+- Personas modified (Student->Child)
 - Sprint cermonies including sprint2 plan review and retrospectives
 - Ethical considerations
 - Cybersecurity analysis
