@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <test test-name="test_audio_processor" pkg="choose_adaptive_words" type="test_audio_processor.py" time-limit="150.0" />
+</launch>

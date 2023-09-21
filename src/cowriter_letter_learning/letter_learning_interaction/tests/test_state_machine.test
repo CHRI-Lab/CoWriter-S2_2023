@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <test test-name="test_state_machine" pkg="letter_learning_interaction" type="test_state_machine.py" />
+</launch>
