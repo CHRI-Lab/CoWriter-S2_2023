@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <test test-name="test_nao_writer_naoqi" pkg="nao_trajectory_following" type="test_nao_writer_naoqi.py" />
+</launch>

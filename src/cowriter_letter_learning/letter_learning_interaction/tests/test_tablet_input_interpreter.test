@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <test test-name="test_tablet_input_interpreter" pkg="letter_learning_interaction" type="test_tablet_input_interpreter.py" />
+</launch>

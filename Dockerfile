@@ -1,0 +1,56 @@
+FROM ros:humble
+
+RUN useradd -m nao && echo "nao:nao" | chpasswd && adduser nao sudo
+ENV MAIN_DIR=/home/nao
+ENV PROJECT_DIR=${MAIN_DIR}/NAOHW-Boxjelly
+USER root
+
+RUN apt-get update && apt-get install -y sudo python3-pip git
+RUN apt-get install -y ros-humble-turtle-tf2-py ros-humble-tf2-tools ros-humble-tf-transformations
+RUN apt-get install  -y ffmpeg libsm6 libxext6
+RUN sudo apt-get install libportaudio2
+
+
+RUN pip3 install qibuild scikit-build toml \
+    matplotlib openai google-cloud scikit-learn \
+    recordtype --upgrade google-api-python-client --upgrade google-cloud-speech \
+    git+https://github.com/openai/whisper.git 
+COPY ./requirements.txt ./requirements.txt
+RUN pip3 install -r requirements.txt
+RUN pip3 install transforms3d
+
+WORKDIR ${PROJECT_DIR}/src/
+ENV CMAKE_PREFIX_PATH=/opt/ros/humble
+ENV AMENT_PREFIX_PATH=/opt/ros/humble
+ENV PYTHONPATH=/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages
+
+WORKDIR ${PROJECT_DIR}/src
+RUN git clone https://github.com/ros-visualization/interactive_markers.git/
+WORKDIR ${PROJECT_DIR}/src/interactive_markers
+RUN git checkout ros2
+WORKDIR ${PROJECT_DIR}
+RUN colcon build --packages-select interactive_markers
+# isolation of the build environment for each module, otherwise the build remains stuck ?
+COPY ./src ${PROJECT_DIR}/src
+RUN colcon build --packages-select interface
+RUN colcon build --packages-select choose_adaptive_words
+RUN colcon build --packages-select nao_trajectory_following
+RUN colcon build --packages-select letter_learning_interaction
+
+# Note: I don't know why, but for letter_learning_interaction, the command "source install/setup.bash"
+# doesn't add the package to the AMENT_PREFIX_PATH, so we add it manually
+ENV AMENT_PREFIX_PATH=${AMENT_PREFIX_PATH}:/home/nao/NAOHW-Boxjelly/install/letter_learning_interaction:/home/nao/NAOHW-Boxjelly/install/interface:/home/nao/NAOHW-Boxjelly/install/choose_adaptive_words:/home/nao/NAOHW-Boxjelly/install/nao_trajectory_following
+RUN apt-get install -y \
+    imagemagick \
+    alsa-base alsa-utils libsndfile1-dev
+
+WORKDIR ${PROJECT_DIR}
+RUN mogrify ./install/choose_adaptive_words/lib/python3.10/site-packages/choose_adaptive_words/design/assets/*.png
+
+RUN chown -R nao:nao ${PROJECT_DIR}
+RUN chmod 755 ${PROJECT_DIR}
+RUN usermod -aG audio nao
+
+USER nao
+
+CMD ["bash"]

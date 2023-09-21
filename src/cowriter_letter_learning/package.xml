@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>letter_learning_interaction</name>
+  <version>0.1.0</version>
+  <description>A package for nodes which allow for user interaction around the shape_learning library.</description>
+
+  <maintainer email="deanna.m.good@gmail.com">Deanna Hood</maintainer>
+
+  <license>MIT</license>
+
+  <author email="deanna.m.good@gmail.com">Deanna Hood</author>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>builtin_interfaces</depend>
+  <depend>interface</depend>
+
+  <exec_depend>interface</exec_depend>
+
+  <!-- Testing dependencies -->
+  <!-- <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_pytest</test_depend> -->
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
