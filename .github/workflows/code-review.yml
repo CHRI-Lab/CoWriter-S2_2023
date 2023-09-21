@@ -13,3 +13,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           github_pr_id: ${{ github.event.number }}
           files: "*.py"
+          logging: "debug"
