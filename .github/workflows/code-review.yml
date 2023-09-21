@@ -10,7 +10,8 @@ jobs:
       - uses: agogear/chatgpt-pr-review@0.0.11
         with:
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          openai_model: "gpt-4"
           github_token: ${{ secrets.GITHUB_TOKEN }}
           github_pr_id: ${{ github.event.number }}
           files: "*.py"
-          logging: "debug"
+          logging: "info"
