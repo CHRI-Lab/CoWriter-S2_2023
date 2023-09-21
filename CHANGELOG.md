@@ -19,8 +19,8 @@
 - All kinds meeting notes
 
 ### Functional & Technical
-- Upgrate the ROS1 to ROS2 Humbel
-- Implement a image plot part in child UI to show the image coresponding to the input word
-- Add child safe module to guide the child to a health conversition
+- Migrate boxjelly form ROS1 to ROS2 Humbel
+- Pop up AI generated image, which is realted to the input word, within Child UI
+- Add words Filtering & Moderation Module to guide child have a health conversition
 - Add Struggled lettter indetifing module (have not intergrated into main code)
 
