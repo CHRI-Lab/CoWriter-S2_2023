@@ -39,6 +39,8 @@ This semester, our team aims to:
     ├── .github/workflows/              # Implementation of the GitHub Actions  
     ├── docs/                           # Documentation files 
     ├── src/                            # Source code
+    ├── .gitignore 
+    ├── CHANGELOG.md 
     └── README.md
 ```
 
@@ -56,7 +58,7 @@ More information about this workflow is available [here](https://www.atlassian.c
 
 Most of our code development will be Python, so the coding standards used for this language will be the following:
 
-- [PEP8](https://peps.python.org/pep-0008/) for all the coding conventions (ex: syntax checking, conventions) ;
+- [PEP8](https://peps.python.org/pep-0008/) for all the coding conventions (ex: syntax checking, best practices) ;
 - [Black](https://pypi.org/project/black/) for code formatting automation (ex: maximum character number per line).
 
 To ensure that the code pushed is consistent with the chosen Python standards, a [GitHub Action](https://github.com/features/actions) has been set on the repository (see the `.github/workflows` folder).
