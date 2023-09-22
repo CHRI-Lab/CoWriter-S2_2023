@@ -38,9 +38,14 @@ This semester, our team aims to:
 ```
     ├── .github/workflows/              # Implementation of the GitHub Actions  
     ├── docs/                           # Documentation files 
-    ├── src/                            # Source code
+    ├── src/
+    ├── share/
     ├── .gitignore 
-    ├── CHANGELOG.md 
+    ├── CHANGELOG.md
+    ├── Dockerfile
+    ├── robot.Dockerfile
+    ├── requirements.txt
+    ├── Makefile                        # Commands to launch the project
     └── README.md
 ```
 
