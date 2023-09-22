@@ -15,7 +15,7 @@
 - Guidelines for setting up Development Envronment
 - Ethical considerations
 - Cybersecurity analysis
-- Update Client, Supercisor & Team Meeting notes 
+- Update Client, Supervisor & Team Meeting notes 
 
 #### Functional & Technical
 - Add Doker File for environment set up 
