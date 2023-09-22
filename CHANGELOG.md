@@ -9,18 +9,28 @@
 
 
 
-## Sprint 1 release (2023-09-21)
-### Confluence
-- Development Envronment (set up guidelines)
-- Personas modified (Student->Child)
-- Sprint cermonies including sprint2 plan review and retrospectives
+## Sprint 2 release (2023-09-21)
+### Added
+#### Confluence
+- Guidelines for setting up Development Envronment
 - Ethical considerations
 - Cybersecurity analysis
-- All kinds meeting notes
+- Update Client, Supercisor & Team Meeting notes 
 
-### Functional & Technical
-- Migrate boxjelly form ROS1 to ROS2 Humbel
+#### Functional & Technical
+- Add Doker File for environment set up 
 - Pop up AI generated image, which is realted to the input word, within Child UI
 - Add words Filtering & Moderation Module to guide child have a health conversition
 - Add Struggled lettter indetifing module (have not intergrated into main code)
+  
+### Modified
+#### Confluence
+- Personas modified (Student->Child)
+- Modified the layout of the page
+- Modified the sprint2 plan and retrospectives
+#### Functional & Technical
+- Migrate boxjelly form ROS1 to ROS2 Humbel
+
+
+
 
