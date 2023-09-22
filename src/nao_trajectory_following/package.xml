@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>nao_trajectory_following</name>
+  <version>0.1.0</version>
+  <description>A package for nodes which allow the Nao robot to trace trajectories synchronised with other displays (such as a ROS-enabled tablet).</description>
+
+  <maintainer email="deanna.m.good@gmail.com">Deanna Hood</maintainer>
+  <license>MIT</license>
+  <author email="deanna.m.good@gmail.com">Deanna Hood</author>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>visualization_msgs</depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+
+</package>
