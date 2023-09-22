@@ -66,3 +66,6 @@ To ensure that the code pushed is consistent with the chosen Python standards, a
 At each commit, a pipeline will be triggered. It will execute a command (module [Flake8](https://pypi.org/project/flake8/)) to check if each specified Python file complies with PEP8’s rules.
 
 If the pipeline should fail, it would mean some changes have to be made to ensure the consistency of the source code.
+
+## Sprint 2 Demo Video
+The demo video presenting the features developed during Sprint 2 is available [here](https://drive.google.com/file/d/13TsE_G87LoL3ysXPLU3SCg8_5_rH3eh1/view?usp=drive_link).
