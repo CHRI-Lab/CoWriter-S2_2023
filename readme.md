@@ -1,4 +1,4 @@
-Demo vedio here: https://www.youtube.com/watch?v=RNiRpzP787M
+Demo video here: https://www.youtube.com/watch?v=RNiRpzP787M
 
 This folder consist of two method: 
 
