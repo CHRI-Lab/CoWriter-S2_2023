@@ -28,6 +28,11 @@ setup(
     license="MIT",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": [],
+        "console_scripts": [
+            "display_manager_server = bluering_letter_learning.display_manager_server:main",
+            "tablet_input_interpreter = bluering_letter_learning.tablet_input_interpreter:main",
+            "interactive_learning = bluering_letter_learning.interactive_learning:main",
+            "diagram_manager = bluering_letter_learning.diagram_manager:main",
+        ],
     },
 )
