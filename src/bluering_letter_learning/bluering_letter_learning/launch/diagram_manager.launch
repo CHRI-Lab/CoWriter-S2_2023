@@ -1,0 +1,73 @@
+<launch>
+    <arg name="use_external_microphone" default="true" /> <!-- if false, camera on robot will be used -->
+
+    <!-- audio_capture node to capture audio data from computer microphone -->
+    <arg name="dst" default="appsink"/>
+    <arg name="device" default=""/>
+    <arg name="format" default="wave"/>
+    <arg name="bitrate" default="128"/>
+    <arg name="channels" default="1"/>
+    <arg name="depth" default="16"/>
+    <arg name="sample_rate" default="16000"/>
+    <arg name="sample_format" default="S16LE"/>
+    <arg name="ns" default="audio"/>
+    <arg name="audio_topic" default="audio"/>
+
+    <group if="$(arg use_external_microphone)">
+        <include file="$(find audio_capture)/launch/capture.launch">
+            <arg name="dst" value="$(arg dst)"/>
+            <arg name="device" value="$(arg device)"/>
+            <arg name="format" value="$(arg format)"/>
+            <arg name="bitrate" value="$(arg bitrate)"/>
+            <arg name="channels" value="$(arg channels)"/>
+            <arg name="depth" value="$(arg depth)"/>
+            <arg name="sample_rate" value="$(arg sample_rate)"/>
+            <arg name="sample_format" value="$(arg sample_format)"/>
+            <arg name="ns" value="$(arg ns)"/>
+            <arg name="audio_topic" value="$(arg audio_topic)"/>
+        </include>
+    </group>
+
+
+    <!-- diagram_manager node to transcribe audio data and return response -->
+    <arg name="min_silent_chunk_to_split" default="100"/>
+    <arg name="language" default="en-US" />
+    <arg name="log_audio_to_file" default="false" />
+    <arg name="audio_outfile" default="" />
+    <arg name="audio_buflen" default="10240" />
+    <arg name="silent_threshold" default="700" />
+    <arg name="action_todo_topic" default="action_todo" />
+    <arg name="listening_signal_topic" default="listening_signal" />
+    <arg name="words_to_write_topic" default="words_to_write" />
+    <!-- configs for openai -->
+    <arg name="openai_apikey" default="" />
+    <arg name="openai_model" default="text-davinci-002" />
+    <arg name="openai_temp" default="0.5" />
+    <arg name="openai_max_tokens" default="1024" />
+    <arg name="openai_timeout" default="20" />
+
+    <node pkg="bluering_letter_learning" type="diagram_manager.py" name="diagram_manager" output="screen">
+        <rosparam subst_value="true">
+        audio_topic: $(arg audio_topic)
+        n_channel: $(arg channels)
+        depth: $(arg depth)
+        sample_rate: $(arg sample_rate)
+        min_silent_chunk_to_split: $(arg min_silent_chunk_to_split)
+        language: $(arg language)
+        audio_buflen: $(arg audio_buflen)
+        silent_threshold: $(arg silent_threshold)
+        log_audio_to_file: $(arg log_audio_to_file)
+        audio_outfile: $(arg audio_outfile)
+        action_todo_topic: $(arg action_todo_topic)
+        listening_signal_topic: $(arg listening_signal_topic)
+        words_to_write_topic: $(arg words_to_write_topic)
+
+        openai_apikey: $(arg openai_apikey)
+        openai_model: $(arg openai_model)
+        openai_temp: $(arg openai_temp)
+        openai_max_tokens: $(arg openai_max_tokens)
+        openai_timeout: $(arg openai_timeout)
+        </rosparam>
+    </node>
+
+</launch>

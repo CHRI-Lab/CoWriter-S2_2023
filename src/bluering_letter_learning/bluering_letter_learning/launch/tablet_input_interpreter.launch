@@ -1,0 +1,15 @@
+<launch>
+    <arg name="shape_feedback_topic" default="shape_feedback" />
+    <arg name="touch_info_topic" default="touch_info" />
+    <arg name="gesture_info_topic" default="gesture_info" />
+    <arg name="user_drawn_shapes_topic" default="user_drawn_shapes" />
+
+
+    <!-- Start the gesture listener, which will map gestures to the relevant shape -->
+    <node pkg="bluering_letter_learning" type="tablet_input_interpreter.py" name="tablet_input_interpreter" output="screen">
+        <param name="shape_feedback_topic" type="str" value="$(arg shape_feedback_topic)" />
+        <param name="touch_info_topic" type="str" value="$(arg touch_info_topic)" />
+        <param name="gesture_info_topic" type="str" value="$(arg gesture_info_topic)" />
+        <param name="user_drawn_shapes_topic" type="str" value="$(arg user_drawn_shapes_topic)" />
+    </node>
+</launch>

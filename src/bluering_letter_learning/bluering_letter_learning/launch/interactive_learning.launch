@@ -1,0 +1,146 @@
+<launch>
+    <arg name="use_robot_in_interaction" default="true" /> <!-- if false, robot-related commands will
+    be skipped -->
+    <arg name="nao_ip" /> <!-- IP address of non-simulated robot (ignored if
+    simulated) -->
+
+    <arg name="nao_writing" default="$(arg use_robot_in_interaction)" /> <!-- if false, robot will not stand and move its arm to write -->
+    <arg name="nao_standing" default="true" /> <!-- if false, robot will stay in the 'crouched' pose, but still writing -->
+    <arg name="nao_speaking" default="true" />
+    <arg name="nao_handedness" default="right" />
+    <arg name="person_side" default="$(arg nao_handedness)" />
+
+
+    <!-- Language of interaction (french and english supported by nao) -->
+    <arg name="language" default="english" />
+
+
+
+    <!-- ======================== BEGIN learner model params ======================== -->
+    <!-- Where the datasets for generating letter models for the learning algorithm are stored -->
+    <arg name="letter_model_dataset_directory" />
+
+    <!-- Where to store the full log of each of the steps of the letter learning. Empty string to
+    avoid logging -->
+    <arg name="shape_log" />
+    <!-- ======================== END   learner model params ======================== -->
+
+
+
+
+    <!-- ======================== BEGIN I/O for interactive_learning node ======================== -->
+    <!-- Inputs to learning algorithm -->
+    <arg name="shape_feedback_topic" default="shape_feedback" />
+    <arg name="words_to_write_topic" default="words_to_write" />
+    <arg name="stop_request_topic" default="stop_learning" />
+    <arg name="test_request_topic" default="test_learning" />
+    <arg name="gesture_info_topic" default="gesture_info" />
+    <arg name="shape_writing_finished_topic" default="shape_finished" />
+    <arg name="new_teacher_topic" default="new_child" />
+
+    <!-- Outputs from learning algorithm -->
+    <!-- <arg name="trajectory_visualization_topic" default="write_traj" />
+    <arg name="trajectory_nao_topic" default="write_traj_downsampled" /> -->
+    <arg name="clear_writing_surface_topic" default="clear_screen" />
+    <arg name="camera_publishing_status_topic" default="camera_publishing_status" />
+
+    <!-- topics to receive command or response from diagram_manager -->
+    <arg name="action_todo_topic" default="action_todo" />
+
+    <!-- topic to send listening signal (eg. when the robot speaks, send a signal to tell the diagram_manager stop listening) -->
+    <arg name="listening_signal_topic" default="listening_signal" />
+
+    <!-- if using robot, tablet must wait to display at the same time as it -->
+    <!-- Don't see used anywhere -->
+    <!-- <rosparam param="/wait_to_sync_traj" subst_value="true">$(arg nao_writing)</rosparam> -->
+    <!-- ======================== END  I/O for interactive_learning node ======================== -->
+
+
+
+
+    <!-- ======================== BEGIN trajectory_following params ======================== -->
+    <arg name="writing_surface_frame_id" />
+
+    <!-- Method for positioning the writing surface. 'interactive_marker' for manual positioning in RViz, 'fiducial_marker_detection' for detecting a fiducial marker at the bottom left of the surface (tested with chilitags) -->
+    <arg name="writing_surface_positioning_method" default="interactive_marker" />
+
+    <!-- Name of frame of fiducial marker if used as positioning mode -->
+    <arg name="fiducial_marker_frame_id" default="tag_1" />
+
+    <!-- If chilitags is used as the fiducial marker detection scheme, the coordinate system of the detected tag has x up, y to the right. In future versions this may change, but for now it's necessary to rotate the frame, so the default is 'true.' If 'false' and no other processing is necessary, probably the frame can just be re-mapped and this node is unnecessary. -->
+    <arg name="rotate_detected_tag_frame" default="true" />
+
+    <!-- Size of rectangular marker to be displayed (default values for the galaxy note 10.1 in landscape orientation, use (0.21,0.297) for A4 paper in portrait orientation) -->
+    <arg name="writing_surface_width_m" default="0.217" />
+    <arg name="writing_surface_height_m" default="0.136" />
+    <!-- ======================== END   trajectory_following params ======================== -->
+
+
+
+
+    <!-- Start the learning algorithm. Control the robot as well -->
+    <node pkg="bluering_letter_learning" type="interactive_learning.py" name="interactive_learning" output="screen">
+        <param name="use_robot_in_interaction" type="bool" value="$(arg use_robot_in_interaction)" />
+        <param name="nao_ip" type="str" value="$(arg nao_ip)" />
+
+        <param name="nao_writing" type="bool" value="$(arg nao_writing)" />
+        <param name="nao_standing" type="bool" value="$(arg nao_standing)" />
+        <param name="nao_speaking" type="bool" value="$(arg nao_speaking)" />
+        <param name="nao_handedness" type="str" value="$(arg nao_handedness)" />
+
+        <param name="language" type="str" value="$(arg language)" />
+
+        <param name="dataset_directory" type="str" value="$(arg letter_model_dataset_directory)" />
+        <param name="shape_log" type="str" value="$(arg shape_log)" />
+
+
+        <param name="shape_feedback_topic" type="str" value="$(arg shape_feedback_topic)" />
+        <param name="words_to_write_topic" type="str" value="$(arg words_to_write_topic)" />
+        <param name="stop_request_topic" type="str" value="$(arg stop_request_topic)" />
+        <param name="test_request_topic" type="str" value="$(arg test_request_topic)" />
+        <param name="gesture_info_topic" type="str" value="$(arg gesture_info_topic)" />
+        <param name="shape_writing_finished_topic" type="str" value="$(arg shape_writing_finished_topic)" />
+        <param name="new_teacher_topic" type="str" value="$(arg new_teacher_topic)" />
+        <param name="action_todo_topic" type="str" value="$(arg action_todo_topic)" />
+        <param name="listening_signal_topic" type="str" value="$(arg listening_signal_topic)" />
+
+
+        <!-- Old code: Outputs to trajectory_following. New code: Remove publishing to trajectory_following, control the robot to write directly -->
+        <!-- <param name="trajectory_output_topic" type="str" value="$(arg
+        trajectory_visualization_topic)"/> -->
+        <!-- <param name="trajectory_output_nao_topic" type="str" value="$(arg
+        trajectory_nao_topic)"/> -->
+        <param name="clear_writing_surface_topic" type="str" value="$(arg clear_writing_surface_topic)" />
+        <param name="camera_publishing_status_topic" type="str" value="$(arg camera_publishing_status_topic)" />
+
+
+        <!-- Old code: trajectory_following receives input from ros topics. New code: Remove publishing to trajectory_following, control the robot to write directly -->
+        <param name="writing_surface_frame_id" value="$(arg writing_surface_frame_id)" />
+        <!-- <param name="trajectory_visualization_input_topic" value="$(arg
+        trajectory_visualization_topic)" /> -->
+        <!-- <param name="trajectory_nao_input_topic" value="$(arg trajectory_nao_topic)" /> -->
+    </node>
+
+
+
+
+    <!-- ======================== BEGIN trajectory_following nodes ======================== -->
+
+    <!-- Connect the robot to the map -->
+    <node pkg="tf" type="static_transform_publisher" name="map_footprint_broadcaster" args="0 0 0 0 0 0 /map /base_footprint 10"/>
+
+    <!-- Start the writing surface positioner to publish the TF and display it for RViz (from
+    trajectory_following, now moved inside interactive_learning) -->
+    <node pkg="bluering_letter_learning" type="writing_surface_positioner.py"
+    name="writing_surface_positioner" output="screen">
+        <param name="nao_handedness" type="str" value="$(arg nao_handedness)" />
+        <param name="positioning_method" type="str" value="$(arg writing_surface_positioning_method)" />
+        <param name="writing_surface_frame_id" type="str" value="$(arg writing_surface_frame_id)" />
+        <param name="tag_frame_id" type="str" value="$(arg fiducial_marker_frame_id)" />
+        <param name="surface_width" type="double" value="$(arg writing_surface_width_m)" />
+        <param name="surface_height" type="double" value="$(arg writing_surface_height_m)" />
+    </node>
+
+    <!-- ======================== END   trajectory_following nodes ======================== -->
+
+</launch>
