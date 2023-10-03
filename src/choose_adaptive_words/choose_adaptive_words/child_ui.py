@@ -16,6 +16,7 @@ from rclpy.executors import MultiThreadedExecutor
 import rclpy
 from rclpy.node import Node
 import pkg_resources
+import imageio
 
 
 WINDOW_DEFAULT_SIZE = (960, 540)
@@ -73,6 +74,19 @@ class Child_UI(QtWidgets.QMainWindow):
         self.button_feedback.setIcon(
             QtGui.QIcon(self.choose_adaptive_words_path + "/assets/send.svg")
         )
+
+        # set strugg button
+        self.button_strugg = QtWidgets.QPushButton(self)
+        self.button_strugg.setIconSize(
+            QSize(ERASR_SIZE[0] - ERASR_OFFSET, ERASR_SIZE[1] - ERASR_OFFSET)
+        )
+        self.button_strugg.setIcon(
+            QtGui.QIcon(self.choose_adaptive_words_path + "/assets/predict.png")
+        )
+        self.button_strugg.clicked.connect(self.button_strugg_clicked)
+
+        # canvas
+        self.canvas = None
 
         # insert thr AI-Generated image
         self.image = QtWidgets.QLabel(self)
@@ -146,7 +160,16 @@ class Child_UI(QtWidgets.QMainWindow):
         p.end()
 
         # update
+        self.canvas = canvas
+
         self.update()
+
+        # self.canvas = canvas
+
+    def button_strugg_clicked(self):
+        self.canvas.save("draw.jpg")
+
+    
 
     def button_erase_clicked(self):
         self.child_point_lists = list()
@@ -198,11 +221,20 @@ class Child_UI(QtWidgets.QMainWindow):
             )
         if hasattr(self, "image"):
             self.image.setGeometry(
-                self.width() // 2,
+                self.width() // 3,
                 ERASR_OFFSET,
                 ERASR_SIZE[0],
                 ERASR_SIZE[1],
             )
+
+        if hasattr(self, "button_strugg"):
+            self.button_strugg.setGeometry(
+                self.width() *2 // 3 ,
+                ERASR_OFFSET,
+                ERASR_SIZE[0],
+                ERASR_SIZE[1],
+            )
+
         self.update_drawings()
         if hasattr(self, "drawing"):
             self.drawing.setGeometry(

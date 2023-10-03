@@ -133,6 +133,7 @@ class ManagerUINode(Node):
             + self.gui.wordText.text().lower()
             + " to /words_to_write"
         )
+        
         self.publish_word_to_write.publish(
             String(data=self.gui.wordText.text().lower())
         )
