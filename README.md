@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="./docs/images/main_read_me_illustration.jpeg" />
-</p>s
+</p>
 
 Composed of a set of ROS nodes that facilitate the user interaction with a robot, the CoWriter project is designed for children to teach a social robot handwriting. Nao is an autonomous, programmable humanoid robot and has been used for demonstration purposes for this project.
 
@@ -38,9 +38,14 @@ This semester, our team aims to:
 ```
     ├── .github/workflows/              # Implementation of the GitHub Actions  
     ├── docs/                           # Documentation files 
-    ├── src/                            # Source code
+    ├── src/
+    ├── share/
     ├── .gitignore 
-    ├── CHANGELOG.md 
+    ├── CHANGELOG.md
+    ├── Dockerfile
+    ├── robot.Dockerfile
+    ├── requirements.txt
+    ├── Makefile                        # Commands to launch the project
     └── README.md
 ```
 
