@@ -7,8 +7,9 @@ export NODES_CONTAINER=nodes-${ENV}
 export CONTROLLER_CONTAINER=controller-${ENV}
 
 
-include ./makefiles/production.mk
-include ./makefiles/development.mk
+include ./docker/production/production.mk
+include ./docker/development/development.mk
+
 
 TARGETS = $(filter-out $@,$(MAKECMDGOALS))
 $(eval $(TARGETS): check-env)
