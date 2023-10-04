@@ -16,4 +16,4 @@ ENV PYTHONPATH=${PYTHONPATH}:${NAOQI_DIR}/pynaoqi-python2.7-2.8.6.23-linux64-201
 USER nao
 COPY ./src/controller/ ${MAIN_DIR}/controller/
 WORKDIR ${MAIN_DIR}/controller
-CMD ["python2", "controller.py"]
+CMD ["python2", "main.py"]

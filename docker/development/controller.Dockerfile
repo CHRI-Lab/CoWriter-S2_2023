@@ -15,4 +15,4 @@ RUN pip install flask
 
 USER nao
 WORKDIR ${MAIN_DIR}/controller
-CMD ["python2", "controller.py"]
+CMD ["python2", "main.py"]
