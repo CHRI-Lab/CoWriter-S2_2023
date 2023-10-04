@@ -3,9 +3,9 @@
 <package format="3">
   <name>interface</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="chienpu.lin@student.unimelb.edu.au">ubuntu</maintainer>
-  <license>TODO: License declaration</license>
+  <description>A package of interfaces for the cowriter</description>
+  <maintainer email="deanna.m.good@gmail.com">Deanna Hood</maintainer>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
