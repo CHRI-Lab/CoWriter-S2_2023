@@ -36,17 +36,16 @@ This semester, our team aims to:
 ## Structure
 
 ```
-    ├── .github/workflows/              # Implementation of the GitHub Actions  
+    ├── .github/workflows/              # Implementation of the GitHub Actions
+    ├── docker/                         # Docker resources
     ├── docs/                           # Documentation files 
-    ├── src/
     ├── share/
+    ├── src/
     ├── .gitignore 
     ├── CHANGELOG.md
-    ├── Dockerfile
-    ├── robot.Dockerfile
-    ├── requirements.txt
     ├── Makefile                        # Commands to launch the project
-    └── README.md
+    ├── README.md
+    └── requirements.txt
 ```
 
 ## Coding Standards
