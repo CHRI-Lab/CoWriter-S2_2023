@@ -16,7 +16,8 @@ from rclpy.executors import MultiThreadedExecutor
 import rclpy
 from rclpy.node import Node
 import pkg_resources
-import imageio
+from strugg_letter import identify_strugg_letter
+from PIL import Image
 
 
 WINDOW_DEFAULT_SIZE = (960, 540)
@@ -85,9 +86,6 @@ class Child_UI(QtWidgets.QMainWindow):
         )
         self.button_strugg.clicked.connect(self.button_strugg_clicked)
 
-        # canvas
-        self.canvas = None
-
         # insert thr AI-Generated image
         self.image = QtWidgets.QLabel(self)
         self.timer = QTimer(self)
@@ -101,17 +99,35 @@ class Child_UI(QtWidgets.QMainWindow):
 
         # init child pen
         self.child_pen = QtGui.QPen()
-        self.child_pen.setWidth(4)
+        self.child_pen.setWidth(10)
 
         # init manager pen
         self.manager_pen = QtGui.QPen()
-        self.manager_pen.setWidth(2)
+        self.manager_pen.setWidth(4)
         self.manager_pen.setColor(QtGui.QColor(255, 31, 31))
 
         # list of drawings
         self.child_point_list = list()
         self.child_point_lists = list()
         self.manager_point_lists = list()
+        # self.manager_point_lists = [[(77, 50), (76, 49), (75, 49), (74, 49), (73, 49), (71, 48), (69, 47), (67, 47), (65, 46), (64, 46), (62, 46), (61, 45), (60, 45), (58, 45), (57, 45), (56, 45), (55, 45), (54, 45), (53, 45), (53, 46), (53, 47), (52, 48), (51, 49), (51, 50), (50, 51), (49, 53), (49, 54), (48, 55), (48, 56), (47, 57), (47, 59), (46, 60), (45, 61), (45, 62), (45, 63), (45, 64), (45, 65), (45, 66), (45, 67), (45, 69), (45, 71), (45, 72), (45, 73), (45, 74), (45, 75), (45, 76), (45, 77), (45, 78), (45, 80), (45, 81), (45, 82), (46, 83), (46, 84), (46, 85), (47, 86), (48, 87), (49, 87), (49, 88), (50, 88), (51, 88), (52, 89), (53, 90), (55, 90), (57, 90), (58, 91), (60, 92), (61, 92), (62, 92), (64, 92), (65, 92), (66, 92), (67, 92), (68, 92), (69, 92), (70, 91), (71, 91), (72, 91), (74, 90), (74, 89), (75, 89), (75, 88), (77, 87), (77, 86), (78, 86), (78, 85), (80, 84), (81, 83), (81, 82)],
+        #                             [(31, 31), (32, 29), (33, 29), (34, 27), (35, 26), (35, 25), (36, 25), (37, 25), (37, 24), (38, 23), (39, 23), (39, 22), (40, 22), (40, 21), (41, 21), (42, 20), (44, 20), (44, 19), (45, 19), (46, 19), (47, 19), (47, 20), (48, 20), (49, 21), (51, 21), (52, 22), (54, 22), (56, 22), (59, 23), (61, 23), (62, 23), (62, 24), (62, 25), (63, 25), (63, 26), (63, 27), (64, 27), (64, 28), (64, 29), (65, 29), (65, 30), (65, 31), (65, 32), (65, 33), (66, 34), (66, 35), (66, 36), (67, 38), (67, 40), (67, 41), (67, 42), (67, 43), (67, 45), (67, 47), (67, 48), (67, 50), (67, 51), (67, 52), (67, 53), (67, 54), (67, 55), (67, 56), (67, 57), (67, 58), (66, 59), (66, 60), (66, 61), (66, 62), (66, 63), (64, 64), (63, 66), (62, 67), (61, 68), (60, 70), (58, 72), (58, 73), (56, 74), (55, 75), (55, 76), (54, 76), (53, 77), (51, 78), (50, 78), (50, 79), (49, 79), (48, 80), (46, 81), (45, 81), (44, 81), (43, 81), (42, 81), (41, 81), (39, 81), (37, 81), (35, 81), (32, 81), (30, 81), (28, 81), (27, 81), (26, 80), (26, 79), (26, 78), (25, 78), (25, 77), (24, 76), (24, 75), (23, 74), (23, 73), (22, 72), (22, 71), (22, 70), (22, 69), (22, 68), (22, 67), (22, 66), (22, 65), (22, 64), (22, 63), (22, 62), (23, 62), (23, 61), (24, 60), (25, 60), (25, 59), (25, 58), (25, 57), (26, 56), (26, 55), (28, 54), (29, 54), (30, 53), (31, 53), (32, 52), (33, 52), (34, 51), (36, 50), (37, 49), (37, 48), (38, 48), (39, 48), (40, 48), (41, 47), (42, 47), (43, 47), (44, 47), (45, 47), (46, 47), (47, 47), (48, 47), (50, 47), (51, 47), (53, 46), (54, 46), (56, 46), (57, 46), (58, 46), (59, 46), (60, 46), (60, 47), (61, 47), (62, 47), (63, 49), (64, 50), (64, 51), (65, 51), (65, 52), (65, 53), (66, 53), (66, 54), (66, 55), (66, 56), (67, 56), (67, 57), (67, 58), (67, 59), (67, 60), (67, 61), (67, 62), (67, 63), (67, 64), (67, 65), (67, 66), (68, 67), (68, 68), (68, 69), (69, 70), (69, 71), (69, 72), (70, 73), (70, 74), (71, 74), (71, 75), (71, 76), (72, 77), (73, 77), (73, 78), (74, 78), (75, 79), (77, 80), (78, 80), (79, 80), (80, 80), (81, 80), (82, 80), (82, 81), (81, 81)],
+        #                             [(44, 39), (45, 39), (46, 39), (46, 38), (47, 37), (47, 38), (47, 39), (47, 40), (48, 40), (48, 41), (48, 42), (48, 43), (48, 44), (48, 46), (48, 47), (48, 48), (48, 49), (48, 50), (48, 51), (48, 52), (47, 52), (47, 53), (47, 54), (46, 54), (46, 55), (46, 56), (46, 57), (46, 58), (46, 59), (45, 59), (45, 60), (44, 60), (44, 61), (44, 62), (44, 63), (43, 63), (43, 64), (43, 65), (43, 66), (43, 67), (43, 68), (42, 70), (42, 71), (41, 71), (41, 72), (41, 73), (41, 74), (41, 75), (41, 76), (41, 77), (41, 78), (41, 79), (41, 80), (41, 81), (41, 82), (41, 83), (41, 84), (41, 85), (41, 86), (42, 86), (43, 87), (44, 87), (45, 87), (46, 87), (47, 87), (48, 87), (49, 87), (50, 87), (52, 87), (53, 87), (54, 87), (55, 87), (55, 86), (56, 86), (56, 85), (57, 84), (57, 83), (58, 82), (59, 81), (59, 80), (60, 79), (60, 78), (60, 77), (60, 76)], [(36, 52), (39, 51), (41, 51), (43, 51), (46, 50), (47, 50), (48, 50), (49, 50), (50, 50), (51, 50), (52, 50), (53, 50), (54, 50), (55, 50), (56, 50), (57, 50), (59, 50), (60, 50), (61, 50), (62, 50), (61, 49)]]
+        # a = []
+        # a.append(self.manager_point_lists[0])
+        # b = []
+        # for a in self.manager_point_lists[1]:
+        #     b.append((a[0]+40,a[1]))
+
+        # a.append(b)
+        # b=[]
+        # for a in self.manager_point_lists[2]:
+        #     b.append((a[0]+80,a[1]))
+        # a.append(b)
+
+        # self.manager_point_lists = a
+
+            
 
     def updateImage(self):
         self.pixmap = QtGui.QPixmap(
@@ -160,16 +176,43 @@ class Child_UI(QtWidgets.QMainWindow):
         p.end()
 
         # update
-        self.canvas = canvas
-
         self.update()
 
-        # self.canvas = canvas
-
     def button_strugg_clicked(self):
-        self.canvas.save("draw.jpg")
+        self.drawing.pixmap().save("draw.png")
 
-    
+        child_x_axle = []
+        child_y_axle = []
+        if len(self.child_point_lists) > 1:
+            for i in range (len(self.child_point_lists)):
+                for x in self.child_point_lists[i]:
+                    child_x_axle.append(x[0])
+                    child_y_axle.append(x[1])
+        else:
+            for x in self.child_point_lists[0]:
+                child_x_axle.append(x[0])
+                child_y_axle.append(x[1])
+        # Crop image of child writing
+        image = Image.open('draw.png')
+        image.crop((min(child_x_axle)-20,min(child_y_axle),max(child_x_axle)+20,max(child_y_axle))).save("draw.png")
+
+        text = "cat"
+
+        test_result = identify_strugg_letter('draw.png')
+        a = test_result['value']
+        result = a.strip()
+        print("Identidy your strugged letter(s)")
+        if len(result) == len(text):
+            for i in range(len(result)):
+                if text[i] == result[i]:
+                    print ("-------------------------------------------")
+                    print ("Your wrote letter: ", text[i], " seems good! Keep going!" )
+                else:
+                    print ("-------------------------------------------")
+                    print ("Your wrote letter: ", text[i], " looks like: ", result[i], ", based on OCR Module. Please practice more" )
+
+        print("Feedback Finished")
+        
 
     def button_erase_clicked(self):
         self.child_point_lists = list()
