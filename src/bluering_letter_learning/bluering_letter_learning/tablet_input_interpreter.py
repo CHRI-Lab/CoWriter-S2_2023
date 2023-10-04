@@ -19,365 +19,216 @@ Implemented but not in use:
 the learning algorithm from when it was touch-feedback only.
 """
 import os.path
-import rospy
+import rclpy
+from rclpy.node import Node
 import numpy
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PointStamped
 
 from shape_learning.shape_learner_manager import Shape
 
-from bluering_letter_learning.srv import *
-from bluering_letter_learning.msg import Shape as ShapeMsg
+from interface.srv import ShapeAtLocation
+from interface.msg import Shape as ShapeMsg
 
 import logging
 
-wordLogger = logging.getLogger("word_logger")
 
+class TabletInputInterpreter(Node):
+    def __init__(self):
+        super().__init__("tablet_input_interpreter")
 
-def configure_logging(path="/tmp"):
-    if path:
-        if os.path.isdir(path):
-            path = os.path.join(path, "words_demonstrations.log")
-        handler = logging.FileHandler(path)
-        handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        self.wordLogger = logging.getLogger("word_logger")
+        self.configure_logging()
+
+        self.strokes = []
+
+        self.get_logger.info("[tablet_input_interpreter] Starting...")
+        # ? Name of topic to get gestures representing the active shape for demonstration
+        GESTURE_TOPIC = self.declare_parameter(
+            "~gesture_info_topic", "gesture_info"
+        ).value
+        # ? Name of topic to get user drawn raw shapes on
+        USER_DRAWN_SHAPES_TOPIC = self.declare_parameter(
+            "~user_drawn_shapes_topic", "user_drawn_shapes"
+        ).value
+        # ? Name of topic to publish processed shapes on
+        PROCESSED_USER_SHAPE_TOPIC = self.declare_parameter(
+            "~processed_user_shape_topic", "user_shapes_processed"
+        ).value
+
+        # ? listen for gesture representing active demo shape
+        self.create_subscription(
+            PointStamped, GESTURE_TOPIC, self.onSetActiveShapeGesture
         )
-        handler.setFormatter(formatter)
-    else:
-        handler = logging.NullHandler()
+        # ? listen for user-drawn shapes
+        self.create_subscription(
+            Path, USER_DRAWN_SHAPES_TOPIC, self.userShapePreprocessor
+        )
 
-    wordLogger.addHandler(handler)
-    wordLogger.setLevel(logging.DEBUG)
+        self.pub_shapes = self.create_publisher(
+            ShapeMsg, PROCESSED_USER_SHAPE_TOPIC, 10
+        )
 
-
-# HACK: should properly configure the path from an option
-configure_logging()
-
-
-positionToShapeMappingMethod = "basedOnClosestShapeToPosition"
-shapePreprocessingMethod = "merge"  #'longestStroke'
-
-
-# ---------------------------------------------------- LISTENING FOR USER SHAPE
-strokes = []
-
-
-def userShapePreprocessor(message):
-    global strokes
-
-    # rospy.loginfo(f'[tablet_input_interpreter][userShapePreprocessor] strokes = {strokes}')
-
-    if (
-        len(message.poses) == 0
-    ):  # ? a message with 0 poses signifies the shape has no more strokes
-        if len(strokes) > 0:
-            onUserDrawnShapeReceived(
-                strokes, shapePreprocessingMethod, positionToShapeMappingMethod
+    # HACK: should properly configure the path from an option
+    def configure_logging(self, path="/tmp"):
+        if path:
+            if os.path.isdir(path):
+                path = os.path.join(path, "words_demonstrations.log")
+            handler = logging.FileHandler(path)
+            handler.setLevel(logging.DEBUG)
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
+            handler.setFormatter(formatter)
         else:
-            rospy.loginfo(
-                "[tablet_input_interpreter][userShapePreprocessor] empty demonstration. ignoring"
+            handler = logging.NullHandler()
+
+        self.wordLogger.addHandler(handler)
+        self.wordLogger.setLevel(logging.DEBUG)
+
+    # ---------------------------------------------------- LISTENING FOR USER SHAPE
+    def userShapePreprocessor(self, message):
+        # rospy.loginfo(f'[tablet_input_interpreter][userShapePreprocessor] strokes = {strokes}')
+
+        if (
+            len(message.poses) == 0
+        ):  # ? a message with 0 poses signifies the shape has no more strokes
+            if len(self.strokes) > 0:
+                self.onUserDrawnShapeReceived()
+            else:
+                self.get_logger.info(
+                    "[tablet_input_interpreter][userShapePreprocessor] empty demonstration. ignoring"
+                )
+
+            self.strokes = []
+
+        else:  # ? new stroke in shape - add it
+            self.get_logger.info(
+                f"[tablet_input_interpreter][userShapePreprocessor] Got stroke to write with {len(message.poses)} points"
             )
+            x_shape = []
+            y_shape = []
+            for poseStamped in message.poses:
+                x_shape.append(poseStamped.pose.position.x)
+                y_shape.append(-poseStamped.pose.position.y)
 
-        strokes = []
+            numPointsInShape = len(x_shape)
 
-    else:  # ? new stroke in shape - add it
-        rospy.loginfo(
-            f"[tablet_input_interpreter][userShapePreprocessor] Got stroke to write with {len(message.poses)} points"
-        )
+            # ? format as necessary for shape_modeler (x0, x1, x2, ..., y0, y1, y2, ...)'
+            shape = []
+            shape[0:numPointsInShape] = x_shape
+            shape[numPointsInShape:] = y_shape
+
+            shape = numpy.reshape(
+                shape, (-1, 1)
+            )  # ? explicitly make it 2D array with only one column
+            self.strokes.append(shape)
+            # rospy.loginfo(f'[tablet_input_interpreter][userShapePreprocessor] shape = {shape}')
+
+    # ------------------------------------------------------- PROCESSING USER SHAPE
+    def onUserDrawnShapeReceived(self, shapePreprocessingMethod="merge"):
+        #### Log all the strokes
+        xypaths = []
+        for stroke in self.strokes:
+            stroke = stroke.flatten().tolist()
+            nbpts = int(len(stroke) / 2)
+            # print(f'[tablet_input_interpreter][onUserDrawnShapeReceived] stroke = {stroke}')
+            print(
+                f"[tablet_input_interpreter][onUserDrawnShapeReceived] len(stroke) = {len(stroke)} | len(stroke)/2 = {len(stroke)/2} | nbpts = {nbpts}"
+            )
+            # print(f'[tablet_input_interpreter][onUserDrawnShapeReceived] stroke[:nbpts] = {stroke[:nbpts]} | len = {len(stroke[:nbpts])}')
+            # print(f'[tablet_input_interpreter][onUserDrawnShapeReceived] stroke[nbpts:] = {stroke[nbpts:]} | len = {len(stroke[nbpts:])}')
+            xypaths.append(zip(stroke[:nbpts], stroke[nbpts:]))
+        self.wordLogger.info(str(xypaths))
+        ####
+
+        # preprocess to turn multiple strokes into one path
+        if shapePreprocessingMethod == "merge":
+            path = self.processShape_mergeStrokes(self.strokes)
+        elif shapePreprocessingMethod == "longestStroke":
+            path = self.processShape_longestStroke(self.strokes)
+        else:
+            path = self.processShape_firstStroke(self.strokes)
+
+        demoShapeReceived = Shape(path=path)
+        shapeMessage = self.makeShapeMessage(demoShapeReceived)
+        self.pub_shapes.publish(shapeMessage)
+
+    ###-------- FORMATTING SHAPE OBJECT INTO ROS MSG --------###
+    # expects a ShapeLearnerManager.Shape as input
+    def makeShapeMessage(self, shape):
+        shapeMessage = ShapeMsg()
+        if shape.path is not None:
+            shapeMessage.path = shape.path
+        if shape.shape_id is not None:
+            shapeMessage.shape_id = shape.shapeID
+        if shape.shape_type is not None:
+            shapeMessage.shape_type = shape.shapeType
+        if shape.shape_type_code is not None:
+            shapeMessage.shape_type_code = shape.shapeType_code
+        if shape.params_to_vary is not None:
+            shapeMessage.params_to_vary = shape.paramsToVary
+        if shape.param_values is not None:
+            shapeMessage.param_values = shape.paramValues
+
+        return shapeMessage
+
+    # ------------------------------------------------- SHAPE PREPROCESSING METHODS
+    def processShape_longestStroke(self, strokes):
+        length_longestStroke = 0
+        for stroke in strokes:
+            strokeLength = stroke.shape[
+                0
+            ]  # how many rows in array: number of points
+            if strokeLength > length_longestStroke:
+                longestStroke = stroke
+                length_longestStroke = strokeLength
+        return longestStroke
+
+    def processShape_mergeStrokes(self, strokes):
         x_shape = []
         y_shape = []
-        for poseStamped in message.poses:
-            x_shape.append(poseStamped.pose.position.x)
-            y_shape.append(-poseStamped.pose.position.y)
+        for stroke in strokes:
+            nbpts = int(stroke.shape[0] / 2)
+            x_shape.extend(stroke[:nbpts, 0])
+            y_shape.extend(stroke[nbpts:, 0])
 
-        numPointsInShape = len(x_shape)
+        return numpy.array(x_shape + y_shape)
 
-        # ? format as necessary for shape_modeler (x0, x1, x2, ..., y0, y1, y2, ...)'
-        shape = []
-        shape[0:numPointsInShape] = x_shape
-        shape[numPointsInShape:] = y_shape
+    def processShape_firstStroke(self, strokes):
+        return strokes[0]
 
-        shape = numpy.reshape(
-            shape, (-1, 1)
-        )  # ? explicitly make it 2D array with only one column
-        strokes.append(shape)
-        # rospy.loginfo(f'[tablet_input_interpreter][userShapePreprocessor] shape = {shape}')
-
-
-# ------------------------------------------------------- PROCESSING USER SHAPE
-def onUserDrawnShapeReceived(
-    path, shapePreprocessingMethod, positionToShapeMappingMethod
-):
-    #### Log all the strokes
-    xypaths = []
-    for stroke in strokes:
-        stroke = stroke.flatten().tolist()
-        nbpts = int(len(stroke) / 2)
-        # print(f'[tablet_input_interpreter][onUserDrawnShapeReceived] stroke = {stroke}')
-        print(
-            f"[tablet_input_interpreter][onUserDrawnShapeReceived] len(stroke) = {len(stroke)} | len(stroke)/2 = {len(stroke)/2} | nbpts = {nbpts}"
+    # ----------------- PROCESS GESTURES FOR SETTING ACTIVE SHAPE FOR DEMONSTRATION
+    def onSetActiveShapeGesture(self, message):
+        gestureLocation = [message.point.x, message.point.y]
+        # map gesture location to shape drawn
+        shape_at_location = self.create_client(
+            ShapeAtLocation, "shape_at_location"
         )
-        # print(f'[tablet_input_interpreter][onUserDrawnShapeReceived] stroke[:nbpts] = {stroke[:nbpts]} | len = {len(stroke[:nbpts])}')
-        # print(f'[tablet_input_interpreter][onUserDrawnShapeReceived] stroke[nbpts:] = {stroke[nbpts:]} | len = {len(stroke[nbpts:])}')
-        xypaths.append(zip(stroke[:nbpts], stroke[nbpts:]))
-    wordLogger.info(str(xypaths))
-    ####
-
-    # preprocess to turn multiple strokes into one path
-    if shapePreprocessingMethod == "merge":
-        path = processShape_mergeStrokes(strokes)
-    elif shapePreprocessingMethod == "longestStroke":
-        path = processShape_longestStroke(strokes)
-    else:
-        path = processShape_firstStroke(strokes)
-
-    demoShapeReceived = Shape(path=path)
-    shapeMessage = makeShapeMessage(demoShapeReceived)
-    pub_shapes.publish(shapeMessage)
-
-
-###-------- FORMATTING SHAPE OBJECT INTO ROS MSG --------###
-# expects a ShapeLearnerManager.Shape as input
-def makeShapeMessage(shape):
-    shapeMessage = ShapeMsg()
-    if shape.path is not None:
-        shapeMessage.path = shape.path
-    if shape.shapeID is not None:
-        shapeMessage.shapeID = shape.shapeID
-    if shape.shapeType is not None:
-        shapeMessage.shapeType = shape.shapeType
-    if shape.shapeType_code is not None:
-        shapeMessage.shapeType_code = shape.shapeType_code
-    if shape.paramsToVary is not None:
-        shapeMessage.paramsToVary = shape.paramsToVary
-    if shape.paramValues is not None:
-        shapeMessage.paramValues = shape.paramValues
-
-    return shapeMessage
-
-
-# ------------------------------------------------- SHAPE PREPROCESSING METHODS
-def processShape_longestStroke(strokes):
-    length_longestStroke = 0
-    for stroke in strokes:
-        strokeLength = stroke.shape[
-            0
-        ]  # how many rows in array: number of points
-        if strokeLength > length_longestStroke:
-            longestStroke = stroke
-            length_longestStroke = strokeLength
-    return longestStroke
-
-
-def processShape_mergeStrokes(strokes):
-    x_shape = []
-    y_shape = []
-    for stroke in strokes:
-        nbpts = int(stroke.shape[0] / 2)
-        x_shape.extend(stroke[:nbpts, 0])
-        y_shape.extend(stroke[nbpts:, 0])
-
-    return numpy.array(x_shape + y_shape)
-
-
-def processShape_firstStroke(strokes):
-    return strokes[0]
-
-
-# ----------------- PROCESS GESTURES FOR SETTING ACTIVE SHAPE FOR DEMONSTRATION
-activeShapeForDemonstration_type = None
-
-
-def onSetActiveShapeGesture(message):
-    global activeShapeForDemonstration_type
-
-    gestureLocation = [message.point.x, message.point.y]
-    # map gesture location to shape drawn
-    try:
-        shape_at_location = rospy.ServiceProxy(
-            "shape_at_location", shapeAtLocation
-        )
-        request = shapeAtLocationRequest()
+        request = ShapeAtLocation.Request()
         request.location.x = gestureLocation[0]
         request.location.y = gestureLocation[1]
-        response = shape_at_location(request)
+        while not shape_at_location.wait_for_service(timeout_sec=1.0):
+            self.get_logger.info("service not available, waiting again...")
+        future = shape_at_location.call_async(request)
+        rclpy.spin_until_future_complete(self, future)
+        response = future.result()
         shapeType_code = response.shape_type_code
         shapeID = response.shape_id
-    except rospy.ServiceException as e:
-        rospy.logerr("Service call failed: %s", e)
 
-    if shapeType_code != -1 and shapeID != -1:
-        activeShapeForDemonstration_type = shapeType_code
-        rospy.loginfo("Setting active shape to shape " + str(shapeType_code))
+        if shapeType_code != -1 and shapeID != -1:
+            self.get_logger.info(
+                "Setting active shape to shape " + str(shapeType_code)
+            )
 
 
-"""  
-    
-# ----------------------------------------------------- PROCESSING TOUCH EVENTS
-prevTouchTime = 0   
-minTimeBetweenTouches = 0.1  #Seconds allowed between touches for the second one to be considered
-def touchInfoManager(pointStamped):
-    global touch_subscriber, gesture_subscriber, prevTouchTime
-    touch_subscriber.unregister() #unregister regardless of outcome, and re-subscribe if necessary
-    gesture_subscriber.unregister() 
-    
-    touchTime = pointStamped.header.stamp.to_sec()
-    if((touchTime - prevTouchTime)>minTimeBetweenTouches):
-        touchLocation = [pointStamped.point.x, pointStamped.point.y]
-        
-        #map touch location to closest shape drawn
-        try:
-            shape_at_location = rospy.ServiceProxy('shape_at_location', shapeAtLocation)
-            request = shapeAtLocationRequest()
-            request.location.x = touchLocation[0]
-            request.location.y = touchLocation[1]
-            response = shape_at_location(request)
-            shapeType_code = response.shape_type_code
-            shapeID = response.shape_id
-        except rospy.ServiceException as e:
-            rospy.logerr('Service call failed: %s',e)
-        
-        
-        if(shapeType_code == -1):
-            rospy.loginfo('Touch not inside the display area')
-            
-        elif(shapeID == -1):
-            rospy.loginfo('Ignoring touch because not on valid shape')
-        else:
-            try:
-                possible_to_display = rospy.ServiceProxy('possible_to_display_shape', isPossibleToDisplayNewShape)
-                response = possible_to_display(shape_type_code = shapeType_code)
-                ableToDisplay = response.is_possible.data
-            except rospy.ServiceException as e:
-                ableToDisplay = False
-                rospy.logerr('Service call failed: %s',e)
-            
-            if(not ableToDisplay):#no more space
-                rospy.loginfo('Can\'t fit anymore letters on the screen')
+def main(args=None):
+    rclpy.init(args=args)
+    tablet_input_interpreter = TabletInputInterpreter()
+    rclpy.spin(tablet_input_interpreter)
+    tablet_input_interpreter.destroy_node()
+    rclpy.shutdown()
 
-            else:
-                              
-                rospy.loginfo('Shape touched: '+str(shapeType_code)+'_'+str(shapeID))  
-                feedbackMessage = String()
-                feedbackMessage.data = str(shapeType_code) + '_' + str(shapeID)
-                pub_feedback.publish(feedbackMessage)
-                
-        prevTouchTime = touchTime
-    else:
-        rospy.loginfo('Ignoring touch because it was too close to the one before')
-
-    listenForAllGestures()
-            
-            
-# ------------------------------------------------ PROCESSING LONG-TOUCH EVENTS
-def gestureManager(pointStamped):
-    global touch_subscriber, gesture_subscriber, prevTouchTime
-    touch_subscriber.unregister() #unregister regardless of outcome, and re-subscribe if necessary
-    gesture_subscriber.unregister()   
-    
-    touchTime = pointStamped.header.stamp.to_sec() 
-    if((touchTime - prevTouchTime)>minTimeBetweenTouches):
-        gestureLocation = [pointStamped.point.x, pointStamped.point.y]
-        
-        #map touch location to closest shape drawn
-        try:
-            shape_at_location = rospy.ServiceProxy('shape_at_location', shapeAtLocation)
-            request = shapeAtLocationRequest()
-            request.location.x = gestureLocation[0]
-            request.location.y = gestureLocation[1]
-            response = shape_at_location(request)
-            shapeType_code = response.shape_type_code
-            shapeID = response.shape_id
-            #rospy.loginfo( response.location)
-        except rospy.ServiceException as e:
-            rospy.logerr('Service call failed: %s',e)
-                  
-        if(shapeType_code == -1):
-            rospy.loginfo('Touch not inside the display area')
-        elif(shapeID == -1):
-            rospy.loginfo('Ignoring touch because not on valid shape')
-        else:
-            try:
-                possible_to_display = rospy.ServiceProxy('possible_to_display_shape', isPossibleToDisplayNewShape)
-                response = possible_to_display(shape_type_code = shapeType_code)
-                ableToDisplay = response.is_possible.data
-                #rospy.loginfo( response.location)
-            except rospy.ServiceException as e:
-                ableToDisplay = False
-                rospy.logerr('Service call failed: %s',e)
-            
-            if(not ableToDisplay):#no more space
-                rospy.loginfo('Can\'t fit anymore letters on the screen')
-            else:  
-                
-                rospy.loginfo('Shape selected as best: '+str(shapeType_code)+'_'+str(shapeID))
-                feedbackMessage = String()
-                feedbackMessage.data = str(shapeType_code) + '_' + str(shapeID) + '_noNewShape'
-                pub_feedback.publish(feedbackMessage)
-                    
-        prevTouchTime = touchTime
-    else:
-        rospy.loginfo('Ignoring touch because it was too close to the one before')
-    
-    listenForAllGestures()
-    
-def listenForAllGestures():
-    global touch_subscriber, gesture_subscriber
-    #listen for touch events on the tablet
-    touch_subscriber = rospy.Subscriber(TOUCH_TOPIC, PointStamped, touchInfoManager)
-        
-    #listen for touch events on the tablet
-    gesture_subscriber = rospy.Subscriber(GESTURE_TOPIC, PointStamped, gestureManager) 
-
-"""
 
 if __name__ == "__main__":
-    rospy.init_node("tablet_input_interpreter")
-    """
-    #Topic for location of 'new shape like this one' gesture
-    TOUCH_TOPIC = rospy.get_param('~touch_info_topic', 'touch_info')         
-    #Topic for location of 'shape good enough' gesture
-    GESTURE_TOPIC = rospy.get_param('~gesture_info_topic', 'gesture_info')  
-    #Name of topic to publish feedback on
-    FEEDBACK_TOPIC = rospy.get_param('~shape_feedback_topic', 'shape_feedback')
-    pub_feedback = rospy.Publisher(FEEDBACK_TOPIC, String) 
-    listenForAllGestures() #start touch and long-touch subscribers
-    """
-
-    rospy.loginfo("[tablet_input_interpreter] Starting...")
-
-    # ? Name of topic to get gestures representing the active shape for demonstration
-    GESTURE_TOPIC = rospy.get_param("~gesture_info_topic", "gesture_info")
-    # ? Name of topic to get user drawn raw shapes on
-    USER_DRAWN_SHAPES_TOPIC = rospy.get_param(
-        "~user_drawn_shapes_topic", "user_drawn_shapes"
-    )
-    # ? Name of topic to publish processed shapes on
-    PROCESSED_USER_SHAPE_TOPIC = rospy.get_param(
-        "~processed_user_shape_topic", "user_shapes_processed"
-    )
-
-    # ? listen for gesture representing active demo shape
-    gesture_subscriber = rospy.Subscriber(
-        GESTURE_TOPIC, PointStamped, onSetActiveShapeGesture
-    )
-
-    # ? listen for user-drawn shapes
-    shape_subscriber = rospy.Subscriber(
-        USER_DRAWN_SHAPES_TOPIC, Path, userShapePreprocessor
-    )
-
-    pub_shapes = rospy.Publisher(
-        PROCESSED_USER_SHAPE_TOPIC, ShapeMsg, queue_size=10
-    )
-
-    # ? initialise display manager for shapes (manages positioning of shapes)
-    rospy.wait_for_service("shape_at_location")
-    rospy.wait_for_service("possible_to_display_shape")
-    rospy.wait_for_service("closest_shapes_to_location")
-    rospy.wait_for_service("display_shape_at_location")
-    rospy.wait_for_service("index_of_location")
-
-    rospy.spin()
+    main()
