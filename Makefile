@@ -1,46 +1,42 @@
-export NODES_IMAGE=nodes
-export ROBOT_CONTROLLER_IMAGE=robot-controller
-export NODES_CONTAINER=nodes
-export ROBOT_CONTROLLER_CONTAINER=robot-controller
+export FILE_PATH=./docker/${ENV}
 
-build-nodes:
-	docker build --tag ${NODES_IMAGE} --platform linux/amd64 .
+export NODES_IMAGE=nodes-${ENV}
+export CONTROLLER_IMAGE=controller-${ENV}
 
-build-robot-controller:
-	docker build --tag ${ROBOT_CONTROLLER_IMAGE} --platform linux/amd64 --file robot.Dockerfile .
+export NODES_CONTAINER=nodes-${ENV}
+export CONTROLLER_CONTAINER=controller-${ENV}
 
-run-nodes:
-	docker run -it -d \
-		--name ${NODES_CONTAINER} \
-		--user nao \
-		--network host \
-		--device /dev/snd \
-		-v ./src:/home/nao/NAOHW-Boxjelly/src \
-		-v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=${DISPLAY} \
-		${NODES_IMAGE}
 
-run-robot-controller:
-	docker run -it \
-		--name ${ROBOT_CONTROLLER_CONTAINER} \
-		--user nao \
-		--network="host" \
-		-v ./src/controller:/home/nao/controller \
-		${ROBOT_CONTROLLER_IMAGE} 
+include ./docker/production/production.mk
+include ./docker/development/development.mk
 
-start-cowriter:
-	docker exec -it ${NODES_CONTAINER} \
-	bash -c "source ./install/setup.bash && /opt/ros/humble/bin/ros2 launch letter_learning_interaction cowriter.launch.py"
 
-start-adaptive-words:
-	docker exec -it ${NODES_CONTAINER} \
-	bash -c "source ./install/setup.bash && /opt/ros/humble/bin/ros2 launch choose_adaptive_words adaptive.launch.py"
+# ensure that the ENV variable is set to either "production" or "development"
+# before running any of the targets below
+TARGETS = $(filter-out $@,$(MAKECMDGOALS))
+$(eval $(TARGETS): check-env)
 
-start-trajectory-following:
-	docker exec -it ${NODES_CONTAINER} \
-	bash -c "source ./install/setup.bash && /opt/ros/humble/bin/ros2 launch nao_trajectory_following trajectory.launch.py"
+check-env:
+	@if [ -z "$(ENV)" ]; then \
+		echo "Set the ENV variable either to \"production\" or \"development\".\nexport ENV=..."; \
+		exit 1; \
+	elif [ "$(ENV)" != "production" ] && [ "$(ENV)" != "development" ]; then \
+		echo "Error: ENV must be set to either \"production\" or \"development\"."; \
+		exit 1; \
+	else \
+		echo "ENV is set to $(ENV)"; \
+	fi
 
-rm-nodes:
-	docker rm -f ${NODES_CONTAINER}
+build-nodes: build-nodes-${ENV}
+build-controller: build-controller-${ENV}
+build: build-nodes build-controller
 
-rm-robot-controller:
-	docker rm -f ${ROBOT_CONTROLLER_CONTAINER}
+run-nodes: run-nodes-${ENV}
+run-controller: run-controller-${ENV}
+
+start-nodes: start-nodes-${ENV}
+start-controller: start-controller-${ENV}
+
+rm-nodes: rm-nodes-${ENV}
+rm-controller: rm-controller-${ENV}
+rm: rm-nodes rm-controller
