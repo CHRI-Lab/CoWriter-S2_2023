@@ -16,7 +16,8 @@ from rclpy.executors import MultiThreadedExecutor
 import rclpy
 from rclpy.node import Node
 import pkg_resources
-from strugg_letter import identify_strugg_letter
+from choose_adaptive_words.strugg_letter import identify_strugg_letter
+from choose_adaptive_words.manager_ui import word
 from PIL import Image
 
 
@@ -179,6 +180,7 @@ class Child_UI(QtWidgets.QMainWindow):
         self.update()
 
     def button_strugg_clicked(self):
+        print("Practiced word: ", word)
         self.drawing.pixmap().save("draw.png")
 
         child_x_axle = []
@@ -196,22 +198,22 @@ class Child_UI(QtWidgets.QMainWindow):
         image = Image.open('draw.png')
         image.crop((min(child_x_axle)-20,min(child_y_axle),max(child_x_axle)+20,max(child_y_axle))).save("draw.png")
 
-        text = "cat"
+        if word != None:
+            text = word.strip()
+            test_result = identify_strugg_letter('draw.png')
+            a = test_result['value']
+            result = a.strip()
+            print("Identidy your strugged letter(s)")
+            if len(result) == len(text):
+                for i in range(len(result)):
+                    if text[i] == result[i]:
+                        print ("-------------------------------------------")
+                        print ("Your wrote letter: ", text[i], " seems good! Keep going!" )
+                    else:
+                        print ("-------------------------------------------")
+                        print ("Your wrote letter: ", text[i], " looks like: ", result[i], ", based on OCR Module. Please practice more" )
 
-        test_result = identify_strugg_letter('draw.png')
-        a = test_result['value']
-        result = a.strip()
-        print("Identidy your strugged letter(s)")
-        if len(result) == len(text):
-            for i in range(len(result)):
-                if text[i] == result[i]:
-                    print ("-------------------------------------------")
-                    print ("Your wrote letter: ", text[i], " seems good! Keep going!" )
-                else:
-                    print ("-------------------------------------------")
-                    print ("Your wrote letter: ", text[i], " looks like: ", result[i], ", based on OCR Module. Please practice more" )
-
-        print("Feedback Finished")
+            print("Feedback Finished")
         
 
     def button_erase_clicked(self):

@@ -40,6 +40,8 @@ TOPIC_LEARNING_PACE = "simple_learning_pace"
 TOPIC_GPT_INPUT = "chatgpt_input"
 TOPIC_SHAPE_FINISHED = "shape_finished"
 
+word = None
+
 
 class Manager_UI(QtWidgets.QDialog, QtWidgets.QMainWindow):
     def __init__(self):
@@ -138,6 +140,8 @@ class ManagerUINode(Node):
             String(data=self.gui.wordText.text().lower())
         )
         self.ai_image.generate_image(self.gui.wordText.text().lower())
+
+        word = self.gui.wordText.text().lower()
 
     def buttonGptTextClicked(self):
         self.get_logger().info(
