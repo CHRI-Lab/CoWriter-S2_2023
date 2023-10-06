@@ -224,7 +224,7 @@ class InteractiveLearning(Node):
             self.pub_camera_status,
             self.pub_bounding_boxes,
             self.pub_clear,
-            # self.tabletWatchdog,
+            self.tabletWatchdog,
             self.pub_traj,
             self.pub_traj_downsampled,
             self.pub_listening_signal,

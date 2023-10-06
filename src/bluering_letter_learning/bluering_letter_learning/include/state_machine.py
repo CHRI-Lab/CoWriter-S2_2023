@@ -3,10 +3,12 @@
 from http://www.ibm.com/developerworks/linux/library/l-python-state/index.html
 """
 
+
 class StateMachine:
     """
     Class for managing state machines.
     """
+
     def __init__(self):
         self.handlers = {}
         self.startState = None
@@ -21,7 +23,7 @@ class StateMachine:
 
     def set_start(self, name):
         self.startState = name.upper()
-    
+
     def get_state(self):
         return self.currentState
 
@@ -29,10 +31,14 @@ class StateMachine:
         try:
             handler = self.handlers[self.startState]
         except:
-            raise Exception('InitializationError', 'must call .set_start() before .run()')
+            raise Exception(
+                "InitializationError", "must call .set_start() before .run()"
+            )
 
         if not self.endStates:
-            raise Exception('InitializationError', 'at least one state must be an end_state')
+            raise Exception(
+                "InitializationError", "at least one state must be an end_state"
+            )
 
         while 1:
             (newState, cargo) = handler(cargo)
