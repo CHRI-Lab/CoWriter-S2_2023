@@ -205,6 +205,7 @@ class InteractiveLearning(Node):
         """ state machine controller """
         self.stateMachine = StateMachine()
         self.controller = StateController(
+            self,
             self.stateMachine,
             self.NAO_IP,
             9559,
