@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 
 """
-This module provides two classes for managing watchdog timers over ROS 
+This module provides two classes for managing watchdog timers over ROS
 topics: Watchdog and WatchdogClearer.
 
 Watchdog:
     Listens for watchdog timer clears over a topic and raises a warning
     if the timer overflows, meaning the device responsible for clearing
-    the timer has not performed as expected. When a clear message is 
-    received from a WatchdogClearer instance, it resets the timer and 
+    the timer has not performed as expected. When a clear message is
+    received from a WatchdogClearer instance, it resets the timer and
     updates the responsive status.
 
 WatchdogClearer:
-    Publishes watchdog timer clears over a topic at specified 
-    intervals. Sends clear messages to a Watchdog instance 
-    listening on the same topic, allowing the Watchdog to reset its 
+    Publishes watchdog timer clears over a topic at specified
+    intervals. Sends clear messages to a Watchdog instance
+    listening on the same topic, allowing the Watchdog to reset its
     timer and maintain its responsive status.
 """
 
@@ -129,12 +129,8 @@ class WatchdogClearer:
         self.ros_node: Node = ros_node
         self.clear_topic: str = clear_topic
         self.time_between_clears_sec: float = time_between_clears_sec
-        self.publisher = self.ros_node.create_publisher(
-            Empty, self.clear_topic, 10
-        )
-        self.timer: Timer = Timer(
-            self.time_between_clears_sec, self.clear_watchdog
-        )
+        self.publisher = self.ros_node.create_publisher(Empty, self.clear_topic, 10)
+        self.timer: Timer = Timer(self.time_between_clears_sec, self.clear_watchdog)
         self.timer.start()
 
     def clear_watchdog(self) -> None:

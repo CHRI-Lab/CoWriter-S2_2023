@@ -17,7 +17,6 @@ from time import sleep
 import rclpy
 from rclpy.node import Node
 from rclpy.time import Time
-from rclpy.clock import Duration
 import tf2_ros as tf
 from tf2_ros.buffer import Buffer
 
@@ -124,17 +123,19 @@ def main(args=None):
     # node.get_parameter("~detector_frame_id", "camera_frame")
     camera_frame = "v4l_frame"
 
-    language: str = "english"
+    # language: str = "english"
     # node.get_parameter("~language", "english")
 
     # Create publishers for different topics
     pub_words = node.create_publisher(String, words_topic, 10)
-    pub_special = node.create_publisher(String, special_topic, 10)
-    pub_stop = node.create_publisher(Empty, stop_topic, 10)
-    pub_test = node.create_publisher(Empty, test_topic, 10)
+    node.create_publisher(String, special_topic, 10)
+    node.create_publisher(Empty, stop_topic, 10)
+    node.create_publisher(Empty, test_topic, 10)
 
     # Initialize the TransformListener
-    tf_listener = tf.TransformListener(Buffer(), node) #,True, Duration(nanoseconds=500000000))
+    tf_listener = tf.TransformListener(
+        Buffer(), node
+    )  # ,True, Duration(nanoseconds=500000000))
     sleep(0.5)
     rate = node.create_rate(10)
     prev_word: str = ""
@@ -144,9 +145,7 @@ def main(args=None):
     while not rclpy.ok():
         # Wait for the go card to appear
         while not rclpy.ok():
-            go_card_last_seen = last_seen_since(
-                "tag_341", tf_listener, camera_frame
-            )
+            go_card_last_seen = last_seen_since("tag_341", tf_listener, camera_frame)
             if go_card_last_seen < 0.1:
                 break
 
@@ -167,21 +166,26 @@ def main(args=None):
                 # Check if the time difference is less than 0.3 seconds
                 if (Time().now() - common_time).to_sec() < 0.3:
                     try:
-                        # Get the transform (translation and rotation) between the tag and camera_frame
+                        # Get the transform (translation and rotation) between the tag
+                        # and camera_frame
                         translation, rotation = tf_listener.lookupTransform(
                             tag, camera_frame, common_time
                         )
 
-                        # Check if the tag is facing the camera (based on rotation values)
+                        # Check if the tag is facing the camera
+                        # (based on rotation values)
                         if rotation[2] - rotation[3] > 0:
-                            # The tag is not facing the camera, so skip to the next iteration
+                            # The tag is not facing the camera,
+                            # so skip to the next iteration
                             continue
 
                     except tf.ExtrapolationException:
-                        # If an extrapolation exception occurs, continue to the next iteration
+                        # If an extrapolation exception occurs,
+                        # continue to the next iteration
                         continue
 
-                    # Add the detected letter and its x-coordinate in the camera frame to the letters_detected set
+                    # Add the detected letter and its x-coordinate in the camera frame
+                    # to the letters_detected set
                     letters_detected.add((letter, translation[0]))
 
             except tf.Exception:
@@ -190,20 +194,18 @@ def main(args=None):
 
         # If no letters were detected, log a warning message
         if not letters_detected:
-            node.get_logger().warn(
-                "Got a 'GO' card, but unable to find any letter!"
-            )
+            node.get_logger().warn("Got a 'GO' card, but unable to find any letter!")
         else:
             # Sort the detected letters based on their x-coordinate in the camera frame
             sorted_letters = sorted(letters_detected, key=cmp_to_key(compare))
 
             # Create the word to publish by joining the sorted letters
-            word_to_publish = "".join([l for l, _ in sorted_letters])
+            word_to_publish = "".join([letter for letter, _ in sorted_letters])
 
             # Check if the word to publish is the same as the previous word
             if word_to_publish in prev_word:
                 node.get_logger().info(
-                    f"I'm not publishing '{word_to_publish}' since it is still the same word (or part thereof)."
+                    f"I'm not publishing '{word_to_publish}' since it is still the same word (or part thereof)."  # noqa: E501
                 )
             else:
                 node.get_logger().info(f"Publishing word: {word_to_publish}")
@@ -214,7 +216,7 @@ def main(args=None):
                 pub_words.publish(message)
 
                 # Reset the tags_detected set
-                tags_detected: Set[str] = set()
+                # tags_detected: Set[str] = set()
 
                 # Update the previous word
                 prev_word = word_to_publish

@@ -115,7 +115,9 @@ class AudioProcessor:
         transcription_chunk: str = self.speech_transcriber.transcribe_audio(
             self.record_file
         )["text"]
-        self.ros_node.get_logger().info("Transcription is %s" % transcription_chunk)
+        self.ros_node.get_logger().info(
+            "Transcription is %s" % transcription_chunk
+        )
         self.transcription += transcription_chunk
 
         # If transcription is non-empty & unchanged, publish and reset

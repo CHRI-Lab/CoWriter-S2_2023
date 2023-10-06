@@ -59,9 +59,7 @@ class PublisherManager:
             Bool, self.PUBLISH_STATUS_TOPIC, 10
         )
 
-        self.pub_traj = self.ros_node.create_publisher(
-            Path, self.SHAPE_TOPIC,  10
-        )
+        self.pub_traj = self.ros_node.create_publisher(Path, self.SHAPE_TOPIC, 10)
 
         self.pub_bounding_boxes = self.ros_node.create_publisher(
             Float64MultiArray, self.BOUNDING_BOXES_TOPIC, 10
@@ -151,8 +149,6 @@ class DeviceManager:
             InteractionSettings.generate_settings, self.SHAPE_LOGGING_PATH
         )
 
-        self.tablet_watchdog = Watchdog(
-            "watchdog_clear/tablet", 0.4, self.ros_node
-        )
+        self.tablet_watchdog = Watchdog("watchdog_clear/tablet", 0.4, self.ros_node)
         self.screen_manager = ScreenManager(0.2, 0.1395)
         self.text_shaper: TextShaper = TextShaper()

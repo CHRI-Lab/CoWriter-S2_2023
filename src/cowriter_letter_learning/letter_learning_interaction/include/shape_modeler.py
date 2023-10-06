@@ -15,14 +15,16 @@ from sklearn.cluster import MeanShift
 
 
 class ShapeModeler:
-    def __init__(self,
-                 shape_name=None,
-                 samples=None,
-                 init_filename=None,
-                 update_filenames=None,
-                 param_filename=None,
-                 num_principle_components=10):
-        """ Initialize a shape modeler
+    def __init__(
+        self,
+        shape_name=None,
+        samples=None,
+        init_filename=None,
+        update_filenames=None,
+        param_filename=None,
+        num_principle_components=10,
+    ):
+        """Initialize a shape modeler
 
         If given an initial dataset (params samples or init_filename),
         loads the training dataset for a given shape, and run a PCA
@@ -48,7 +50,6 @@ class ShapeModeler:
         self.num_principle_components = num_principle_components
 
         if samples is None and init_filename is None:
-            
             return
 
         if samples:
@@ -73,7 +74,8 @@ class ShapeModeler:
         self.perform_PCA()
 
         (self.ref_params, error) = self.decompose_shape(
-            numpy.reshape(self.data_mat[0], (-1, 1)))
+            numpy.reshape(self.data_mat[0], (-1, 1))
+        )
         # self.createNewSet()
 
     def make_data_matrix(self, filename):
@@ -94,14 +96,14 @@ class ShapeModeler:
         # scan the dataset :
         lines = []
         try:
-            with open(filename, 'r') as f:
+            with open(filename, "r") as f:
                 lines.append(f.readline())
                 lines.append(f.readline())
                 nb_samples = int(lines[0].strip())
                 for i in range(nb_samples):
                     lines.append(f.readline())
         except IOError:
-            raise RuntimeError("no reading permission for file"+filename)
+            raise RuntimeError("no reading permission for file" + filename)
         self.num_shapes_in_dataset = int(lines[0].strip())
         self.num_points_in_shapes = int(lines[1].strip())
         if not (self.num_shapes_in_dataset and self.num_points_in_shapes):
@@ -109,26 +111,31 @@ class ShapeModeler:
 
         self.num_shapes_in_demo = 0
         self.data_mat = numpy.empty(
-            (self.num_shapes_in_dataset, self.num_points_in_shapes * 2))
+            (self.num_shapes_in_dataset, self.num_points_in_shapes * 2)
+        )
         self.demo_data_mat = numpy.empty(
-            (self.num_shapes_in_demo, self.num_points_in_shapes * 2))
+            (self.num_shapes_in_demo, self.num_points_in_shapes * 2)
+        )
 
         ref_line = lines[2].strip()
-        ref_values = ref_line.split(' ')
+        ref_values = ref_line.split(" ")
         if not (len(ref_values) == self.num_points_in_shapes * 2):
             raise RuntimeError(
-                "Unable to read appropriate number of points from text file for reference shape ")
+                "Unable to read appropriate number of points from text file for reference shape "  # noqa: E501
+            )
         self.ref_shape = [float(i) for i in ref_values]
         self.data_mat[0] = self.ref_shape
         # -1 because we have already add the first shape (reference)
-        for i in range(self.num_shapes_in_dataset-1):
-            line = lines[i+3].strip()
-            values = line.split(' ')
+        for i in range(self.num_shapes_in_dataset - 1):
+            line = lines[i + 3].strip()
+            values = line.split(" ")
             if not (len(values) == self.num_points_in_shapes * 2):
                 raise RuntimeError(
-                    "Unable to read appropriate number of points from text file for shape " + str(i + 1))
+                    "Unable to read appropriate number of points from text file for shape "  # noqa: E501
+                    + str(i + 1)
+                )
 
-            self.data_mat[i+1] = [float(j) for j in values]
+            self.data_mat[i + 1] = [float(j) for j in values]
 
     def make_data_matrix_2(self, filename):
         """Read data from text file and store resulting data matrix
@@ -145,14 +152,14 @@ class ShapeModeler:
         # scan the dataset :
         lines = []
         try:
-            with open(filename, 'r') as f:
+            with open(filename, "r") as f:
                 lines.append(f.readline())
                 lines.append(f.readline())
                 nb_samples = int(lines[1].strip())
-                for i in range(nb_samples+5):
+                for i in range(nb_samples + 5):
                     lines.append(f.readline())
         except IOError:
-            raise RuntimeError("no reading permission for file"+filename)
+            raise RuntimeError("no reading permission for file" + filename)
 
         self.num_shapes_in_dataset = int(lines[1].strip())
         self.num_points_in_shapes = int(lines[3].strip())
@@ -161,26 +168,31 @@ class ShapeModeler:
 
         self.num_shapes_in_demo = 0
         self.data_mat = numpy.empty(
-            (self.num_shapes_in_dataset, self.num_points_in_shapes * 2))
+            (self.num_shapes_in_dataset, self.num_points_in_shapes * 2)
+        )
         self.demo_data_mat = numpy.empty(
-            (self.num_shapes_in_demo, self.num_points_in_shapes * 2))
+            (self.num_shapes_in_demo, self.num_points_in_shapes * 2)
+        )
 
         ref_line = lines[5].strip()
-        ref_values = ref_line.split(' ')
+        ref_values = ref_line.split(" ")
         if not (len(ref_values) == self.num_points_in_shapes * 2):
             raise RuntimeError(
-                "Unable to read appropriate number of points from text file for reference shape ")
+                "Unable to read appropriate number of points from text file for reference shape "  # noqa: E501
+            )
         self.ref_shape = [float(i) for i in ref_values]
         self.data_mat[0] = self.ref_shape
 
         # -1 because we have already add the first shape (reference)
-        for i in range(self.num_shapes_in_dataset-1):
-            line = lines[i+7].strip()
-            values = line.split(' ')
+        for i in range(self.num_shapes_in_dataset - 1):
+            line = lines[i + 7].strip()
+            values = line.split(" ")
             if not (len(values) == self.num_points_in_shapes * 2):
                 raise RuntimeError(
-                    "Unable to read appropriate number of points from text file for shape " + str(i + 1))
-            self.data_mat[i+1] = [float(i) for i in values]
+                    "Unable to read appropriate number of points from text file for shape "  # noqa: E501
+                    + str(i + 1)
+                )
+            self.data_mat[i + 1] = [float(i) for i in values]
 
     def perform_PCA(self):
         """
@@ -191,11 +203,14 @@ class ShapeModeler:
         cover_mat = numpy.cov(self.data_mat.T)
         eig_vals, eig_vecs = numpy.linalg.eig(cover_mat)
         self.principle_components = numpy.real(
-            eig_vecs[:, 0:self.num_principle_components])
+            eig_vecs[:, 0 : self.num_principle_components]  # noqa: E203
+        )
         self.parameter_variances = numpy.real(
-            eig_vals[0:self.num_principle_components])
+            eig_vals[0 : self.num_principle_components]  # noqa: E203
+        )
         self.mean_shape = self.data_mat.mean(0).reshape(
-            (self.num_points_in_shapes * 2, 1))
+            (self.num_points_in_shapes * 2, 1)
+        )
 
     def get_euclidian_center(self):
         """
@@ -213,15 +228,16 @@ class ShapeModeler:
         # data_mean, data_var = self.get_euclidian_center()
         dist = self.mean_shape - shape
         # sigma =numpy.sqrt(self.parameter_variances)
-        return numpy.sum(dist*dist)
+        return numpy.sum(dist * dist)
 
     def get_dist_to_ref(self, shape):
         params_1, _ = self.decompose_shape(
-            self.data_mat[0].reshape((self.num_points_in_shapes * 2, 1)))
+            self.data_mat[0].reshape((self.num_points_in_shapes * 2, 1))
+        )
         params_2, _ = self.decompose_shape(shape)
-        dist = numpy.array(params_1)-numpy.array(params_2)
+        dist = numpy.array(params_1) - numpy.array(params_2)
         var = numpy.abs(numpy.array(self.get_parameter_variances()))
-        ndist = dist*dist/var
+        ndist = dist * dist / var
         return numpy.sum(ndist[:1])
 
     def get_parameter_variances(self):
@@ -235,9 +251,10 @@ class ShapeModeler:
         """
         Generate a shape with the given parameter vector
         """
-        if (not params.shape == (self.num_principle_components, 1)):
+        if not params.shape == (self.num_principle_components, 1):
             raise RuntimeError(
-                "Vector of parameters must have dimensions of (num_principle_components,1)")
+                "Vector of parameters must have dimensions of (num_principle_components,1)"  # noqa: E501
+            )
         shape = self.mean_shape + numpy.dot(self.principle_components, params)
         return shape
 
@@ -267,7 +284,7 @@ class ShapeModeler:
         """
         Draw 'paramsToVary' values from triangular distribution with
         limits given by 'bounds' and modes given by 'modes' and make
-        shape       
+        shape
         """
         b = deepcopy(params)
         for i in range(len(params_to_vary)):
@@ -281,16 +298,15 @@ class ShapeModeler:
         values (projects onto the num_principle_components-dimensional
         space)
         """
-        if (not shape.shape == (self.num_points_in_shapes * 2, 1)):
+        if not shape.shape == (self.num_points_in_shapes * 2, 1):
             print(shape.shape)
             print(self.num_points_in_shapes)
             raise RuntimeError(
-                "Shape to decompose must be the same size as shapes used to make the dataset")
-        params = numpy.dot(self.principle_components.T,
-                           shape - self.mean_shape)
+                "Shape to decompose must be the same size as shapes used to make the dataset"  # noqa: E501
+            )
+        params = numpy.dot(self.principle_components.T, shape - self.mean_shape)
 
-        approx_shape = self.mean_shape + \
-            numpy.dot(self.principle_components, params)
+        approx_shape = self.mean_shape + numpy.dot(self.principle_components, params)
         diff = abs(shape - approx_shape) ** 2
         error = sum(diff) / (self.num_points_in_shapes * 2)
         return params, error
@@ -315,9 +331,8 @@ class ShapeModeler:
             block (bool): If True, the display will block the execution
                           of the rest of the program until the plot
                           window is closed. Defaults to True.
-    """
-        ShapeModeler.show_shape(
-            ShapeModeler.normalise_shape(self.mean_shape), block)
+        """
+        ShapeModeler.show_shape(ShapeModeler.normalise_shape(self.mean_shape), block)
 
     def extend_data_mat(self, shape):
         """
@@ -331,37 +346,35 @@ class ShapeModeler:
         self.demo_data_mat = numpy.append(self.demo_data_mat, shape.T, axis=0)
         self.perform_PCA()
         (self.ref_params, error) = self.decompose_shape(
-            numpy.reshape(self.data_mat[0], (-1, 1)))
+            numpy.reshape(self.data_mat[0], (-1, 1))
+        )
 
     def save_all(self):
-        """ 
+        """
         Save the inital shape + the demo shapes into a new dataset.
         """
         if self.update_filenames:
             filename = self.update_filenames[0]
             if filename:
-                print('saving in' + filename)
+                print("saving in" + filename)
                 if not os.path.exists(filename):
-                    raise RuntimeError("path to dataset" +
-                                       filename + "not found")
+                    raise RuntimeError("path to dataset" + filename + "not found")
                 try:
-                    with open(filename, 'wb') as f:
-                        f.write(str.encode('nb_sample:\n'))
-                        f.write(str.encode('%i\n' %
-                                self.num_shapes_in_dataset))
-                        f.write(str.encode('nb_pts:\n'))
-                        f.write(str.encode('%i\n' % self.num_points_in_shapes))
-                        f.write(str.encode('ref:\n'))
-                        f.write(str.encode(
-                            ' '.join(map(str, self.data_mat[0])) + '\n'))
-                        f.write(str.encode('...\n'))
-                        for i in range(len(self.data_mat)-1):
-                            f.write(str.encode(
-                                ' '.join(map(str, self.data_mat[i+1]))))
-                            f.write(str.encode('\n'))
+                    with open(filename, "wb") as f:
+                        f.write(str.encode("nb_sample:\n"))
+                        f.write(str.encode("%i\n" % self.num_shapes_in_dataset))
+                        f.write(str.encode("nb_pts:\n"))
+                        f.write(str.encode("%i\n" % self.num_points_in_shapes))
+                        f.write(str.encode("ref:\n"))
+                        f.write(str.encode(" ".join(map(str, self.data_mat[0])) + "\n"))
+                        f.write(str.encode("...\n"))
+                        for i in range(len(self.data_mat) - 1):
+                            f.write(
+                                str.encode(" ".join(map(str, self.data_mat[i + 1])))
+                            )
+                            f.write(str.encode("\n"))
                 except IOError:
-                    raise RuntimeError(
-                        "no writing permission for file" + filename)
+                    raise RuntimeError("no writing permission for file" + filename)
             else:
                 raise Exception("Unknown filename")
 
@@ -373,27 +386,27 @@ class ShapeModeler:
             for filename in self.update_filenames[1:]:
                 if filename:
                     if not os.path.exists(filename):
-                        raise RuntimeError(
-                            "path to dataset"+filename+"not found")
+                        raise RuntimeError("path to dataset" + filename + "not found")
                     try:
-                        with open(filename, 'wb') as f:
-                            f.write(str.encode('nb_sample:\n'))
-                            f.write(str.encode('%i\n' %
-                                    self.num_shapes_in_dataset))
-                            f.write(str.encode('nb_pts:\n'))
-                            f.write(str.encode('%i\n' %
-                                    self.num_points_in_shapes))
-                            f.write(str.encode('ref:\n'))
-                            f.write(str.encode(
-                                ' '.join(map(str, self.data_mat[0])) + '\n'))
-                            f.write(str.encode('...\n'))
-                            for i in range(len(self.data_mat)-1):
+                        with open(filename, "wb") as f:
+                            f.write(str.encode("nb_sample:\n"))
+                            f.write(str.encode("%i\n" % self.num_shapes_in_dataset))
+                            f.write(str.encode("nb_pts:\n"))
+                            f.write(str.encode("%i\n" % self.num_points_in_shapes))
+                            f.write(str.encode("ref:\n"))
+                            f.write(
+                                str.encode(" ".join(map(str, self.data_mat[0])) + "\n")
+                            )
+                            f.write(str.encode("...\n"))
+                            for i in range(len(self.data_mat) - 1):
                                 f.write(
-                                    str.encode(' '.join(map(str, self.demo_data_mat[i+1]))))
-                                f.write(str.encode('\n'))
+                                    str.encode(
+                                        " ".join(map(str, self.demo_data_mat[i + 1]))
+                                    )
+                                )
+                                f.write(str.encode("\n"))
                     except IOError:
-                        raise RuntimeError(
-                            "no writing permission for file"+filename)
+                        raise RuntimeError("no writing permission for file" + filename)
                 else:
                     raise Exception("Unknown filename")
 
@@ -403,27 +416,27 @@ class ShapeModeler:
         """
         if self.param_filename:
             filename = self.param_filename
-            print('saving params in'+filename)
+            print("saving params in" + filename)
             if not os.path.exists(filename):
-                raise RuntimeError("path to dataset"+filename+"not found")
+                raise RuntimeError("path to dataset" + filename + "not found")
             lines = []
             try:
-                with open(filename, 'rb') as f:
+                with open(filename, "rb") as f:
                     for i in range(52):
                         lines.append(f.readline())
             except IOError:
-                raise RuntimeError("no reading permission for file"+filename)
+                raise RuntimeError("no reading permission for file" + filename)
             try:
-                with open(filename, 'wb') as f:
+                with open(filename, "wb") as f:
                     for i in range(52):
                         f.write(lines[i])
-                        test = lines[i].replace(
-                            '[', '').replace(']\n', '') == letter
+                        test = lines[i].replace("[", "").replace("]\n", "") == letter
                         if test:
-                            lines[i+1] = str(params).replace('[',
-                                                             '').replace(']', '')+'\n'
+                            lines[i + 1] = (
+                                str(params).replace("[", "").replace("]", "") + "\n"
+                            )
             except IOError:
-                raise RuntimeError("no writing permission for file"+filename)
+                raise RuntimeError("no writing permission for file" + filename)
 
     def param_matrix(self):
         """
@@ -440,11 +453,13 @@ class ShapeModeler:
                                        for each shape in the dataset.
         """
         param_mat = numpy.zeros(
-            (self.num_shapes_in_dataset, self.num_principle_components))
+            (self.num_shapes_in_dataset, self.num_principle_components)
+        )
         for i in range(self.num_shapes_in_dataset):
             shape = self.data_mat[i, :]
             params, _ = self.decompose_shape(
-                shape.reshape((self.num_points_in_shapes * 2, 1)))
+                shape.reshape((self.num_points_in_shapes * 2, 1))
+            )
             param_mat[i, :] = params[:, 0]
         return param_mat
 
@@ -487,16 +502,16 @@ class ShapeModeler:
         clusters, _, var = self.get_clusters()
         scores = []
         for i in range(len(clusters)):
-            dist = (clusters[i, :].reshape(
-                (self.num_points_in_shapes * 2, 1))-shape)
-            scores.append(numpy.sum(dist*dist))
+            dist = clusters[i, :].reshape((self.num_points_in_shapes * 2, 1)) - shape
+            scores.append(numpy.sum(dist * dist))
         return numpy.min(numpy.array(scores))
 
     def get_centers(self):
-
         clusters, _, _ = self.get_clusters()
-        centers = [clusters[i, :].reshape(
-            (self.num_points_in_shapes * 2, 1)) for i in range(len(clusters))]
+        centers = [
+            clusters[i, :].reshape((self.num_points_in_shapes * 2, 1))
+            for i in range(len(clusters))
+        ]
         return centers
 
     @staticmethod
@@ -518,7 +533,7 @@ class ShapeModeler:
     @staticmethod
     def normalise_shape(shape):
         """
-        Normalise shape so that max dimension is 1 
+        Normalise shape so that max dimension is 1
         """
         num_points_in_shape = int(len(shape) / 2)
         x_shape = shape[0:num_points_in_shape]
@@ -533,7 +548,9 @@ class ShapeModeler:
         # normalise shape
         scale = max(x_range, y_range)
         if scale < 1e-10:
-            print('Warning: shape is probably a bunch of points on top of each other...')
+            print(
+                "Warning: shape is probably a bunch of points on top of each other..."
+            )
 
         x_shape = x_shape / scale
         y_shape = y_shape / scale
@@ -554,14 +571,14 @@ class ShapeModeler:
 
         x_range = max(x_shape) - min(x_shape)
         y_range = max(y_shape) - min(y_shape)
-        x_centre = (max(x_shape) - x_range / 2)
-        y_centre = (max(y_shape) - y_range / 2)
+        x_centre = max(x_shape) - x_range / 2
+        y_centre = max(y_shape) - y_range / 2
         return [x_centre, -y_centre]
 
     @staticmethod
     def normalise_shape_height(shape):
         """
-        Normalise shape so that height is 1 
+        Normalise shape so that height is 1
         """
         num_points_in_shape = int(len(shape) / 2)
         x_shape = shape[0:num_points_in_shape]
@@ -570,15 +587,17 @@ class ShapeModeler:
         # shift so centre of shape is at (0,0)
         x_range = max(x_shape) - min(x_shape)
         y_range = max(y_shape) - min(y_shape)
-        x_centre = (max(x_shape) - x_range / 2)
-        y_centre = (max(y_shape) - y_range / 2)
+        x_centre = max(x_shape) - x_range / 2
+        y_centre = max(y_shape) - y_range / 2
         x_shape = x_shape - x_centre
         y_shape = y_shape - y_centre
 
         # normalise shape
         scale = y_range
         if scale < 1e-10:
-            print('Warning: shape is probably a bunch of points on top of each other...')
+            print(
+                "Warning: shape is probably a bunch of points on top of each other..."
+            )
 
         x_shape = x_shape / scale
         y_shape = y_shape / scale
@@ -591,7 +610,7 @@ class ShapeModeler:
     @staticmethod
     def normalise_shape_width(shape):
         """
-        Normalise shape so that width is 1 
+        Normalise shape so that width is 1
         """
         num_points_in_shape = int(len(shape) / 2)
         x_shape = shape[0:num_points_in_shape]
@@ -600,15 +619,17 @@ class ShapeModeler:
         # shift so centre of shape is at (0,0)
         x_range = max(x_shape) - min(x_shape)
         y_range = max(y_shape) - min(y_shape)
-        x_centre = (max(x_shape) - x_range / 2)
-        y_centre = (max(y_shape) - y_range / 2)
+        x_centre = max(x_shape) - x_range / 2
+        y_centre = max(y_shape) - y_range / 2
         x_shape = x_shape - x_centre
         y_shape = y_shape - y_centre
 
         # normalise shape
         scale = x_range
         if scale < 1e-10:
-            print('Warning: shape is probably a bunch of points on top of each other...')
+            print(
+                "Warning: shape is probably a bunch of points on top of each other..."
+            )
 
         x_shape = x_shape / scale
         y_shape = y_shape / scale
@@ -632,15 +653,17 @@ class ShapeModeler:
         Show shape with random colour
         """
         num_points_in_shape = len(shape) // 2
-        x_shape = numpy.reshape(numpy.array(
-            shape[0:num_points_in_shape]), num_points_in_shape)
-        y_shape = numpy.reshape(numpy.array(
-            shape[num_points_in_shape:]), num_points_in_shape)
+        x_shape = numpy.reshape(
+            numpy.array(shape[0:num_points_in_shape]), num_points_in_shape
+        )
+        y_shape = numpy.reshape(
+            numpy.array(shape[num_points_in_shape:]), num_points_in_shape
+        )
 
         # plt.plot(x_shape, -y_shape, c=numpy.random.rand(3, 1))
         # plt.axis([-1, 1, -1, 1])
         if block:
             plt.show(block=block)  # block=False <-> plt.draw
         else:
-            plt.errorbar(x_shape, -y_shape, yerr=scores/numpy.max(scores))
+            plt.errorbar(x_shape, -y_shape, yerr=scores / numpy.max(scores))
             plt.draw()
