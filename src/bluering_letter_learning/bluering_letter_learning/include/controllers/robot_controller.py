@@ -42,13 +42,13 @@ class RobotController:
     ) -> None:
         qi_url = f"tcp://{naoIP}:{naoPort}"
         self.ros_node = ros_node
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             f"[RobotController][RobotController] Connecting to qi_url={qi_url}"
         )
         app = qi.Application(url=qi_url)
         app.start()
         # app.run()
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             "[RobotController][RobotController] app started"
         )
 
@@ -111,13 +111,13 @@ class RobotController:
             testPhrase,
             thankYouPhrase,
         ) = InteractionSettings.getPhrases(self.language)
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             "[RobotController][setLanguage] setting language"
         )
         self.ttsProxy.setLanguage(language.capitalize())
 
     def init(self) -> None:
-        self.ros_node.get_logger.info("[RobotController][init] called")
+        self.ros_node.get_logger().info("[RobotController][init] called")
 
         # ? These two lines are init state in trajectory_following code
         self.motionProxy.wbEnableEffectorControl(
@@ -128,11 +128,11 @@ class RobotController:
         # ? belows are init state in letter_learning code
         if self.naoWriting:  # ? if we want robot to write
             if self.naoStanding:  # ? if we want robot to stand
-                self.ros_node.get_logger.info(
+                self.ros_node.get_logger().info(
                     "[RobotController][init] removed goToPosture StandInit"
                 )
                 # self.postureProxy.goToPosture('StandInit', 0.2) #? make the robot stand
-                self.ros_node.get_logger.info(
+                self.ros_node.get_logger().info(
                     "[RobotController][init] wbEnableEffectorControl True"
                 )
                 self.motionProxy.wbEnableEffectorControl(
@@ -140,15 +140,15 @@ class RobotController:
                 )  # ? turn whole body motion control on
 
             else:  # ? if we dont need the robot to stand
-                self.ros_node.get_logger.info("[RobotController][init] rest")
+                self.ros_node.get_logger().info("[RobotController][init] rest")
                 self.motionProxy.rest()  # ? goes to a relaxed and safe position and sets Motor off. For Nao6, goes to the Crouch posture and sets the Stiffness off.
 
                 # ? the below dont know what's for
-                self.ros_node.get_logger.info(
+                self.ros_node.get_logger().info(
                     "[RobotController][init] setStiffnesses Head LArm RArm"
                 )
                 self.motionProxy.setStiffnesses(["Head", "LArm", "RArm"], 0.5)
-                self.ros_node.get_logger.info(
+                self.ros_node.get_logger().info(
                     "[RobotController][init] setStiffnesses LHipYawPitch LHipRoll LHipPitch"
                 )
                 self.motionProxy.setStiffnesses(
@@ -162,7 +162,7 @@ class RobotController:
                     ],
                     0.8,
                 )
-                self.ros_node.get_logger.info(
+                self.ros_node.get_logger().info(
                     "[RobotController][init] wbEnableEffectorControl False"
                 )
                 self.motionProxy.wbEnableEffectorControl(
@@ -172,7 +172,7 @@ class RobotController:
             self.armJoints_standInit = self.motionProxy.getAngles(
                 self.effector, True
             )
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[RobotController][init] self.armJoints_standInit {self.armJoints_standInit}"
             )
 
@@ -181,7 +181,7 @@ class RobotController:
             self.ttsProxy.say(
                 toSay
             )  # ? say the string we tell the robot to say
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[RobotController][lookAndAskForFeedback] toSay: {toSay}"
             )
 
@@ -222,9 +222,11 @@ class RobotController:
         """
         Tell the robot to look at tablet
         """
-        self.ros_node.get_logger.info("[RobotController][lookAtTablet] called")
+        self.ros_node.get_logger().info(
+            "[RobotController][lookAtTablet] called"
+        )
         if self.isFrontInteraction:
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 "[RobotController][lookAtTablet] setAngles headAngles_lookAtTablet_down"
             )
             self.motionProxy.setAngles(
@@ -235,7 +237,7 @@ class RobotController:
 
         else:
             if self.effector == "RArm":  # ? tablet will be on our right
-                self.ros_node.get_logger.info(
+                self.ros_node.get_logger().info(
                     "[RobotController][lookAtTablet] setAngles headAngles_lookAtTablet_right"
                 )
                 self.motionProxy.setAngles(
@@ -244,7 +246,7 @@ class RobotController:
                     0.2,
                 )
             else:
-                self.ros_node.get_logger.info(
+                self.ros_node.get_logger().info(
                     "[RobotController][lookAtTablet] setAngles headAngles_lookAtTablet_left"
                 )
                 self.motionProxy.setAngles(
@@ -259,7 +261,7 @@ class RobotController:
     def say(self, phrase, personSide) -> None:
         if self.naoWriting:
             if self.naoStanding:
-                self.ros_node.get_logger.info(
+                self.ros_node.get_logger().info(
                     "[RobotController][say] removed goToPosture(StandInit, 0.3)"
                 )
                 # self.postureProxy.goToPosture('StandInit', 0.3)
@@ -285,7 +287,7 @@ class RobotController:
                 self.lookAndAskForFeedback(phrase, personSide)
 
     def followTrajectory(self, traj) -> None:
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             f"[RobotController][followTrajectory] got traj at {datetime.now()}"
         )
 
@@ -308,7 +310,7 @@ class RobotController:
             timeList = []
             # stime = 2.0
             stime = 1.0
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[RobotController][followTrajectory] traj.poses len : {len(traj.poses)}"
             )
             for i, trajp in enumerate(traj.poses):
@@ -351,7 +353,7 @@ class RobotController:
                     ]
                 )
                 timeList.append(stime)
-                self.ros_node.get_logger.info(
+                self.ros_node.get_logger().info(
                     f"[RobotController][followTrajectory]      [ ] append to points : [0, {target_robot.pose.position.y}, {target_robot.pose.position.z}, {roll}, 0, 0]"
                 )
 
@@ -381,11 +383,11 @@ class RobotController:
             # rospy.loginfo(f'[RobotController][followTrajectory]    points : {points} | type = {type(points)} | type = {type(points_scaled_flipped[0][1])}')
             # rospy.loginfo(f'[RobotController][followTrajectory]    self.effectorList : {self.effectorList} | type = {type(self.effectorList)}')
             # rospy.loginfo(f'[RobotController][followTrajectory]    self.space : {self.space} | type = {type(self.space)}')
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[RobotController][followTrajectory]    points_scaled_flipped : {points_scaled_flipped} | type = {type(points_scaled_flipped)} | type = {type(points_scaled_flipped[0][1])}"
             )
             # rospy.loginfo(f'[RobotController][followTrajectory]    self.axisMaskList : {self.axisMaskList} | type = {type(self.axisMaskList)} | type = {type(self.axisMaskList[0])}')
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[RobotController][followTrajectory]    timeList : {timeList} | type = {type(timeList)} | type = {type(timeList[0])}"
             )
 
@@ -401,7 +403,7 @@ class RobotController:
             )
 
             # rospy.loginfo(f'[RobotController][followTrajectory] Time taken for rest of trajectory: {(datetime.now() - startTime)}')
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[RobotController][followTrajectory] Time taken for rest of trajectory: {(self.ros_node.get_clock().now() - startTime)}"
             )
 
@@ -410,6 +412,6 @@ class RobotController:
             )  # ? finish writing, back to standing position
 
         else:
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 "[RobotController][followTrajectory] Got traj but not allowed to execute it because I've fallen"
             )

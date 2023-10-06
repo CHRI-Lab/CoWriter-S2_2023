@@ -42,7 +42,7 @@ class TabletInputInterpreter(Node):
 
         self.strokes = []
 
-        self.get_logger.info("[tablet_input_interpreter] Starting...")
+        self.get_logger().info("[tablet_input_interpreter] Starting...")
         # ? Name of topic to get gestures representing the active shape for demonstration
         GESTURE_TOPIC = self.declare_parameter(
             "~gesture_info_topic", "gesture_info"
@@ -58,11 +58,11 @@ class TabletInputInterpreter(Node):
 
         # ? listen for gesture representing active demo shape
         self.create_subscription(
-            PointStamped, GESTURE_TOPIC, self.onSetActiveShapeGesture
+            PointStamped, GESTURE_TOPIC, self.onSetActiveShapeGesture, 10
         )
         # ? listen for user-drawn shapes
         self.create_subscription(
-            Path, USER_DRAWN_SHAPES_TOPIC, self.userShapePreprocessor
+            Path, USER_DRAWN_SHAPES_TOPIC, self.userShapePreprocessor, 10
         )
 
         self.pub_shapes = self.create_publisher(
@@ -96,14 +96,14 @@ class TabletInputInterpreter(Node):
             if len(self.strokes) > 0:
                 self.onUserDrawnShapeReceived()
             else:
-                self.get_logger.info(
+                self.get_logger().info(
                     "[tablet_input_interpreter][userShapePreprocessor] empty demonstration. ignoring"
                 )
 
             self.strokes = []
 
         else:  # ? new stroke in shape - add it
-            self.get_logger.info(
+            self.get_logger().info(
                 f"[tablet_input_interpreter][userShapePreprocessor] Got stroke to write with {len(message.poses)} points"
             )
             x_shape = []
@@ -209,7 +209,7 @@ class TabletInputInterpreter(Node):
         request.location.x = gestureLocation[0]
         request.location.y = gestureLocation[1]
         while not shape_at_location.wait_for_service(timeout_sec=1.0):
-            self.get_logger.info("service not available, waiting again...")
+            self.get_logger().info("service not available, waiting again...")
         future = shape_at_location.call_async(request)
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
@@ -217,7 +217,7 @@ class TabletInputInterpreter(Node):
         shapeID = response.shape_id
 
         if shapeType_code != -1 and shapeID != -1:
-            self.get_logger.info(
+            self.get_logger().info(
                 "Setting active shape to shape " + str(shapeType_code)
             )
 

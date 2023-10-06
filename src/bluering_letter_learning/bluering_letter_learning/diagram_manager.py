@@ -102,7 +102,7 @@ class ROSAudioStream(object):
             "~listening_signal_topic", "listening_signal"
         ).value
         self.node.create_subscription(
-            String, LISTENING_SIGNAL_TOPIC, self.setListening
+            String, LISTENING_SIGNAL_TOPIC, self.setListening, 10
         )
 
         # ? Speech to text class
@@ -130,7 +130,7 @@ class ROSAudioStream(object):
 
     def setListening(self, data: String):
         data = data.data.lower()
-        self.node.get_logger.info(
+        self.node.get_logger().info(
             f"[ ][ROSAudioStream][setListening] data = {data}"
         )
         # self.listening = data
@@ -146,7 +146,7 @@ class ROSAudioStream(object):
 
     def start(self):
         self.node.create_subscription(
-            AudioData, self.audio_topic, self.audio_callback
+            AudioData, self.audio_topic, self.audio_callback, 10
         )
 
     def __exit__(self):
@@ -211,7 +211,7 @@ class ROSAudioStream(object):
 
         if silent is False:
             # if True:
-            self.node.get_logger.info(
+            self.node.get_logger().info(
                 f"[ ][ROSAudioStream][audio_callback] silent : {silent}  |  self.n_cont_silent_chunk : {self.n_cont_silent_chunk}  |  self.buf : {len(self.buf)}  |  self.audio_buflen : {self.audio_buflen}"
             )
 
@@ -238,7 +238,7 @@ class ROSAudioStream(object):
             self.n_cont_silent_chunk = 0  # ? reset silent chunk counter
 
             # ? call google cloud speech to transcribe audio buffer
-            self.node.get_logger.info(
+            self.node.get_logger().info(
                 f"\n[ ][ROSAudioStream][audio_callback] processing buf content : {len(content)}"
             )
             transcribed_txt = self.gcs.recognize(content)
@@ -246,12 +246,12 @@ class ROSAudioStream(object):
             # buffer = io.BytesIO(content)
             # buffer.name = 'testy.wav'
             # transcribed_txt = openai.Audio.transcribe("whisper-1", buffer)
-            self.node.get_logger.info(
+            self.node.get_logger().info(
                 f"[+][ROSAudioStream][audio_callback] transcribed_txt : {transcribed_txt}"
             )
 
             # rospy.loginfo(f'   [ROSAudioStream][audio_callback] time_taken : {time.time() - start_time:.2f} secs')
-            self.node.get_logger.info(
+            self.node.get_logger().info(
                 f"   [ROSAudioStream][audio_callback] self.listening_word_to_write : {self.listening_word_to_write}"
             )
             # rospy.loginfo(f'   [ROSAudioStream][audio_callback] self.finish_transcribe_cb : {self.finish_transcribe_cb}')
@@ -271,7 +271,7 @@ class DiagramManager(Node):
     def __init__(self):
         super().__init__("diagram_manager")
 
-        self.get_logger.info("[ ][DiagramManager] init called")
+        self.get_logger().info("[ ][DiagramManager] init called")
         # ? if True, subscribe data from audio_topic, else no
         ACTION_TODO_TOPIC = self.declare_parameter(
             "~action_todo_topic", "action_todo"
@@ -316,7 +316,7 @@ class DiagramManager(Node):
         """
         Detect command from a text string
         """
-        self.get_logger.info(
+        self.get_logger().info(
             f"[ ][DiagramManager][detect_command] text : {text}"
         )
         text = text.lower()
@@ -363,10 +363,10 @@ class DiagramManager(Node):
         """
         Callback function to process transcribed data
         """
-        self.get_logger.info(
+        self.get_logger().info(
             f"[ ][DiagramManager][process_transcribed_data] text : {text}"
         )
-        self.get_logger.info(
+        self.get_logger().info(
             f"   [DiagramManager][process_transcribed_data] expecting_word : {expecting_word}"
         )
 
@@ -391,7 +391,7 @@ class DiagramManager(Node):
                 return
             else:  # ? write
                 self.pub_word_to_write.publish(text)
-                self.get_logger.info(
+                self.get_logger().info(
                     f"   [DiagramManager][process_transcribed_data] self.pub_word_to_write.publish({text})"
                 )
                 return
@@ -424,22 +424,22 @@ class DiagramManager(Node):
                 else:
                     if command == "change_word":
                         self.pub_word_to_write.publish(data)
-                        self.get_logger.info(
+                        self.get_logger().info(
                             f"   [DiagramManager][process_transcribed_data](commanded) self.pub_word_to_write.publish({data})"
                         )
                     elif command == "login":
                         self.pub_new_child.publish(f"{data}|old")
-                        self.get_logger.info(
+                        self.get_logger().info(
                             f"   [DiagramManager][process_transcribed_data](commanded) self.pub_new_child.publish({data}|old)"
                         )
                     elif command == "register":
                         self.pub_new_child.publish(f"{data}|new")
-                        self.get_logger.info(
+                        self.get_logger().info(
                             f"   [DiagramManager][process_transcribed_data](commanded) self.pub_new_child.publish({data}|new)"
                         )
 
         if len(reply) > 0:  # ? action: to speak
-            self.get_logger.info(
+            self.get_logger().info(
                 f"[+][DiagramManager/process_transcribed_data] toact[speak] : {reply}"
             )
 
@@ -488,14 +488,14 @@ class DiagramManager(Node):
             answer = response.choices[0].message.content.strip()
         except openai.error.OpenAIError as error:
             # answer = f"I'm down dude"
-            self.get_logger.error(
+            self.get_logger().error(
                 f"[!][DiagramManager/ask_chatgpt] OpenAI API Error: {error}"
             )
 
-        self.get_logger.info(
+        self.get_logger().info(
             f"[+][DiagramManager/ask_chatgpt] answer : {answer}"
         )
-        self.get_logger.info(
+        self.get_logger().info(
             f"   [DiagramManager/ask_chatgpt] time_taken : {time.time() - start_time:.2f} secs"
         )
 

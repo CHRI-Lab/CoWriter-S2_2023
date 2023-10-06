@@ -79,7 +79,7 @@ class ROSCbController:
         pub_listening_signal,
     ) -> None:
         self.ros_node = ros_node
-        self.ros_node.get_logger.info("[ROSCbController] init called")
+        self.ros_node.get_logger().info("[ROSCbController] init called")
 
         self.stateMachine = stateMachine
 
@@ -115,12 +115,13 @@ class ROSCbController:
         """
         self.robotCtl = None
         if naoConnected:
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 "[ROSCbController] Initializing RobotController"
             )
 
             # TODO: change qi_url to use nao_ip and nao_port from arguments
             self.robotCtl = RobotController(
+                ros_node,
                 naoIP,
                 naoPort,
                 effector,
@@ -131,7 +132,7 @@ class ROSCbController:
                 isFrontInteraction,
                 alternateSidesLookingAt,
             )
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[ROSCbController] Connecting to {naoIP}:{naoPort}"
             )
 
@@ -147,10 +148,10 @@ class ROSCbController:
         self.wordManager = ShapeLearnerManager(
             InteractionSettings.generateSettings, self.shapeLoggingPath
         )
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             f"[ROSCbController] SHAPE_LOGGING_PATH = {self.shapeLoggingPath}"
         )
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             f"[ROSCbController] datasetDirectory = {datasetDirectory}"
         )
 
@@ -257,7 +258,7 @@ class ROSCbController:
             or self.stateMachine.get_state() is None
         ):  # ? state machine hasn't started yet - word probably came from input arguments
             self.wordReceived = message.data
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[ROSCbController][onWordReceived] Received word: {self.wordReceived}"
             )
         else:
@@ -267,7 +268,7 @@ class ROSCbController:
         """
         Callback when receiving a signal to clear screen
         """
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             "[ROSCbController][onClearScreenReceived] Clearing display"
         )
         clear_all_shapes = self.ros_node.create_client(
@@ -292,7 +293,7 @@ class ROSCbController:
             self.feedbackReceived = (
                 message  # ? replace any existing feedback with new
             )
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 "[onFeedbackReceived] Received feedback"
             )
         elif self.stateMachine.get_state() == "RESPONDING_TO_FEEDBACK":
@@ -329,14 +330,14 @@ class ROSCbController:
             # rospy.loginfo(f'[ROSCbController][onUserDrawnShapeReceived] demo_from_template = {demo_from_template}')
 
             if demo_from_template is not None:
-                self.ros_node.get_logger.info(
+                self.ros_node.get_logger().info(
                     f"[ROSCbController][onUserDrawnShapeReceived] Received template demonstration for letters {demo_from_template.keys()}"
                 )
 
                 for name, path in demo_from_template.items():
                     # HACK: do not learn multi-stroke letters for now
                     if name in ["i", "j", "t"]:
-                        self.ros_node.get_logger.warn(
+                        self.ros_node.get_logger().warn(
                             f"[ROSCbController][onUserDrawnShapeReceived] Received demonstration for multi-stroke letter <{name}>: ignoring it."
                         )
                         continue

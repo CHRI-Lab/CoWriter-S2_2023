@@ -68,7 +68,7 @@ class StateController(ROSCbController):
             pub_listening_signal,
         )
 
-        self.ros_node.get_logger.info("[StateController] init called")
+        self.ros_node.get_logger().info("[StateController] init called")
 
         self.infoToRestore_waitForRobotToConnect = None
         self.infoToRestore_waitForTabletToConnect = None
@@ -101,7 +101,7 @@ class StateController(ROSCbController):
 
     # NOTE THAT THIS WAS FOR TOUCH-BASED FEEDBACK, WHICH ISN'T USED ANYMORE
     def respondToFeedback(self, infoFromPrevState):
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             "[StateController][respondToFeedback] STATE: RESPONDING_TO_FEEDBACK"
         )
 
@@ -116,7 +116,7 @@ class StateController(ROSCbController):
         try:
             shapeIndex_messageFor = int(feedback[0])
         except:
-            self.ros_node.get_logger.error(
+            self.ros_node.get_logger().error(
                 f"[respondToFeedback] Shape type index must be an integer. Received : {feedback[0]}"
             )
             processMessage = False
@@ -124,7 +124,7 @@ class StateController(ROSCbController):
         try:
             bestShape_index = int(feedback[1])
         except:
-            self.ros_node.get_logger.error(
+            self.ros_node.get_logger().error(
                 f"[respondToFeedback] Best shape index must be an integer. Received : {feedback[0]}"
             )
             processMessage = False
@@ -136,14 +136,14 @@ class StateController(ROSCbController):
                 noNewShape = True
             else:
                 processMessage = False
-                self.ros_node.get_logger.error(
+                self.ros_node.get_logger().error(
                     f"[respondToFeedback] Unknown message received in feedback string: {feedbackMessage}"
                 )
 
         if processMessage:
             if noNewShape:  # ? just respond to feedback, don't make new shape
                 if self.robotCtl is not None and self.naoSpeaking:
-                    self.ros_node.get_logger.info(
+                    self.ros_node.get_logger().info(
                         f"[StateController][respondToFeedback] toSay: {toSay}"
                     )
                     toSay = "Ok, thanks for helping me"
@@ -154,13 +154,13 @@ class StateController(ROSCbController):
                     shapeIndex_messageFor, bestShape_index, noNewShape
                 )
                 if response == -1:
-                    self.ros_node.get_logger.error(
+                    self.ros_node.get_logger().error(
                         "[respondToFeedback] Something's gone wrong in the feedback manager"
                     )
 
             else:
                 if self.naoSpeaking:
-                    self.ros_node.get_logger.info(
+                    self.ros_node.get_logger().info(
                         f"[StateController][respondToFeedback] NAO: {toSay}"
                     )
                     shape_messageFor = (
@@ -201,7 +201,7 @@ class StateController(ROSCbController):
         return nextState, infoForNextState
 
     def startInteraction(self, infoFromPrevState):
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             "[StateController][startInteraction] STATE: STARTING_INTERACTION"
         )
         # if self.naoSpeaking:
@@ -219,7 +219,7 @@ class StateController(ROSCbController):
 
     def waitForChild(self, infoFromPrevState):
         if infoFromPrevState["state_cameFrom"] != "WAITING_FOR_CHILD":
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 "[StateController][waitForChild] STATE: WAITING_FOR_CHILD"
             )
             self.pub_camera_status.publish(True)  # ? turn camera on
@@ -258,7 +258,7 @@ class StateController(ROSCbController):
             infoFromPrevState["state_cameFrom"]
             != "WAITING_FOR_ROBOT_TO_CONNECT"
         ):
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 "[StateController][waitForRobotToConnect] STATE: WAITING_FOR_ROBOT_TO_CONNECT"
             )
             self.infoToRestore_waitForRobotToConnect = infoFromPrevState
@@ -286,7 +286,7 @@ class StateController(ROSCbController):
             infoFromPrevState["state_cameFrom"]
             != "WAITING_FOR_LETTER_TO_FINISH"
         ):
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 "[StateController][waitForShapeToFinish] STATE: WAITING_FOR_LETTER_TO_FINISH"
             )
             self.infoToRestore_waitForShapeToFinish = infoFromPrevState
@@ -308,7 +308,7 @@ class StateController(ROSCbController):
                 boxesToPub = self.shapeHelper.make_bounding_box_msg(
                     bb, selected=False
                 )
-                self.ros_node.get_logger.info(
+                self.ros_node.get_logger().info(
                     f"[StateController][waitForShapeToFinish] called make_bounding_box_msg to calc boxesToPub = {len(bb)}"
                 )
                 self.pub_bounding_boxes.publish(boxesToPub)
@@ -319,7 +319,7 @@ class StateController(ROSCbController):
             self.shapeFinished = False
 
             infoForNextState = self.infoToRestore_waitForShapeToFinish
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[StateController][waitForShapeToFinish] infoForNextState = {infoForNextState}"
             )
             try:
@@ -351,7 +351,7 @@ class StateController(ROSCbController):
         return nextState, infoForNextState
 
     def respondToNewWord(self, infoFromPrevState):
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             "[StateController][respondToNewWord] STATE: RESPONDING_TO_NEW_WORD"
         )
         wordToLearn = infoFromPrevState["wordReceived"]
@@ -393,7 +393,7 @@ class StateController(ROSCbController):
                 ):
                     self.word_response_phrases_counter = 0
 
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[StateController][respondToNewWord] NAO: {toSay}"
             )
             self.robotCtl.speak(toSay)
@@ -431,18 +431,18 @@ class StateController(ROSCbController):
         return nextState, infoForNextState
 
     def askForFeedback(self, infoFromPrevState):
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             "[StateController][askForFeedback] STATE: ASKING_FOR_FEEDBACK"
         )
         centre = infoFromPrevState["centre"]
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             "[StateController][askForFeedback] state_camefrom = "
             + infoFromPrevState["state_cameFrom"]
         )
 
         if infoFromPrevState["state_cameFrom"] == "PUBLISHING_WORD":
             wordWritten = infoFromPrevState["wordWritten"]
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[StateController][askForFeedback] Asking for feedback on word {wordWritten}"
             )
             if self.naoSpeaking:
@@ -478,7 +478,7 @@ class StateController(ROSCbController):
 
         elif infoFromPrevState["state_cameFrom"] == "PUBLISHING_LETTER":
             shapeType = infoFromPrevState["shapePublished"]
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[StateController][askForFeedback] Asking for feedback on letter {shapeType}"
             )
 
@@ -528,12 +528,12 @@ class StateController(ROSCbController):
         return nextState, infoForNextState
 
     def respondToTestCard(self, infoFromPrevState):
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             f"[StateController][respondToTestCard] STATE: RESPONDING_TO_TEST_CARD"
         )
         if self.naoSpeaking:
             self.robotCtl.speak(self.testPhrase)
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[StateController]NAO: {self.testPhrase}"
             )
         nextState = "WAITING_FOR_WORD"
@@ -541,7 +541,7 @@ class StateController(ROSCbController):
         return nextState, infoForNextState
 
     def stopInteraction(self, infoFromPrevState):
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             "[StateController][stopInteraction] STATE: STOPPING"
         )
         if self.naoSpeaking:
@@ -558,7 +558,7 @@ class StateController(ROSCbController):
 
     def waitForWord(self, infoFromPrevState):
         if infoFromPrevState["state_cameFrom"] != "WAITING_FOR_WORD":
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 "[StateController][waitForWord] STATE: WAITING_FOR_WORD"
             )
             self.pub_camera_status.publish(True)  # ? turn camera on
@@ -587,7 +587,7 @@ class StateController(ROSCbController):
 
     def waitForFeedback(self, infoFromPrevState):
         if infoFromPrevState["state_cameFrom"] != "WAITING_FOR_FEEDBACK":
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 "[StateController][waitForFeedback] STATE: WAITING_FOR_FEEDBACK"
             )
             self.pub_camera_status.publish(True)  # ? turn camera on
@@ -639,7 +639,7 @@ class StateController(ROSCbController):
         # ? debug
         if "state_goTo" in infoForNextState:
             state_goTo = infoForNextState["state_goTo"]
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[StateController][waitForFeedback] state_goTo = {state_goTo}"
             )
 
@@ -660,7 +660,7 @@ class StateController(ROSCbController):
             != "WAITING_FOR_TABLET_TO_CONNECT"
         ):
             # print('------------------------------------------ waiting_for_tablet_to_connect')
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 "[StateController][waitForTabletToConnect] STATE: waiting_for_tablet_to_connect"
             )
             self.infoToRestore_waitForTabletToConnect = infoFromPrevState
@@ -690,10 +690,10 @@ class StateController(ROSCbController):
         """
         Control the robot to follow trajectory of a word
         """
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             "[StateController][writeWord] STATE: PUBLISHING_WORD"
         )
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             f"[StateController][writeWord] len(self.demoShapesReceived) = {len(self.demoShapesReceived)}"
         )
 
@@ -785,7 +785,7 @@ class StateController(ROSCbController):
     #     return nextState, infoForNextState
 
     def respondToDemonstrationWithFullWord(self, infoFromPrevState):
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             "[StateController][respondToDemonstrationWithFullWord] STATE: RESPONDING_TO_DEMONSTRATION_FULL_WORD"
         )
         # rospy.loginfo(f'[StateController][respondToDemonstrationWithFullWord] infoFromPrevState = {infoFromPrevState}')
@@ -811,7 +811,7 @@ class StateController(ROSCbController):
             ):
                 self.demo_response_phrases_counter = 0
             self.robotCtl.speak(toSay)
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[StateController][respondToDemonstrationWithFullWord] NAO: {toSay}"
             )
 
@@ -820,21 +820,21 @@ class StateController(ROSCbController):
             glyph = shape.path
             shapeName = shape.shapeType
 
-            self.ros_node.get_logger.debug(
+            self.ros_node.get_logger().debug(
                 f"[StateController][respondToDemonstrationWithFullWord] Downsampling %s..."
                 % shapeName
             )
             glyph = self.shapeHelper.downsampleShape(glyph)
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[StateController][respondToDemonstrationWithFullWord] Downsampling of %s done. Demo received for %s"
                 % (shapeName, shapeName)
             )
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[StateController][respondToDemonstrationWithFullWord] self.wordManager.currentCollection: {self.wordManager.currentCollection} | shapeName : {shapeName} | self.wordManager.shapesLearnt : {self.wordManager.shapesLearnt}"
             )
             shapeIndex = None
             shapeIndex = self.wordManager.currentCollection.index(shapeName)
-            self.ros_node.get_logger.info(
+            self.ros_node.get_logger().info(
                 f"[StateController][respondToDemonstrationWithFullWord] >>>  shapeIndex: {shapeIndex} "
             )
             self.wordManager.respondToDemonstration(shapeIndex, glyph)
@@ -849,7 +849,7 @@ class StateController(ROSCbController):
 
         # ? clear feedback shape
         self.demoShapesReceived = []
-        self.ros_node.get_logger.info(
+        self.ros_node.get_logger().info(
             f"[StateController][respondToDemonstrationWithFullWord] self.demoShapesReceived reset! self.demoShapesReceived = {self.demoShapesReceived}"
         )
 

@@ -31,7 +31,7 @@ class InteractiveLearning(Node):
     def __init__(self):
         super().__init__("interactive_learning")
 
-        self.get_logger.info("[interactive_learning] Starting...")
+        self.get_logger().info("[interactive_learning] Starting...")
 
         # ? Nao parameters
         self.NAO_IP = self.declare_parameter(
@@ -172,7 +172,7 @@ class InteractiveLearning(Node):
         # robotWatchdog = Watchdog('watchdog_clear/robot', 0.8)
 
     def loadDataset(self):
-        self.get_logger.info(f"[ ] DATASET_DIR : {self.DATASET_DIR}")
+        self.get_logger().info(f"[ ] DATASET_DIR : {self.DATASET_DIR}")
         if self.DATASET_DIR.lower() == "default":  # ? use default
             import inspect
             from shape_learning.shape_modeler import ShapeModeler
@@ -184,14 +184,14 @@ class InteractiveLearning(Node):
                 installDirectory
                 + "/share/shape_learning/letter_model_datasets/uji_pen_chars2"
             )
-        self.get_logger.info(f"[+] DATASET_DIR : {self.DATASET_DIR}")
+        self.get_logger().info(f"[+] DATASET_DIR : {self.DATASET_DIR}")
 
     def initControllers(self):
-        self.get_logger.info(
+        self.get_logger().info(
             "[interactive_learning] Initializing StateController"
         )
 
-        self.get_logger.info(
+        self.get_logger().info(
             "Nao configuration: writing=%s, speaking=%s (%s), standing=%s, handedness=%s"
             % (
                 self.NAO_WRITING,
@@ -288,12 +288,12 @@ class InteractiveLearning(Node):
         """listen for events from ROS"""
         # ? listen for a new child signal
         self.create_subscription(
-            String, self.NEW_CHILD_TOPIC, self.controller.onChildReceived
+            String, self.NEW_CHILD_TOPIC, self.controller.onChildReceived, 10
         )
 
         # ? listen for words to write
         self.create_subscription(
-            String, self.WORDS_TOPIC, self.controller.onWordReceived
+            String, self.WORDS_TOPIC, self.controller.onWordReceived, 10
         )
 
         # ? listen for request to clear screen (from tablet)
@@ -301,16 +301,17 @@ class InteractiveLearning(Node):
             Empty,
             self.CLEAR_SURFACE_TOPIC,
             self.controller.onClearScreenReceived,
+            10,
         )
 
         # ? listen for test time
         self.create_subscription(
-            Empty, self.TEST_TOPIC, self.controller.onTestRequestReceived
+            Empty, self.TEST_TOPIC, self.controller.onTestRequestReceived, 10
         )
 
         # ? listen for when to stop
         self.create_subscription(
-            Empty, self.STOP_TOPIC, self.controller.onStopRequestReceived
+            Empty, self.STOP_TOPIC, self.controller.onStopRequestReceived, 10
         )
 
         # ? listen for user-drawn shapes
@@ -318,6 +319,7 @@ class InteractiveLearning(Node):
             ShapeMsg,
             self.PROCESSED_USER_SHAPE_TOPIC,
             self.controller.onUserDrawnShapeReceived,
+            10,
         )
 
         # ? listen for user-drawn finger gestures
@@ -325,6 +327,7 @@ class InteractiveLearning(Node):
             PointStamped,
             self.GESTURE_TOPIC,
             self.controller.onSetActiveShapeGesture,
+            10,
         )
 
         # ? wait for finishing signal from where ?
@@ -333,17 +336,18 @@ class InteractiveLearning(Node):
                 String,
                 self.SHAPE_FINISHED_TOPIC,
                 self.controller.onShapeFinished,
+                10,
             )
         )
 
         # ? listen for what to act from diagram_manager
         self.create_subscription(
-            ActionToDoMsg, self.ACTION_TODO_TOPIC, self.controller.onToAct
+            ActionToDoMsg, self.ACTION_TODO_TOPIC, self.controller.onToAct, 10
         )
 
     def spin(self):
         # ? initialise display manager for shapes (manages positioning of shapes)
-        self.get_logger.info(
+        self.get_logger().info(
             "Waiting for display manager services to become available"
         )
 
@@ -351,7 +355,7 @@ class InteractiveLearning(Node):
             ClearAllShapes, "clear_all_shapes"
         )
         while not clear_all_shapes.wait_for_service(timeout_sec=1.0):
-            self.get_logger.info(
+            self.get_logger().info(
                 "Display manager services not available, waiting..."
             )
 
