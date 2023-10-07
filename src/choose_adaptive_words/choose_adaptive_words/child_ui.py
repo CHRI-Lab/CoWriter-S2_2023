@@ -17,7 +17,7 @@ import rclpy
 from rclpy.node import Node
 import pkg_resources
 from choose_adaptive_words.strugg_letter import identify_strugg_letter
-from choose_adaptive_words.manager_ui import word
+# from choose_adaptive_words.manager_ui import word
 from PIL import Image
 
 WINDOW_DEFAULT_SIZE = (960, 540)
@@ -84,7 +84,6 @@ class Child_UI(QtWidgets.QMainWindow):
         self.button_strugg.setIcon(
             QtGui.QIcon(self.choose_adaptive_words_path + "/assets/predict.png")
         )
-        self.button_strugg.clicked.connect(self.button_strugg_clicked)
 
         # insert thr AI-Generated image
         self.image = QtWidgets.QLabel(self)
@@ -177,52 +176,6 @@ class Child_UI(QtWidgets.QMainWindow):
 
         # update
         self.update()
-
-    def button_strugg_clicked(self):
-        self.drawing.pixmap().save("draw.png")
-
-        child_x_axle = []
-        child_y_axle = []
-        if len(self.child_point_lists) > 1:
-            for i in range (len(self.child_point_lists)):
-                for x in self.child_point_lists[i]:
-                    child_x_axle.append(x[0])
-                    child_y_axle.append(x[1])
-        else:
-            for x in self.child_point_lists[0]:
-                child_x_axle.append(x[0])
-                child_y_axle.append(x[1])
-        # Crop image of child writing
-        image = Image.open('draw.png')
-        image.crop((min(child_x_axle)-20,min(child_y_axle),max(child_x_axle)+20,max(child_y_axle))).save("draw.png")
-
-        file = open('feedback.txt','w')
-        if word != None:
-            text = word.strip()
-            test_result = identify_strugg_letter('draw.png')
-            a = test_result['value']
-            result = a.strip()
-            print("Identidy your strugged letter(s)")
-            file.write("Your feedback: \n")
-            if len(result) == len(text):
-                
-                for i in range(len(result)):
-                    if text[i] == result[i]:
-                        print ("-------------------------------------------")
-                        file.write("-------------------------------------------\n")
-                        print ("Your wrote letter: ", text[i], " seems good! Keep going!" )
-                        file.write("Your wrote letter: "+ text[i]+ " seems good! Keep going! \n")
-                    else:
-                        print ("-------------------------------------------")
-                        file.write("-------------------------------------------\n")
-                        print ("Your wrote letter: ", text[i], " looks like: ", result[i], ". Please practice more" )
-                        file.write("Your wrote letter: "+ text[i]+ " looks like: ", result[i], ". Please practice more\n")
-            else:
-                file.write("You witing looks like: " + result+ ", so it does match your input word. \n")
-            print("Feedback Finished")
-            file.write("-------------------------------------------\n")
-        else:
-            file.write("You did not input any word\n")
             
 
     def button_erase_clicked(self):
@@ -342,6 +295,8 @@ class ChildGUINode(Node):
         )
         self.gui.button_feedback.clicked.connect(self.feedback_clicked)
 
+        self.gui.button_strugg.clicked.connect(self.button_strugg_clicked)
+
         # self.subscription = self.create_subscription(
         #     String,
         #     'topic',
@@ -380,6 +335,53 @@ class ChildGUINode(Node):
         self.publish_user_drawn_shapes.publish(
             self.gui.pack_writing_pts(total_list)
         )
+
+    def button_strugg_clicked(self):
+        word = "tree"
+        self.gui.drawing.pixmap().save("draw.png")
+
+        child_x_axle = []
+        child_y_axle = []
+        if len(self.gui.child_point_lists) > 1:
+            for i in range (len(self.gui.child_point_lists)):
+                for x in self.gui.child_point_lists[i]:
+                    child_x_axle.append(x[0])
+                    child_y_axle.append(x[1])
+        else:
+            for x in self.gui.child_point_lists[0]:
+                child_x_axle.append(x[0])
+                child_y_axle.append(x[1])
+        # Crop image of child writing
+        image = Image.open("draw.png")
+        image.crop((min(child_x_axle)-20,min(child_y_axle),max(child_x_axle)+20,max(child_y_axle))).save("draw.png")
+
+        if word != None:
+            text = word.strip()
+            test_result = identify_strugg_letter('draw.png')
+            a = test_result['value']
+            result = a.strip()
+
+            self.get_logger().info(result+"!!!!!!!!!!")
+
+            self.get_logger().info("Identidy your strugged letter(s)")
+            if len(result) == len(text):
+                
+                for i in range(len(result)):
+                    if text[i] == result[i]:
+                        self.get_logger().info("-------------------------------------------")
+
+                        self.get_logger().info("Your wrote letter: "+ text[i]+ " seems good! Keep going!")
+                    else:
+                        self.get_logger().info("-------------------------------------------")
+
+                        self.get_logger().info("Your wrote letter: "+ text[i]+ " looks like: "+result[i]+ ". Please practice more")
+            else:
+                self.get_logger().info("You witing looks like: " + result+ ", so it does match your input word.")
+
+            self.get_logger().info("Feedback Finished")
+            self.get_logger().info("-------------------------------------------")
+        else:
+            self.get_logger().info("You did not input any word")
 
 
 def main(args=None):

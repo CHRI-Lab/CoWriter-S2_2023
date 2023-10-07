@@ -40,7 +40,6 @@ TOPIC_LEARNING_PACE = "simple_learning_pace"
 TOPIC_GPT_INPUT = "chatgpt_input"
 TOPIC_SHAPE_FINISHED = "shape_finished"
 
-word = "None"
 
 
 class Manager_UI(QtWidgets.QDialog, QtWidgets.QMainWindow):
@@ -123,6 +122,7 @@ class ManagerUINode(Node):
 
     def buttonEraseClicked(self):
         self.get_logger().info("erasing child")
+        self.get_logger().info(word)
         self.publish_manager_erase.publish(String(data="erased"))
 
     def buttonTalkToMeCliked(self):
@@ -141,7 +141,6 @@ class ManagerUINode(Node):
         )
         self.ai_image.generate_image(self.gui.wordText.text().lower())
 
-        word = self.gui.wordText.text().lower()
 
     def buttonGptTextClicked(self):
         self.get_logger().info(
