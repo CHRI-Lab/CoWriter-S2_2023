@@ -21,6 +21,20 @@ const CanvasManager = () => {
         setUserInputs([]);
     }, [inputText]);
 
+    const submitText = async () => {
+        setGenerateCanvas(true);
+
+        console.log(inputText)
+        try {
+            const response = await axios.post('http://127.0.0.1:5000/send_text', inputText);
+
+            console.log(response.data);
+        } catch (error) {
+            console.error('Error sending strokes to the backend:', error);
+        }
+    };
+
+
     const sendStrokesToBackend = async () => {
         console.log(userInputs)
         try {
@@ -45,8 +59,9 @@ const CanvasManager = () => {
 
     return (
         <div id="canvas_manager" className="container-fluid">
-            <button type="button" className="btn btn-info" onClick={sendStrokesToBackend}>Done</button>
+            <button type="button" className="btn btn-success" onClick={submitText}>Submit</button>
             <button type="button" className="btn btn-warning" onClick={()=>{setInputText("")}}>Clear</button>
+            <button type="button" className="btn btn-info" onClick={sendStrokesToBackend}>Done</button>
             <hr/>
             <input
                 type="text"
@@ -56,7 +71,7 @@ const CanvasManager = () => {
                 onChange={
                     (event) => {
                         setInputText(event.target.value);
-                        setGenerateCanvas(true);
+                        // setGenerateCanvas(true);
                         getWordDemo(event.target.value);
                     }
                 }

@@ -131,7 +131,7 @@ class ChatbotNode(Node):
         root = tk.Tk()
         root.title("Let's talk")
         prompt_label = tk.Label(
-            root, text="Glad to see you! Please enter your words here:"
+            root, text="Glad to see you!!!!! Please enter your words here:"
         )
         prompt_label.pack()
         entry = tk.Entry(root, width=50)

@@ -17,27 +17,30 @@ from .shape_learner_manager import ShapeLearnerManager, generateSettings
 
 class InputInterpreter(Node, threading.Thread):
     def __init__(self):
-        Node.__init__(self, 'input_interpreter')
+        Node.__init__(self, "input_interpreter")
         threading.Thread.__init__(self)
 
         # define topic - strokeMessage
-        self.publisher_ = self.create_publisher(Strokes, 'strokesMessage', 10)
+        self.publisher_ = self.create_publisher(Strokes, "strokesMessage", 10)
 
         # define service - get demo characters
-        self.cli = self.create_client(GetDemo, 'get_demo')
+        self.cli = self.create_client(GetDemo, "get_demo")
         while not self.cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('GetDemo service not available, waiting again...')
+            self.get_logger().info(
+                "GetDemo service not available, waiting again..."
+            )
         self.get_demo_req = GetDemo.Request()
 
         self.get_demo_response = None
-
 
     def publish_strokesMessage(self, msg):
         self.publisher_.publish(msg)
         self.get_logger().info(f"InputInterpreter publish: {msg.shape_type}")
 
     def send_request(self, word):
-        self.get_logger().info(f'InputInterpreter request demo for word: {word}')
+        self.get_logger().info(
+            f"InputInterpreter request demo for word: {word}"
+        )
         self.get_demo_req.word = word
         self.future = self.cli.call_async(self.get_demo_req)
         rclpy.spin_until_future_complete(self, self.future)
@@ -45,7 +48,7 @@ class InputInterpreter(Node, threading.Thread):
 
     def run(self):
         rclpy.spin(self)
-        self.get_logger().info('Publisher InputInterpreter is running')
+        self.get_logger().info("Publisher InputInterpreter is running")
 
     @classmethod
     def shutdown_ros2(cls):
@@ -77,22 +80,24 @@ CORS(app, resources={r"*": cors_config})
 def send_strokes():
     user_inputs = request.json
 
-    user_inputs_processed = [process_user_input(user_input) for user_input in user_inputs]
+    user_inputs_processed = [
+        process_user_input(user_input) for user_input in user_inputs
+    ]
 
     for strokes in user_inputs_processed:
         current_app.input_interpreter.publish_strokesMessage(strokes)
 
-    return jsonify({"message": "User input received successfully"})
+    return jsonify({"message": "User input received successfully!!"})
 
 
 @app.route("/get_demo", methods=["POST"])
 def get_demo():
-
     user_inputs = request.json
-    word = user_inputs.get('word')
+    word = user_inputs.get("word")
     response = current_app.input_interpreter.send_request(word)
 
-    return jsonify({'shapes': shapes_to_dict(response.shapes)})
+    return jsonify({"shapes": shapes_to_dict(response.shapes)})
+
 
 def shapes_to_dict(shapes):
     shapes_dict = {}
@@ -144,5 +149,5 @@ def main():
     InputInterpreter.shutdown_ros2()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
