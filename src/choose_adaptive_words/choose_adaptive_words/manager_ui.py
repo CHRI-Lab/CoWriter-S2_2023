@@ -40,7 +40,7 @@ TOPIC_LEARNING_PACE = "simple_learning_pace"
 TOPIC_GPT_INPUT = "chatgpt_input"
 TOPIC_SHAPE_FINISHED = "shape_finished"
 
-word = None
+word = "None"
 
 
 class Manager_UI(QtWidgets.QDialog, QtWidgets.QMainWindow):
