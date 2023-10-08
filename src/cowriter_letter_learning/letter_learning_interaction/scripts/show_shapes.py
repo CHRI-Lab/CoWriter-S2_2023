@@ -6,7 +6,7 @@ display_shapes.py
 This script displays shapes stored in a CSV file as matplotlib plots.
 
 To run this script, pass the name of the CSV file containing the shapes
-as an argument. Optionally, you can use the --no_clear flag to avoid 
+as an argument. Optionally, you can use the --no_clear flag to avoid
 clearing the display between shapes.
 
 Usage:
@@ -17,7 +17,7 @@ Args:
                     from.
 
 Options:
-    --no_clear: Don't clear the display (useful for viewing shapes in 
+    --no_clear: Don't clear the display (useful for viewing shapes in
                 proportion to each other).
 
 Requirements:
@@ -39,13 +39,13 @@ def show_shapes(input_filename: str, no_clear: bool) -> None:
 
     :param input_filename: A string containing the name of the CSV file
                            to read from.
-    :param no_clear: A boolean flag indicating whether to clear the 
+    :param no_clear: A boolean flag indicating whether to clear the
                      display between shapes.
     """
     plt.ion()
 
-    with open(input_filename, 'r') as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',', quotechar='|')
+    with open(input_filename, "r") as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=",", quotechar="|")
         for row in csv_reader:
             _stroke: List[str] = row[2:]
             stroke: List[float] = [float(coordinate) for coordinate in _stroke]
@@ -53,7 +53,7 @@ def show_shapes(input_filename: str, no_clear: bool) -> None:
             # Used to plot the shape
             x_shape, y_shape = stroke[::2], stroke[1::2]
 
-            # If no_clear is false then clear plot before drawing next 
+            # If no_clear is false then clear plot before drawing next
             # shape
             if not no_clear:
                 plt.clf()
@@ -63,16 +63,18 @@ def show_shapes(input_filename: str, no_clear: bool) -> None:
             time.sleep(1.0)
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Show shapes in csv file')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Show shapes in csv file")
     parser.add_argument(
-        'input', 
-        help='A string containing the name of the CSV file to read from.')
+        "input",
+        help="A string containing the name of the CSV file to read from.",
+    )
     parser.add_argument(
-        '--no_clear', 
-        action='store_true',
-        help="Don't clear the display (useful for viewing shapes in" +
-            " proportion to each other).")
+        "--no_clear",
+        action="store_true",
+        help="Don't clear the display (useful for viewing shapes in"
+        + " proportion to each other).",
+    )
     args = parser.parse_args()
 
     show_shapes(args.input, args.no_clear)

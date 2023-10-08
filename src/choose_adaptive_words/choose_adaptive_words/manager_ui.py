@@ -1,23 +1,7 @@
 from PyQt5 import uic, QtWidgets
-import PyQt5.QtCore as QtCore
 from PyQt5.QtWidgets import QFileDialog
-from PyQt5.QtCore import QObject, QRect, Qt, QSize, QDate
-from PyQt5.QtGui import QIcon
-from datetime import datetime
 from os.path import expanduser
-from nav_msgs.msg import Path
-from std_msgs.msg import (
-    String,
-    UInt8,
-    Int32MultiArray,
-    Float32,
-    MultiArrayDimension,
-    MultiArrayLayout,
-    Empty,
-)
-from geometry_msgs.msg import PoseStamped
-import numpy as np
-import os
+from std_msgs.msg import String, Float32, Empty
 
 import sys
 import pkg_resources
@@ -29,8 +13,7 @@ from threading import Thread
 from rclpy.executors import MultiThreadedExecutor
 
 from choose_adaptive_words.audio_processor import AudioProcessor
-from choose_adaptive_words.ChildProfile import ChildProfile
-from choose_adaptive_words.parameters import *
+from choose_adaptive_words.parameters import PATH_DB
 from choose_adaptive_words.ai_image import AI_IMAGE
 
 
@@ -56,14 +39,7 @@ class Manager_UI(QtWidgets.QDialog, QtWidgets.QMainWindow):
             self.choose_adaptive_words_path + "/manager_view.ui", self
         )
         self.show()
-        # define QtWidgets
-
         self.labelLeariningPace.setText(str(self.sliderLearningPace.value()))
-
-        ## init publisher
-        # self.publish_word_to_write = rospy.Publisher(TOPIC_WORDS_TO_WRITE, String, queue_size=10)
-
-        ## init path
         self.pathText.setText(PATH_DB)
 
 
@@ -159,32 +135,44 @@ class ManagerUINode(Node):
 
     def buttonPredictClicked(self):
         print("prediction currently disabled")
-        # #get letters from boxes
+        # get letters from boxes
         # trace = self.activity.tactileSurface.getData()
         # boxes = self.activity.tactileSurface.boxesToDraw
-        # letters = self.activity.wt.separateWordsToLetters(trace, boxes, self.activity.tactileSurface.height(), self.activity.tactileSurface.convert_pix_meter)
+        # letters = self.activity.wt.separateWordsToLetters(
+        #     trace,
+        #     boxes,
+        #     self.activity.tactileSurface.height(),
+        #     self.activity.tactileSurface.convert_pix_meter,
+        # )
 
-        # #compute score of all letters
+        # # compute score of all letters
         # for index in letters:
-        #     d_score = self.activity.predictor.predict(self.activity.childProfile.rightHanded,
-        #     self.activity.childProfile.male,
-        #     self.activity.childProfile.dateBirth.daysTo(QDate().currentDate())/30.5,
-        #     self.activity.childProfile.section,
-        #     letters[index],
-        #     self.activity.lettersToWrite[index])
+        #     d_score = self.activity.predictor.predict(
+        #         self.activity.childProfile.rightHanded,
+        #         self.activity.childProfile.male,
+        #         self.activity.childProfile.dateBirth.daysTo(
+        #             QDate().currentDate()
+        #         )
+        #         / 30.5,
+        #         self.activity.childProfile.section,
+        #         letters[index],
+        #         self.activity.lettersToWrite[index],
+        #     )
 
-        #     self.activity.skills[self.activity.lettersToWrite[index]].dScore.append(d_score)
+        #     self.activity.skills[
+        #         self.activity.lettersToWrite[index]
+        #     ].dScore.append(d_score)
 
-        # #save data
+        # # save data
         # self.activity.saveData(letters)
 
-        # #update knowledge about dico
+        # # update knowledge about dico
         # self.activity.wt.updateWords(self.skills)
 
-        # #choose next word
+        # # choose next word
         # self.activity.algo()
 
-        # #clear screen
+        # # clear screen
         # self.activity.tactileSurface.eraseRobotTrace()
         # self.activity.tactileSurface.erasePixmap()
 
@@ -197,11 +185,16 @@ class ManagerUINode(Node):
         # words_drawn = Path()
 
         # for d in data:
-
         #     pose = PoseStamped()
 
-        #     pose.pose.position.x = d.x*self.activity.tactileSurface.convert_pix_meter
-        #     pose.pose.position.y = -d.y*self.activity.tactileSurface.convert_pix_meter + self.activity.tactileSurface.height()*self.activity.tactileSurface.convert_pix_meter# - boxesCoordinates[0][1]
+        #     pose.pose.position.x = (
+        #         d.x * self.activity.tactileSurface.convert_pix_meter
+        #     )
+        #     pose.pose.position.y = (
+        #         -d.y * self.activity.tactileSurface.convert_pix_meter
+        #         + self.activity.tactileSurface.height()
+        #         * self.activity.tactileSurface.convert_pix_meter
+        #     )  # - boxesCoordinates[0][1]
         #     pose.header.seq = self.activity.seqWord
         #     words_drawn.poses.append(pose)
 

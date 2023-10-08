@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+# flake8: noqa # (Needed to ignore line length errors in this file)
 """
 Manages a collection of shape_learners, with long-term memory about the 
 history of previous collections seen. An example is managing
@@ -8,26 +8,34 @@ words.
 """
 
 import logging
-import sys
 import os.path
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../include'))
-from shape_learner import ShapeLearner
+
+from .shape_learner import ShapeLearner
+
 # for mutable namedtuple (dict might also work)
-#from recordtype import recordtype
+# from recordtype import recordtype
 
 shape_logger = logging.getLogger("shape_logger")
 
-bound_expanding_amount = 0.
+bound_expanding_amount = 0.0
 use_prev_params_when_shape_reappears = True
+
 
 class Shape:
     """
     Shape class to replace recordtype below, which was not functioning
     properly when running rostest for test_tablet_input_interpreter.
     """
-    def __init__(self, path=None, shape_id=None, shape_type=None,
-                 shape_type_code=None, params_to_vary=None,
-                 param_values=None):
+
+    def __init__(
+        self,
+        path=None,
+        shape_id=None,
+        shape_type=None,
+        shape_type_code=None,
+        params_to_vary=None,
+        param_values=None,
+    ):
         self.path = path
         self.shape_id = shape_id
         self.shape_type = shape_type
@@ -35,9 +43,20 @@ class Shape:
         self.params_to_vary = params_to_vary
         self.param_values = param_values
 
-# Leave commented out in case we need it, commented out import of recordtype as well
-#Shape = recordtype('Shape', [('path', None), ('shape_id', None), ('shape_type', None), ('shape_type_code', None),
- #                            ('params_to_vary', None), ('param_values', None)])
+
+# Leave commented out in case we need it,
+# commented out import of recordtype as well
+# Shape = recordtype(
+#     "Shape",
+#     [
+#         ("path", None),
+#         ("shape_id", None),
+#         ("shape_type", None),
+#         ("shape_type_code", None),
+#         ("params_to_vary", None),
+#         ("param_values", None),
+#     ],
+# )
 
 
 def configure_logging(path):
@@ -45,32 +64,38 @@ def configure_logging(path):
     Configures logging for the application.
 
     Parameters:
-        path (str): The path to the log file or directory where the log file will be created.
+    path (str): The path to the log file or directory where the log file will
+                be created.
 
     Returns:
-        None
+    None
 
     Raises:
-        None
+    None
 
     Description:
-        This function configures the logging settings for the application. It takes a path parameter that specifies the
-        location where the log file will be created. If the path is a directory, a default log file named "shapes.log" 
-        will be created inside that directory. If the path is empty or None, logging will be disabled.
+    This function configures the logging settings for the application. It takes
+    a path parameter that specifies the location where the log file will be
+    created. If the path is a directory, a default log file named "shapes.log"
+    will be created inside that directory. If the path is empty or None, logging
+    will be disabled.
 
-        The function creates a logging handler using the specified path and sets the log level to DEBUG. It also defines
-        a formatter for the log messages, which includes the timestamp, logger name, log level, and log message.
+    The function creates a logging handler using the specified path and sets the
+    log level to DEBUG. It also defines a formatter for the log messages, which
+    includes the timestamp, logger name, log level, and log message.
 
-        If the path is empty or None, a NullHandler is used, which effectively disables logging.
+    If the path is empty or None, a NullHandler is used, which effectively
+    disables logging.
 
-        Finally, the logging handler is added to the 'shape_logger' logger object, which is assumed to be defined 
-        globally, and the log level of the 'shape_logger' is set to DEBUG.
+    Finally, the logging handler is added to the 'shape_logger' logger object,
+    which is assumed to be defined globally, and the log level of the
+    'shape_logger' is set to DEBUG.
 
     Example:
-        configure_logging("/var/log/app_logs")  # Configures logging with log file located at "/var/log/app_logs/shapes.log"
-        configure_logging("")  # Disables logging
+    configure_logging("/var/log/app_logs")
+    Configures logging with log file located at "/var/log/app_logs/shapes.log"
+    configure_logging("")  # Disables logging
     """
-
 
     if path:
         if os.path.isdir(path):
@@ -78,7 +103,8 @@ def configure_logging(path):
         handler = logging.FileHandler(path)
         handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         handler.setFormatter(formatter)
     else:
         handler = logging.NullHandler()
@@ -93,20 +119,31 @@ class ShapeLearnerManager:
     A manager class for shape learners.
 
     Parameters:
-        generate_settings_function (function): A function that generates settings for a given shape type.
-        shapes_logging_path (str): The path to the log file for logging shape-related information. Default is "shapes.log".
+        generate_settings_function (function): A function that generates settings
+                                            for a given shape type.
+        shapes_logging_path (str): The path to the log file for logging
+                                shape-related information. Default is "shapes.log".
 
     Attributes:
-        generate_settings (function): The function that generates settings for a given shape type.
+        generate_settings (function): The function that generates settings for a
+                                    given shape type.
         shapes_learnt (list): A list of all the shapes that have been learned.
         shape_learners_all (list): A list of all shape learners.
-        shape_learners_current_collection (list): A list of shape learners for the current collection.
-        settings_shape_learners_all (list): A list of settings for all shape learners.
-        settings_shape_learners_current_collection (list): A list of settings for shape learners in the current collection.
-        shape_learners_seen_before_current_collection (list): A list indicating if a shape has been seen before in the current collection.
+        shape_learners_current_collection (list): A list of shape learners for the
+                                                current collection.
+        settings_shape_learners_all (list): A list of settings for all shape
+                                            learners.
+        settings_shape_learners_current_collection (list): A list of settings for
+                                                        shape learners in the
+                                                        current collection.
+        shape_learners_seen_before_current_collection (list): A list indicating if
+                                                            a shape has been seen
+                                                            before in the current
+                                                            collection.
         current_collection (str): The current collection of shapes being worked on.
         collections_learnt (list): A list of collections that have been learnt.
-        next_shape_learner_to_be_started (int): Index of the next shape learner to be started.
+        next_shape_learner_to_be_started (int): Index of the next shape learner to
+                                            be started.
 
     Methods:
         __init__(generate_settings_function, shapes_logging_path):
@@ -116,7 +153,8 @@ class ShapeLearnerManager:
             Initializes the shape learners for the current collection.
 
         start_next_shape_learner():
-            Starts the learning process for the next shape learner in the current collection.
+            Starts the learning process for the next shape learner in the current
+            collection.
 
         feedback_manager(shape_index_message_for, best_shape_index, no_new_shape):
             Manages the feedback provided to a shape learner.
@@ -157,7 +195,10 @@ class ShapeLearnerManager:
         save_params(shape_index_message_for):
             Saves the current parameters of the shape learner.
     """
-    def __init__(self, generate_settings_function, shapes_logging_path="shapes.log"):
+
+    def __init__(
+        self, generate_settings_function, shapes_logging_path="shapes.log"
+    ):
         """
         Initializes the ShapeLearnerManager object.
 
@@ -196,7 +237,8 @@ class ShapeLearnerManager:
             except ValueError:
                 new_shape = True
             self.shape_learners_seen_before_current_collection.append(
-                not new_shape)
+                not new_shape
+            )
             if new_shape:
                 settings = self.generate_settings(shape_type)
 
@@ -205,26 +247,32 @@ class ShapeLearnerManager:
                 self.shape_learners_all.append(shape_learner)
                 self.settings_shape_learners_all.append(settings)
                 self.shape_learners_current_collection.append(
-                    self.shape_learners_all[-1])
+                    self.shape_learners_all[-1]
+                )
                 self.settings_shape_learners_current_collection.append(
-                    self.settings_shape_learners_all[-1])
+                    self.settings_shape_learners_all[-1]
+                )
 
             else:
                 # use the bounds determined last time
                 # type: ignore
-                previous_bounds = self.shape_learners_all[shape_type_index].get_parameter_bounds(
-                )
+                previous_bounds = self.shape_learners_all[
+                    shape_type_index
+                ].get_parameter_bounds()
                 new_initial_bounds = previous_bounds
                 # USE ONLY FIRST PARAM FOR SELF-LEARNING ALGORITHM ATM
                 new_initial_bounds[0, 0] -= bound_expanding_amount
                 # USE ONLY FIRST PARAM FOR SELF-LEARNING ALGORITHM ATM
                 new_initial_bounds[0, 1] += bound_expanding_amount
                 self.shape_learners_all[shape_type_index].set_parameter_bounds(
-                    new_initial_bounds)  # type: ignore
+                    new_initial_bounds
+                )  # type: ignore
                 self.shape_learners_current_collection.append(
-                    self.shape_learners_all[shape_type_index])  # type: ignore
+                    self.shape_learners_all[shape_type_index]
+                )  # type: ignore
                 self.settings_shape_learners_current_collection.append(
-                    self.settings_shape_learners_all[shape_type_index])  # type: ignore
+                    self.settings_shape_learners_all[shape_type_index]
+                )  # type: ignore
 
     def start_next_shape_learner(self):
         # start learning
@@ -233,36 +281,68 @@ class ShapeLearnerManager:
 
         Returns:
             shape (Shape): The shape object representing the next shape to be learned.
-        
+
         Raises:
             RuntimeError: If there are no more shape learners to be started.
         """
-        if (self.next_shape_learner_to_be_started < len(self.current_collection)):
-            shape_type = self.current_collection[self.next_shape_learner_to_be_started]
+        if self.next_shape_learner_to_be_started < len(self.current_collection):
+            shape_type = self.current_collection[
+                self.next_shape_learner_to_be_started
+            ]
             shape_type_code = self.next_shape_learner_to_be_started
             shape_index = self.index_of_shape_incurrent_collection(shape_type)
 
-            if use_prev_params_when_shape_reappears \
-               and self.shape_learners_seen_before_current_collection[self.next_shape_learner_to_be_started]:  # shape has been seen before
-                [path, param_values] = self.shape_learners_current_collection[shape_index].get_learned_shape()
-                shape_logger.info("%s: continuing learning. Current params: %s. Path: %s" % (
-                    shape_type, param_values.flatten().tolist(), path.flatten().tolist()))
+            if (
+                use_prev_params_when_shape_reappears
+                and self.shape_learners_seen_before_current_collection[
+                    self.next_shape_learner_to_be_started
+                ]
+            ):  # shape has been seen before
+                [path, param_values] = self.shape_learners_current_collection[
+                    shape_index
+                ].get_learned_shape()
+                shape_logger.info(
+                    "%s: continuing learning. Current params: %s. Path: %s"
+                    % (
+                        shape_type,
+                        param_values.flatten().tolist(),
+                        path.flatten().tolist(),
+                    )
+                )
             else:
-                [path, param_values] = self.shape_learners_current_collection[shape_index].start_learning()
-                shape_logger.info("%s: starting learning. Initial params: %s. Path: %s" % (
-                    shape_type, param_values.flatten().tolist(), path.flatten().tolist()))
+                [path, param_values] = self.shape_learners_current_collection[
+                    shape_index
+                ].start_learning()
+                shape_logger.info(
+                    "%s: starting learning. Initial params: %s. Path: %s"
+                    % (
+                        shape_type,
+                        param_values.flatten().tolist(),
+                        path.flatten().tolist(),
+                    )
+                )
 
             params_to_vary = self.settings_shape_learners_current_collection[
-                shape_index].params_to_vary
+                shape_index
+            ].params_to_vary
             self.next_shape_learner_to_be_started += 1
-            shape = Shape(path=path, shape_id=0, shape_type=shape_type,
-                          shape_type_code=shape_type_code, params_to_vary=params_to_vary, param_values=param_values)
+            shape = Shape(
+                path=path,
+                shape_id=0,
+                shape_type=shape_type,
+                shape_type_code=shape_type_code,
+                params_to_vary=params_to_vary,
+                param_values=param_values,
+            )
             return shape
         else:
             raise RuntimeError(
-                'Don\'t know what shape learner you want me to start...')
+                "Don't know what shape learner you want me to start..."
+            )
 
-    def feedback_manager(self, shape_index_message_for, best_shape_index, no_new_shape):
+    def feedback_manager(
+        self, shape_index_message_for, best_shape_index, no_new_shape
+    ):
         """
         Manages the feedback for a shape learner and generates a new shape if required.
 
@@ -276,24 +356,40 @@ class ShapeLearnerManager:
             shape (Shape) or -1: The newly generated shape if `no_new_shape` is False, or -1 if no shape is generated.
         """
         shape_message_for = self.shape_at_index_incurrent_collection(
-            shape_index_message_for)
-        if (shape_message_for == -1):
+            shape_index_message_for
+        )
+        if shape_message_for == -1:
             shape_logger.warning(
-                'Ignoring message because not for valid shape type')
+                "Ignoring message because not for valid shape type"
+            )
             return -1
         else:
-
             if no_new_shape:  # just respond to feedback, don't make new shape
-                self.shape_learners_current_collection[shape_index_message_for].respond_to_feedback(
-                    best_shape_index)
+                self.shape_learners_current_collection[
+                    shape_index_message_for
+                ].respond_to_feedback(best_shape_index)
                 return 1
             else:
-                [num_iters_converged, new_path, new_param_values] = self.shape_learners_current_collection[
-                    shape_index_message_for].generate_new_shape_given_feedback(best_shape_index)
+                [
+                    num_iters_converged,
+                    new_path,
+                    new_param_values,
+                ] = self.shape_learners_current_collection[
+                    shape_index_message_for
+                ].generate_new_shape_given_feedback(
+                    best_shape_index
+                )
             params_to_vary = self.settings_shape_learners_current_collection[
-                shape_index_message_for].params_to_vary
-            shape = Shape(path=new_path, shape_id=[], shape_type=shape_message_for,
-                          shape_type_code=shape_index_message_for, params_to_vary=params_to_vary, param_values=new_param_values)
+                shape_index_message_for
+            ].params_to_vary
+            shape = Shape(
+                path=new_path,
+                shape_id=[],
+                shape_type=shape_message_for,
+                shape_type_code=shape_index_message_for,
+                params_to_vary=params_to_vary,
+                param_values=new_param_values,
+            )
             return num_iters_converged, shape
 
     def respond_to_demonstration(self, shape_index_message_for, shape):
@@ -307,28 +403,52 @@ class ShapeLearnerManager:
         shape (Shape) or -1: The newly generated shape if the demonstration is valid, or -1 if the demonstration is invalid.
         """
         shape_message_for = self.shape_at_index_in_all_shapes_learnt(
-            shape_index_message_for)
-        if (type(shape_message_for) == int):
+            shape_index_message_for
+        )
+        if type(shape_message_for) == int:
             shape_logger.warning(
-                'Ignoring demonstration because not for valid shape type')
+                "Ignoring demonstration because not for valid shape type"
+            )
             return -1
         else:
-            new_path, new_param_values, params_demo = self.shape_learners_current_collection[
-                shape_index_message_for].respond_to_demonstration(shape)
+            (
+                new_path,
+                new_param_values,
+                params_demo,
+            ) = self.shape_learners_current_collection[
+                shape_index_message_for
+            ].respond_to_demonstration(
+                shape
+            )
 
-            shape_logger.info("%s: new demonstration.         Params: %s. Path: %s" % (
-                shape_message_for, params_demo.flatten().tolist(), shape.flatten().tolist()))
+            shape_logger.info(
+                "%s: new demonstration.         Params: %s. Path: %s"
+                % (
+                    shape_message_for,
+                    params_demo.flatten().tolist(),
+                    shape.flatten().tolist(),
+                )
+            )
 
             params_to_vary = self.settings_shape_learners_current_collection[
-                shape_index_message_for].params_to_vary
-            shape = Shape(path=new_path,
-                          shape_id=[],
-                          shape_type=shape_message_for,
-                          shape_type_code=shape_index_message_for,
-                          params_to_vary=params_to_vary,
-                          param_values=new_param_values)
-            shape_logger.info("%s: new generated model.       Params: %s. Path: %s" % (
-                shape_message_for, new_param_values.flatten().tolist(), new_path.flatten().tolist()))
+                shape_index_message_for
+            ].params_to_vary
+            shape = Shape(
+                path=new_path,
+                shape_id=[],
+                shape_type=shape_message_for,
+                shape_type_code=shape_index_message_for,
+                params_to_vary=params_to_vary,
+                param_values=new_param_values,
+            )
+            shape_logger.info(
+                "%s: new generated model.       Params: %s. Path: %s"
+                % (
+                    shape_message_for,
+                    new_param_values.flatten().tolist(),
+                    new_path.flatten().tolist(),
+                )
+            )
             return shape
 
     def index_of_shape_incurrent_collection(self, shape_type):
@@ -369,19 +489,22 @@ class ShapeLearnerManager:
 
         shapes = []
 
-        for idx, shape_learner in enumerate(self.shape_learners_current_collection):
-
+        for idx, shape_learner in enumerate(
+            self.shape_learners_current_collection
+        ):
             path, param_values = shape_learner.get_learned_shape()
             params_to_vary = shape_learner.params_to_vary
             shape_name = self.shape_at_index_incurrent_collection(idx)
             code = self.index_of_shape_in_all_shapes_learnt(shape_name)
 
-            shape = Shape(path=path,
-                          shape_id=[],
-                          shape_type=shape_name,
-                          shape_type_code=code,
-                          params_to_vary=params_to_vary,
-                          param_values=param_values)
+            shape = Shape(
+                path=path,
+                shape_id=[],
+                shape_type=shape_name,
+                shape_type_code=code,
+                params_to_vary=params_to_vary,
+                param_values=param_values,
+            )
 
             shapes.append(shape)
 
@@ -405,7 +528,9 @@ class ShapeLearnerManager:
             except RuntimeError:
                 # no dataset for this letter!
                 shape_logger.error(
-                    "No dataset available for letter <%s>. Skipping this letter." % l)
+                    "No dataset available for letter <%s>. Skipping this letter."
+                    % l
+                )
                 continue
 
             self.current_collection += l
@@ -435,48 +560,71 @@ class ShapeLearnerManager:
         Returns:
             None
         """
-        current_bounds = self.shape_learners_current_collection[shape_type_index].get_parameter_bounds(
-        )
+        current_bounds = self.shape_learners_current_collection[
+            shape_type_index
+        ].get_parameter_bounds()
 
         # change bounds back to the initial ones
-        new_bounds = self.shape_learners_current_collection[shape_type_index].initial_bounds
-        self.shape_learners_current_collection[shape_type_index].set_parameter_bounds(
-            new_bounds)
-        shape_logger.debug('Changing bounds on shape ' + str(self.shape_at_index_incurrent_collection(shape_type_index)) + ' from ' + str(
-            current_bounds) + ' to ' + str(new_bounds))
+        new_bounds = self.shape_learners_current_collection[
+            shape_type_index
+        ].initial_bounds
+        self.shape_learners_current_collection[
+            shape_type_index
+        ].set_parameter_bounds(new_bounds)
+        shape_logger.debug(
+            "Changing bounds on shape "
+            + str(self.shape_at_index_incurrent_collection(shape_type_index))
+            + " from "
+            + str(current_bounds)
+            + " to "
+            + str(new_bounds)
+        )
 
-    def generate_simulated_feedback(self, shape_type_index, new_shape, new_param_value):
-        return self.shape_learners_current_collection[shape_type_index].generate_simulated_feedback(new_shape, new_param_value)
+    def generate_simulated_feedback(
+        self, shape_type_index, new_shape, new_param_value
+    ):
+        return self.shape_learners_current_collection[
+            shape_type_index
+        ].generate_simulated_feedback(new_shape, new_param_value)
 
     def save_all(self, shape_index_message_for):
         shape_message_for = self.shape_at_index_in_all_shapes_learnt(
-            shape_index_message_for)
-        if (shape_message_for == -1):
+            shape_index_message_for
+        )
+        if shape_message_for == -1:
             shape_logger.warning(
-                'Ignoring demonstration because not for valid shape type')
+                "Ignoring demonstration because not for valid shape type"
+            )
             return -1
         else:
-            self.shape_learners_current_collection[shape_index_message_for].save_all(
-            )
+            self.shape_learners_current_collection[
+                shape_index_message_for
+            ].save_all()
 
     def save_demo(self, shape_index_message_for):
         shape_message_for = self.shape_at_index_in_all_shapes_learnt(
-            shape_index_message_for)
-        if (shape_message_for < 0):
+            shape_index_message_for
+        )
+        if shape_message_for < 0:
             shape_logger.warning(
-                'Ignoring demonstration because not for valid shape type')
+                "Ignoring demonstration because not for valid shape type"
+            )
             return -1
         else:
-            self.shape_learners_current_collection[shape_index_message_for].save_demo(
-            )
+            self.shape_learners_current_collection[
+                shape_index_message_for
+            ].save_demo()
 
     def save_params(self, shape_index_message_for):
         shape_message_for = self.shape_at_index_in_all_shapes_learnt(
-            shape_index_message_for)
-        if (shape_message_for < 0):
+            shape_index_message_for
+        )
+        if shape_message_for < 0:
             shape_logger.warning(
-                'Ignoring demonstration because not for valid shape type')
+                "Ignoring demonstration because not for valid shape type"
+            )
             return -1
         else:
-            self.shape_learners_current_collection[shape_index_message_for].save_params(
-            )
+            self.shape_learners_current_collection[
+                shape_index_message_for
+            ].save_params()

@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Publish marker and frame representing a writing surface, either with an 
-interactive marker or wherever a fiducial marker has been detected (e.g. a 
+Publish marker and frame representing a writing surface, either with an
+interactive marker or wherever a fiducial marker has been detected (e.g. a
 chilitag).
 """
 
 # import roslib; roslib.load_manifest("interactive_markers")
 import rclpy
-from rclpy.node import Node
 from rclpy.duration import Duration
 
 from geometry_msgs.msg import Pose
@@ -20,7 +19,10 @@ import math
 from visualization_msgs.msg import Marker, InteractiveMarkerControl
 
 
-from interactive_markers.interactive_marker_server import *
+from interactive_markers.interactive_marker_server import (
+    InteractiveMarker,
+    InteractiveMarkerServer,
+)
 
 # server = None
 global frame_pose
@@ -32,14 +34,15 @@ def processFeedback(feedback):
     Callback function for processing feedback from the interactive marker.
 
     Parameters:
-    - feedback (InteractiveMarkerFeedback): The feedback object containing the pose of the interactive marker.
+    - feedback (InteractiveMarkerFeedback): The feedback object containing the pose
+    of the interactive marker.
 
     Returns:
     - None
     """
-    p = feedback.pose.position
-    o = feedback.pose.orientation
-    frame_pose = feedback.pose
+    p = feedback.pose.position  # noqa: F841
+    o = feedback.pose.orientation  # noqa: F841
+    frame_pose = feedback.pose  # noqa: F841
 
 
 def writing_surface(surface_width=0.217, surface_height=0.136):
@@ -67,9 +70,7 @@ def writing_surface(surface_width=0.217, surface_height=0.136):
     return surface
 
 
-def make6DofMarker(
-    pose, frame_id, surface_width, surface_height, server, fixed=False
-):
+def make6DofMarker(pose, frame_id, surface_width, surface_height, server, fixed=False):
     """
     Create a 6-DOF interactive marker.
 
@@ -196,7 +197,8 @@ def main(args=None):
         "positioning_method", "interactive_marker"
     ).value
 
-    # name of frame to publish as writing surface origin (at bottom left, with x horizontal and y vertical)
+    # name of frame to publish as writing surface origin
+    # (at bottom left, with x horizontal and y vertical)
     FRAME_ID = node.declare_parameter(
         "writing_surface_frame_id", "writing_surface"
     ).value
@@ -217,11 +219,14 @@ def main(args=None):
         # frame has y horizontal and x vertical (graphics coordinate system) and
         # needs to be changed to 'robotics' coordinate system
 
-        tf_listener = tf2_ros.transform_listener.TransformListener(Buffer(), node) #True, Duration(seconds=10))
+        tf_listener = tf2_ros.transform_listener.TransformListener(
+            Buffer(), node
+        )  # True, Duration(seconds=10))
         node.get_clock().sleep_for(Duration(seconds=0.5))
         rate = node.create_rate(50)
         while rclpy.ok():
-            # tf_broadcaster.sendTransform((0,0,0),(0,0,0,1),rospy.Time.now(),"v4l_frame","gaze") #manually "attach" the webcam to the robot's frame (for testing)
+            # tf_broadcaster.sendTransform((0,0,0),(0,0,0,1),rospy.Time.now(),"v4l_frame","gaze")
+            # manually "attach" the webcam to the robot's frame (for testing)
             try:
                 tf_listener.waitForTransform(
                     "map",
@@ -244,7 +249,8 @@ def main(args=None):
             surfacePose.header.frame_id = TAG_FRAME
 
             if ROTATE_TAG_FRAME:
-                # convert 'x up, y to the right' of chilitag from to 'y up, x to the right' for the writing surface
+                # convert 'x up, y to the right' of chilitag from
+                # to 'y up, x to the right' for the writing surface
                 orientation = tf_transformations.quaternion_from_euler(
                     3.14159, 0, 3.14159 / 2
                 )
@@ -278,9 +284,9 @@ def main(args=None):
 
             tf_broadcaster.sendTransform(single_transform)
 
-            pub_markers.publish(
-                writing_surface(SURFACE_WIDTH, SURFACE_HEIGHT)
-            )  # show writing surface
+            # pub_markers.publish(
+            #     writing_surface(SURFACE_WIDTH, SURFACE_HEIGHT)
+            # )  # show writing surface
 
         rate.sleep()
 
@@ -290,7 +296,8 @@ def main(args=None):
 
         # assign default values of pose
         frame_pose = Pose()
-        # use values from 'rosrun tf tf_echo map writing_surface' with interactive marker in desired position
+        # use values from 'rosrun tf tf_echo map writing_surface'
+        # with interactive marker in desired position
         if NAO_HANDEDNESS.lower() == "right":
             frame_pose.orientation.x = -0.4
             frame_pose.orientation.y = 0.5

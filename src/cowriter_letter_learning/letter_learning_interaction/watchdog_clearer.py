@@ -44,9 +44,7 @@ if __name__ == "__main__":
         f"watchdog_clear/{args.device_name}", args.time_between_clears
     )
 
-    node.get_logger().info(
-        f"Starting new watchdog_clearer for {args.device_name}"
-    )
+    node.get_logger().info(f"Starting new watchdog_clearer for {args.device_name}")
 
     # Spin node until shutdown
     rclpy.spin(node)
