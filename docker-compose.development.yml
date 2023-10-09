@@ -8,10 +8,13 @@ services:
     container_name: ${NODES_CONTAINER}
     user: nao
     network_mode: host
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
     volumes:
       - ./src:/home/nao/src
       - ./.env:/home/nao/.env
       - ./share:/home/nao/share
+    command: bash
 
   controller-development:
     build:
@@ -28,9 +31,10 @@ services:
     build:
       context: .
       dockerfile: ${FILE_PATH}/frontend.Dockerfile
-    container_name: ${CONTROLLER_CONTAINER}
+    image: ${FRONTEND_IMAGE}
+    container_name: ${FRONTEND_CONTAINER}
     volumes:
-      - ./src/frontend/app:/usr/src/app
+      - ./src/frontend:/usr/src/app
       - /usr/src/app/node_modules
     ports:
       - 3000:3000
