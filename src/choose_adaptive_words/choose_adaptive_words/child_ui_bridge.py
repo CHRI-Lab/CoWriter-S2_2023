@@ -1,18 +1,6 @@
-import sys
-import os
-from std_msgs.msg import (
-    String,
-    Int32MultiArray,
-    MultiArrayDimension,
-    MultiArrayLayout,
-)
+from std_msgs.msg import String, Int32MultiArray
 
-from threading import Thread
-from rclpy.executors import MultiThreadedExecutor
-
-import rclpy
 from rclpy.node import Node
-import pkg_resources
 
 
 WINDOW_DEFAULT_SIZE = (960, 540)
@@ -25,6 +13,8 @@ TOPIC_SHAPES_TO_DRAW = "shapes_to_draw"
 TOPIC_MANAGER_ERASE = "manager_erase"
 TOPIC_LEARNING_PACE = "simple_learning_pace"
 TOPIC_USER_DRAWN_SHAPES = "user_drawn_shapes"
+
+# TODO: Difan add your code here for the child UI
 
 
 class ChildUIBridge(Node):
@@ -67,9 +57,11 @@ class ChildUIBridge(Node):
         total_list = []
         i = 0
 
-        for l in self.gui.child_point_lists:
-            total_list.append((i, len(l)))
-            total_list += l
+        for point_list in self.gui.child_point_lists:
+            total_list.append((i, len(point_list)))
+            total_list += point_list
             i += 1
         print(total_list)
-        self.publish_user_drawn_shapes.publish(self.gui.pack_writing_pts(total_list))
+        self.publish_user_drawn_shapes.publish(
+            self.gui.pack_writing_pts(total_list)
+        )

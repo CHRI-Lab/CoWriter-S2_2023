@@ -1,10 +1,8 @@
-from os.path import expanduser
 from std_msgs.msg import String, Float32, Empty
 
 from rclpy.node import Node
 
 from choose_adaptive_words.audio_processor import AudioProcessor
-from choose_adaptive_words.parameters import *  # noqa: F403
 from choose_adaptive_words.ai_image import AI_IMAGE
 
 
@@ -28,66 +26,49 @@ class ManagerUIBridge(Node):
         self.publish_manager_erase = self.create_publisher(
             String, TOPIC_MANAGER_ERASE, 10
         )
-        self.publish_chatgpt_input = self.create_publisher(String, TOPIC_GPT_INPUT, 10)
+        self.publish_chatgpt_input = self.create_publisher(
+            String, TOPIC_GPT_INPUT, 10
+        )
         self.publish_shape_finished = self.create_publisher(
             String, TOPIC_SHAPE_FINISHED, 10
         )
-        self.transcription_publisher = self.create_publisher(String, "speech_rec", 10)
+        self.transcription_publisher = self.create_publisher(
+            String, "speech_rec", 10
+        )
         self.stop_publisher = self.create_publisher(Empty, "stop_learning", 10)
         self.ai_image = AI_IMAGE()
 
-        self.gui.buttonStop.clicked.connect(self.buttonStopCliked)
-        self.gui.buttonPredict.clicked.connect(self.buttonPredictClicked)
-        self.gui.buttonSendRobot.clicked.connect(self.buttonSendRobotClicked)
-        self.gui.buttonErase.clicked.connect(self.buttonEraseClicked)
-        self.gui.buttonProfile.clicked.connect(self.buttonProfileClicked)
-        self.gui.buttonPathDialog.clicked.connect(self.buttonPathDialogClicked)
-        self.gui.buttonWordToWrite.clicked.connect(self.buttonWordToWriteClicked)
-        self.gui.buttonGptText.clicked.connect(self.buttonGptTextClicked)
-        self.gui.buttonRobotFinished.clicked.connect(self.buttonRobotFinishedClicked)
-        self.gui.sliderLearningPace.sliderReleased.connect(
-            self.sliderLearningPaceUpdated
-        )
-        self.gui.buttonTalkToMe.clicked.connect(self.buttonTalkToMeCliked)
-
-    def buttonStopCliked(self):
+    def stop(self):
         self.stop_publisher.publish(Empty())
 
-    def buttonEraseClicked(self):
+    def erase(self):
         self.get_logger().info("erasing child")
         self.publish_manager_erase.publish(String(data="erased"))
 
-    def buttonTalkToMeCliked(self):
+    def talk_to_me(self):
         self.ap.run()
         self.transcription_publisher.publish(String(data=self.ap.transcription))
 
-    def buttonWordToWriteClicked(self):
-        self.get_logger().info(
-            "published " + self.gui.wordText.text().lower() + " to /words_to_write"
-        )
-        self.publish_word_to_write.publish(
-            String(data=self.gui.wordText.text().lower())
-        )
-        self.ai_image.generate_image(self.gui.wordText.text().lower())
+    def word_to_write(self, word: str):
+        self.get_logger().info("published " + word + " to /words_to_write")
+        self.publish_word_to_write.publish(String(data=word))
+        self.ai_image.generate_image(word)
 
-    def buttonGptTextClicked(self):
-        self.get_logger().info(
-            "published " + self.gui.gptText.text() + " to /chatgpt_input"
-        )
-        self.publish_chatgpt_input.publish(String(data=self.gui.gptText.text()))
+    def gpt_text(self, text: str):
+        self.get_logger().info("published " + text + " to /chatgpt_input")
+        self.publish_chatgpt_input.publish(String(data=text))
 
-    def sliderLearningPaceUpdated(self):
+    def learning_pace(self, pace: float):
         self.publish_simple_learning_pace.publish(
-            Float32(data=float(self.gui.sliderLearningPace.value() / 100))
+            Float32(data=float(pace / 100))
         )
-        self.gui.labelLeariningPace.setText(str(self.gui.sliderLearningPace.value()))
 
-    def buttonProfileClicked(self):
+    def child_profile(self):
         pass
         # self.activity.childProfile = ChildProfile(self.activity)
         # self.activity.childProfile.signal_profileCompleted.connect(self.callback_profileCompleted)
 
-    def buttonPredictClicked(self):
+    def predict(self):
         print("prediction currently disabled")
         # #get letters from boxes
         # trace = self.activity.tactileSurface.getData()
@@ -118,7 +99,7 @@ class ManagerUIBridge(Node):
         # self.activity.tactileSurface.eraseRobotTrace()
         # self.activity.tactileSurface.erasePixmap()
 
-    def buttonSendRobotClicked(self):
+    def send(self):
         pass
         # data = self.activity.tactileSurface.data
         # boxesCoordinates = self.activity.tactileSurface.boxesToDraw
@@ -150,15 +131,15 @@ class ManagerUIBridge(Node):
         # self.activity.tactileSurface.eraseRobotTrace()
         # self.activity.tactileSurface.erasePixmap()
 
-    def buttonPathDialogClicked(self):
+    def path(self, path: str):
         """
         select path for data base, write result in text widget
         """
-        input_dir = QFileDialog.getExistingDirectory(
-            None, "Select a folder:", expanduser("~")
-        )
-        if len(input_dir) > 0:
-            self.gui.pathText.setText(input_dir)
+        # input_dir = QFileDialog.getExistingDirectory(
+        #     None, "Select a folder:", expanduser("~")
+        # )
+        # if len(input_dir) > 0:
+        #     self.gui.pathText.setText(input_dir)
 
-    def buttonRobotFinishedClicked(self):
+    def robot_finished(self):
         self.publish_shape_finished.publish(String(data="finished"))

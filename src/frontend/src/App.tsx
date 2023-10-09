@@ -4,7 +4,7 @@ import CanvasManager from "./components/child/CanvasManager";
 import ManagerUI from "./components/manager/ManagerUI";
 import MainPage from './components/MainPage';
 
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 
 
