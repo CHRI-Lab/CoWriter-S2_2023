@@ -1354,7 +1354,7 @@ def main(args=None):
 
     # dataset_directory = rospy.get_param("~dataset_directory", "default")
     # node.declare_parameter("dataset_directory", "default")
-    dataset_directory = "/home/nao/NAOHW-Boxjelly/src/share/letter_model_datasets/alexis_set_for_children"  # noqa: E501
+    dataset_directory = "/home/nao/share/letter_model_datasets/alexis_set_for_children"  # noqa: E501
     # "default" #node.get_parameter("dataset_directory").value
 
     if dataset_directory.lower() == "default":  # use default

@@ -14,7 +14,6 @@ from interface.srv import (
     ClosestShapesToLocation,
     DisplayShapeAtLocation,
     IndexOfLocation,
-    shapeAtLocationRequest,
 )
 
 from letter_learning_interaction.include.shape_learner_manager import Shape
@@ -311,7 +310,7 @@ class TabletInputInterpreter(Node):
                                     the gesture's position.
         """
         gesture_location = [message.point.x, message.point.y]
-        request = shapeAtLocationRequest()
+        request = ShapeAtLocation()
         request.location.x = gesture_location[0]
         request.location.y = gesture_location[1]
         response = self.shape_at_location(request)

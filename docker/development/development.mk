@@ -11,6 +11,7 @@ run-nodes-development:
 		--network host \
 		-v ./src:/home/nao/src \
 		-v ./.env:/home/nao/.env \
+		-v ./share:/home/nao/share \
 		${NODES_IMAGE}
 
 run-controller-development:
