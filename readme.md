@@ -35,7 +35,7 @@ Hamming Distance is a metric used to measure the difference between two equal-le
    
    weight sequence = [ ["OCR", Ture or False (0 or 1)] , ["MSE", float from 0 to 1] , ["SSIM", float from 0 to 1] , ["Hamming Distance", float from 0 to 1] ]
    
-   Overall = weight[OCR] x OCR - weight[MSE] x MSE + weight[SSIM] x SSIM - weight[Hamming Distance] x Hamming Distance
+   Overall = weight[OCR] x OCR - weight[MSE] x MSE + weight[SSIM] x SSIM - weight[Hamming Distance] x Hamming Distance + weight[fastdtw]fastdtw
 
    NOTE: the number of these three attributes has been nomalised into range[0,1]
          the weight for three attribute can be adjust manually, if you want, but you also need to adjust the hurdel of struggled letter.
