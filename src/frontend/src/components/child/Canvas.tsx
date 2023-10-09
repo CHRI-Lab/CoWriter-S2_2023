@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import './css/canvas.css'
-import {Coordinate, Stroke, UserInput} from "../types/types";
+import '../css/canvas.css'
+import { Coordinate, Stroke, UserInput } from "../../types/types";
 
 interface CanvasProps {
     width: number;
     height: number;
     canvas_color: string;
     char_to_draw: string;
-    input_text:string;
+    input_text: string;
     setUserInputs: (userInput: UserInput) => void;
 }
 
 
-const Canvas = ({ width, height , canvas_color, char_to_draw, input_text, setUserInputs}: CanvasProps) => {
+const Canvas = ({ width, height, canvas_color, char_to_draw, input_text, setUserInputs }: CanvasProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isPainting, setIsPainting] = useState(false);
     const [mousePosition, setMousePosition] = useState<Coordinate | undefined>(undefined);
@@ -117,7 +117,7 @@ const Canvas = ({ width, height , canvas_color, char_to_draw, input_text, setUse
     };
 
     const get_user_input = () => {
-        let user_input:UserInput = {
+        let user_input: UserInput = {
             strokes: strokes,
             shape_id: null,
             shape_type: char_to_draw,
@@ -145,11 +145,11 @@ const Canvas = ({ width, height , canvas_color, char_to_draw, input_text, setUse
         clearCanvas();
     }, [input_text]);
 
-    return(
+    return (
         <div id="canvas_container">
             <button type="button" className="btn btn-warning" onClick={clearCanvas}>Rewrite</button>
             <div>{char_to_draw}</div>
-            <canvas ref={canvasRef} height={height} width={width} style={{backgroundColor: canvas_color}}/>
+            <canvas ref={canvasRef} height={height} width={width} style={{ backgroundColor: canvas_color }} />
         </div>
     )
 };

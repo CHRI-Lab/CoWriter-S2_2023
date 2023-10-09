@@ -1,19 +1,10 @@
-from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import QFileDialog
 from os.path import expanduser
 from std_msgs.msg import String, Float32, Empty
 
-import sys
-import pkg_resources
-
-import rclpy
 from rclpy.node import Node
 
-from threading import Thread
-from rclpy.executors import MultiThreadedExecutor
-
 from choose_adaptive_words.audio_processor import AudioProcessor
-from choose_adaptive_words.parameters import PATH_DB
+from choose_adaptive_words.parameters import *  # noqa: F403
 from choose_adaptive_words.ai_image import AI_IMAGE
 
 
@@ -24,29 +15,9 @@ TOPIC_GPT_INPUT = "chatgpt_input"
 TOPIC_SHAPE_FINISHED = "shape_finished"
 
 
-class Manager_UI(QtWidgets.QDialog, QtWidgets.QMainWindow):
+class ManagerUIBridge(Node):
     def __init__(self):
-        # super().__init__(node_name=")
-        # self = rclpy.create_node("manager_ui")
-        # self.choose_adaptive_words_path = os.path.dirname(
-        #     os.path.dirname(os.path.realpath(__file__))
-        # )
-        self.choose_adaptive_words_path = pkg_resources.resource_filename(
-            __name__, "design"
-        )
-        super(Manager_UI, self).__init__()
-        self.ui = uic.loadUi(
-            self.choose_adaptive_words_path + "/manager_view.ui", self
-        )
-        self.show()
-        self.labelLeariningPace.setText(str(self.sliderLearningPace.value()))
-        self.pathText.setText(PATH_DB)
-
-
-class ManagerUINode(Node):
-    def __init__(self, gui: Manager_UI):
-        super().__init__("manager_ui")
-        self.gui = gui
+        super().__init__("manager_ui_bridge")
         self.ap = AudioProcessor("english", self)
         self.publish_word_to_write = self.create_publisher(
             String, TOPIC_WORDS_TO_WRITE, 10
@@ -57,15 +28,11 @@ class ManagerUINode(Node):
         self.publish_manager_erase = self.create_publisher(
             String, TOPIC_MANAGER_ERASE, 10
         )
-        self.publish_chatgpt_input = self.create_publisher(
-            String, TOPIC_GPT_INPUT, 10
-        )
+        self.publish_chatgpt_input = self.create_publisher(String, TOPIC_GPT_INPUT, 10)
         self.publish_shape_finished = self.create_publisher(
             String, TOPIC_SHAPE_FINISHED, 10
         )
-        self.transcription_publisher = self.create_publisher(
-            String, "speech_rec", 10
-        )
+        self.transcription_publisher = self.create_publisher(String, "speech_rec", 10)
         self.stop_publisher = self.create_publisher(Empty, "stop_learning", 10)
         self.ai_image = AI_IMAGE()
 
@@ -75,22 +42,13 @@ class ManagerUINode(Node):
         self.gui.buttonErase.clicked.connect(self.buttonEraseClicked)
         self.gui.buttonProfile.clicked.connect(self.buttonProfileClicked)
         self.gui.buttonPathDialog.clicked.connect(self.buttonPathDialogClicked)
-        self.gui.buttonWordToWrite.clicked.connect(
-            self.buttonWordToWriteClicked
-        )
+        self.gui.buttonWordToWrite.clicked.connect(self.buttonWordToWriteClicked)
         self.gui.buttonGptText.clicked.connect(self.buttonGptTextClicked)
-        self.gui.buttonRobotFinished.clicked.connect(
-            self.buttonRobotFinishedClicked
-        )
+        self.gui.buttonRobotFinished.clicked.connect(self.buttonRobotFinishedClicked)
         self.gui.sliderLearningPace.sliderReleased.connect(
             self.sliderLearningPaceUpdated
         )
         self.gui.buttonTalkToMe.clicked.connect(self.buttonTalkToMeCliked)
-
-        # self.publisher_ = self.create_publisher(String, 'topic', 10)
-        # timer_period = 0.5  # seconds
-        # self.timer = self.create_timer(timer_period, self.timer_callback)
-        # self.i = 0
 
     def buttonStopCliked(self):
         self.stop_publisher.publish(Empty())
@@ -105,9 +63,7 @@ class ManagerUINode(Node):
 
     def buttonWordToWriteClicked(self):
         self.get_logger().info(
-            "published "
-            + self.gui.wordText.text().lower()
-            + " to /words_to_write"
+            "published " + self.gui.wordText.text().lower() + " to /words_to_write"
         )
         self.publish_word_to_write.publish(
             String(data=self.gui.wordText.text().lower())
@@ -124,9 +80,7 @@ class ManagerUINode(Node):
         self.publish_simple_learning_pace.publish(
             Float32(data=float(self.gui.sliderLearningPace.value() / 100))
         )
-        self.gui.labelLeariningPace.setText(
-            str(self.gui.sliderLearningPace.value())
-        )
+        self.gui.labelLeariningPace.setText(str(self.gui.sliderLearningPace.value()))
 
     def buttonProfileClicked(self):
         pass
@@ -135,44 +89,32 @@ class ManagerUINode(Node):
 
     def buttonPredictClicked(self):
         print("prediction currently disabled")
-        # get letters from boxes
+        # #get letters from boxes
         # trace = self.activity.tactileSurface.getData()
         # boxes = self.activity.tactileSurface.boxesToDraw
-        # letters = self.activity.wt.separateWordsToLetters(
-        #     trace,
-        #     boxes,
-        #     self.activity.tactileSurface.height(),
-        #     self.activity.tactileSurface.convert_pix_meter,
-        # )
+        # letters = self.activity.wt.separateWordsToLetters(trace, boxes, self.activity.tactileSurface.height(), self.activity.tactileSurface.convert_pix_meter)
 
-        # # compute score of all letters
+        # #compute score of all letters
         # for index in letters:
-        #     d_score = self.activity.predictor.predict(
-        #         self.activity.childProfile.rightHanded,
-        #         self.activity.childProfile.male,
-        #         self.activity.childProfile.dateBirth.daysTo(
-        #             QDate().currentDate()
-        #         )
-        #         / 30.5,
-        #         self.activity.childProfile.section,
-        #         letters[index],
-        #         self.activity.lettersToWrite[index],
-        #     )
+        #     d_score = self.activity.predictor.predict(self.activity.childProfile.rightHanded,
+        #     self.activity.childProfile.male,
+        #     self.activity.childProfile.dateBirth.daysTo(QDate().currentDate())/30.5,
+        #     self.activity.childProfile.section,
+        #     letters[index],
+        #     self.activity.lettersToWrite[index])
 
-        #     self.activity.skills[
-        #         self.activity.lettersToWrite[index]
-        #     ].dScore.append(d_score)
+        #     self.activity.skills[self.activity.lettersToWrite[index]].dScore.append(d_score)
 
-        # # save data
+        # #save data
         # self.activity.saveData(letters)
 
-        # # update knowledge about dico
+        # #update knowledge about dico
         # self.activity.wt.updateWords(self.skills)
 
-        # # choose next word
+        # #choose next word
         # self.activity.algo()
 
-        # # clear screen
+        # #clear screen
         # self.activity.tactileSurface.eraseRobotTrace()
         # self.activity.tactileSurface.erasePixmap()
 
@@ -185,16 +127,11 @@ class ManagerUINode(Node):
         # words_drawn = Path()
 
         # for d in data:
+
         #     pose = PoseStamped()
 
-        #     pose.pose.position.x = (
-        #         d.x * self.activity.tactileSurface.convert_pix_meter
-        #     )
-        #     pose.pose.position.y = (
-        #         -d.y * self.activity.tactileSurface.convert_pix_meter
-        #         + self.activity.tactileSurface.height()
-        #         * self.activity.tactileSurface.convert_pix_meter
-        #     )  # - boxesCoordinates[0][1]
+        #     pose.pose.position.x = d.x*self.activity.tactileSurface.convert_pix_meter
+        #     pose.pose.position.y = -d.y*self.activity.tactileSurface.convert_pix_meter + self.activity.tactileSurface.height()*self.activity.tactileSurface.convert_pix_meter# - boxesCoordinates[0][1]
         #     pose.header.seq = self.activity.seqWord
         #     words_drawn.poses.append(pose)
 
@@ -225,38 +162,3 @@ class ManagerUINode(Node):
 
     def buttonRobotFinishedClicked(self):
         self.publish_shape_finished.publish(String(data="finished"))
-
-    # def timer_callback(self):
-    #     msg = String()
-    #     msg.data = 'Hello World: %d' % self.i
-    #     self.publisher_.publish(msg)
-    #     self.get_logger().info('Publishing: "%s"' % msg.data)
-    #     self.i += 1
-
-
-def main(args=None):
-    rclpy.init()
-    app = QtWidgets.QApplication(sys.argv)
-    window = Manager_UI()
-
-    node = ManagerUINode(window)
-
-    executor = MultiThreadedExecutor()
-    executor.add_node(node)
-
-    thread = Thread(target=executor.spin)
-    thread.start()
-    node.get_logger().info("node spin")
-
-    try:
-        window.show()
-        sys.exit(app.exec_())
-
-    finally:
-        node.get_logger().info("Shutting down ROS2 Node . . .")
-        node.destroy_node()
-        executor.shutdown()
-
-
-if __name__ == "__main__":
-    main()

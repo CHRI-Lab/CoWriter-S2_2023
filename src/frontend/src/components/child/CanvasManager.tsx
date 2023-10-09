@@ -1,9 +1,9 @@
-import { useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import axios from "axios";
-import './css/canvas_manager.css'
+import '../css/canvas_manager.css'
 import Canvas from "./Canvas";
 
-import {UserInput} from "../types/types";
+import { UserInput } from "../../types/types";
 
 
 const CanvasManager = () => {
@@ -32,10 +32,10 @@ const CanvasManager = () => {
         }
     };
 
-    const getWordDemo = async (word:string) => {
+    const getWordDemo = async (word: string) => {
         console.log(word)
         try {
-            const response = await axios.post('http://127.0.0.1:5000/get_demo', {'word':word});
+            const response = await axios.post('http://127.0.0.1:5000/get_demo', { 'word': word });
 
             console.log('reponse', response.data);
         } catch (error) {
@@ -46,8 +46,8 @@ const CanvasManager = () => {
     return (
         <div id="canvas_manager" className="container-fluid">
             <button type="button" className="btn btn-info" onClick={sendStrokesToBackend}>Done</button>
-            <button type="button" className="btn btn-warning" onClick={()=>{setInputText("")}}>Clear</button>
-            <hr/>
+            <button type="button" className="btn btn-warning" onClick={() => { setInputText("") }}>Clear</button>
+            <hr />
             <input
                 type="text"
                 className="form-control"
@@ -61,7 +61,7 @@ const CanvasManager = () => {
                     }
                 }
             />
-            <hr/>
+            <hr />
 
 
             <div className="row d-flex flex-row">

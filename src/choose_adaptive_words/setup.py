@@ -63,6 +63,7 @@ setup(
             "child_ui = choose_adaptive_words.child_ui:main",
             "manager_ui = choose_adaptive_words.manager_ui:main",
             "temp_backend = choose_adaptive_words.temp_backend:main",
+            "backend = choose_adaptive_words.backend:main",
         ]
     },
 )
