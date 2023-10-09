@@ -97,7 +97,7 @@ def close_hand():
 @app.route("/position_interpolation", methods=["POST"])
 def position_interpolation():
     data = request.json
-    
+
     nao_settings.motion_proxy.positionInterpolations(
         [data.get("effector")],
         data.get("space"),

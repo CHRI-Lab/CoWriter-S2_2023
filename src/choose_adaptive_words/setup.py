@@ -27,8 +27,18 @@ setup(
             os.path.join("share", package_name, "launch"),
             glob(os.path.join(package_name, "launch", "*.launch.py")),
         ),
-        (os.path.join('lib/python3.10/site-packages/choose_adaptive_words/design/assets'), glob(package_name+'/design/assets/*')),
-        (os.path.join('lib/python3.10/site-packages/choose_adaptive_words/design/'), glob(package_name+'/design/*.ui')),
+        (
+            os.path.join(
+                "lib/python3.10/site-packages/choose_adaptive_words/design/assets"  # noqa: E501
+            ),
+            glob(package_name + "/design/assets/*"),
+        ),
+        (
+            os.path.join(
+                "lib/python3.10/site-packages/choose_adaptive_words/design/"
+            ),
+            glob(package_name + "/design/*.ui"),
+        ),
     ],
     # This is important as well
     install_requires=["setuptools"],

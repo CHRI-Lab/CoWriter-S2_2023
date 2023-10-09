@@ -10,6 +10,7 @@ run-nodes-production:
 		--network host \
 		--device /dev/snd \
 		-v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=${DISPLAY} \
+		-v ./.env:/home/nao/.env \
 		${NODES_IMAGE}
 
 run-controller-production:

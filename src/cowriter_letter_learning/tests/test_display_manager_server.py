@@ -9,22 +9,19 @@ import unittest
 from letter_learning_interaction.srv import *
 from geometry_msgs.msg import Point
 
-sys.path.insert(
-    0, 
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), '../nodes'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "../nodes"))
 
 from display_manager_server import *
 
 
 class TestDisplayManager(unittest.TestCase):
-
     def setUp(self):
-        rospy.init_node('test_display_manager', anonymous=True)
+        rospy.init_node("test_display_manager", anonymous=True)
 
     def test_handle_clear_all_shapes(self):
         """
         Test handle_clear_all_shapes function.
-        
+
         """
         request = ClearAllShapesRequest()
         response = handle_clear_all_shapes(request)
@@ -44,8 +41,7 @@ class TestDisplayManager(unittest.TestCase):
         self.assertIsInstance(response.location, Point)
 
     def test_handle_index_of_location(self):
-        request = IndexOfLocationRequest(location=Point(
-            x=1, y=2))
+        request = IndexOfLocationRequest(location=Point(x=1, y=2))
         response = handle_index_of_location(request)
         self.assertIsInstance(response, IndexOfLocationResponse)
         self.assertIsInstance(response.row, int)
@@ -74,11 +70,17 @@ class TestDisplayManager(unittest.TestCase):
 
     def test_handle_display_shape_at_location(self):
         request = DisplayShapeAtLocationRequest(
-            shape_type_code=0, location=Point(x=1, y=1))
+            shape_type_code=0, location=Point(x=1, y=1)
+        )
         response = handle_display_shape_at_location(request)
         self.assertIsInstance(response, DisplayShapeAtLocationResponse)
         self.assertIsInstance(response.success.data, bool)
 
-if __name__ == '__main__':
-    rostest.rosrun('letter_learning_interaction', 'test_display_manager_server', 
-                   TestDisplayManager, sys.argv)
+
+if __name__ == "__main__":
+    rostest.rosrun(
+        "letter_learning_interaction",
+        "test_display_manager_server",
+        TestDisplayManager,
+        sys.argv,
+    )

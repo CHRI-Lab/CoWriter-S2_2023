@@ -5,6 +5,14 @@ Listens on a topic for a trajectory message, and publishes the corresponding
 trajectory with markers as an animation suitable for RViz.
 """
 
+import rclpy
+from rclpy.node import Node
+from rclpy.duration import Duration
+
+from visualization_msgs.msg import Marker
+from nav_msgs.msg import Path
+from std_msgs.msg import Empty
+
 import logging
 
 logger = logging.getLogger("write." + __name__)
@@ -15,14 +23,6 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter("[%(levelname)s] %(name)s -> %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-
-import rclpy
-from rclpy.node import Node
-from rclpy.duration import Duration
-
-from visualization_msgs.msg import Marker
-from nav_msgs.msg import Path
-from std_msgs.msg import Empty
 
 
 potentialShapesMissed = 20  # perhaps a clear request is received for shapes
@@ -48,21 +48,15 @@ class TrajectoryVisualizer(Node):
         self.FRAME = self.declare_parameter(
             "~writing_surface_frame_id", "writing_surface"
         ).value
-        self.WRITE_MULTIPLE_SHAPES = (
-            True  # if True, modify the marker ID so as to not
-        )
+        self.WRITE_MULTIPLE_SHAPES = True  # if True, modify the marker ID so as to not
         # overwrite the previous shape(s)
 
         self.pub_markers = self.create_publisher(Marker, MARKER_TOPIC, 5)
         self.shapeCount = 0
         # when we get a trajectory, start publishing the animation
-        traj_subscriber = self.create_subscription(
-            Path, SHAPE_TOPIC, self.on_traj, 10
-        )
+        self.create_subscription(Path, SHAPE_TOPIC, self.on_traj, 10)
         # when we get a clear request, delete previously drawn shapes
-        clear_subscriber = self.create_subscription(
-            Empty, CLEAR_TOPIC, self.on_clear, 10
-        )
+        self.create_subscription(Empty, CLEAR_TOPIC, self.on_clear, 10)
 
     def visualize_traj(self, points):
         """
