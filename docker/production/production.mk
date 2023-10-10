@@ -12,7 +12,7 @@ run-nodes-production:
 		-v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=${DISPLAY} \
 		-v ./.env:/home/nao/.env \
 		-v ./share:/home/nao/share \
-    -v ./credentials:/home/nao/credentials \
+		-v ./credentials:/home/nao/credentials \
 		${NODES_IMAGE}
 
 run-controller-production:
