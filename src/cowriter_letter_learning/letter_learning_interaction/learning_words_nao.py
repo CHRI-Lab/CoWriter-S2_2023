@@ -540,6 +540,11 @@ class LearningWordsNao(Node):
                 self.session.post(
                     "http://localhost:5000/say", json={"phrase": self.response}
                 )
+
+                # signal listening again after nao speaks
+                self.publish_manager.pub_listening_signal.publish(
+                    String(data="convo")
+                )
         else:
             self.response = "feedback"
             self.session.post(
@@ -919,7 +924,10 @@ class LearningWordsNao(Node):
             #     True)  # Turn camera on
 
         if info_from_prev_state["state_came_from"] == "STARTING_INTERACTION":
-            pass
+            # signal listening to start conversation
+            self.publish_manager.pub_listening_signal.publish(
+                String(data="convo")
+            )
 
         info_for_next_state = {"state_came_from": "WAITING_FOR_WORD"}
         if self.word_received is None:
