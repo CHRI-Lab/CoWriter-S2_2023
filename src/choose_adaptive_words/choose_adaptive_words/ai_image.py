@@ -3,7 +3,7 @@ import openai
 import urllib.request
 import pkg_resources
 
-openai.api_key = os.environ["OPENAI_API_KEY"]
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 class AI_IMAGE:
