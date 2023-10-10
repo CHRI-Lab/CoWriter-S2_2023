@@ -18,7 +18,15 @@ RUN apt-get update && apt-get install -y \
     imagemagick \
     alsa-base \
     alsa-utils \
-    libsndfile1-dev
+    libsndfile1-dev \
+    libboost-all-dev \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    gstreamer1.0 \
+    gstreamer1.0-alsa \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-ugly
 
 COPY ./requirements.txt ./requirements.txt
 RUN pip3 install -r requirements.txt
@@ -39,6 +47,13 @@ RUN git checkout ros2
 WORKDIR ${MAIN_DIR}
 RUN colcon build --packages-select interactive_markers
 
+WORKDIR ${MAIN_DIR}/src/
+RUN git clone https://github.com/ros-drivers/audio_common.git/
+WORKDIR ${MAIN_DIR}/src/audio_common
+RUN git checkout ros2
+WORKDIR ${MAIN_DIR}
+RUN colcon build --packages-select audio_common_msgs
+RUN colcon build --packages-select audio_capture
 
 FROM base
 
