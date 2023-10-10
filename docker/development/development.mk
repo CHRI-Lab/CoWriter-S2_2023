@@ -10,6 +10,7 @@ run-nodes-development:
 		--user nao \
 		--network host \
 		-v ./src:/home/nao/src \
+		-v ./share:/home/nao/share \
 		-v ./.env:/home/nao/.env \
 		${NODES_IMAGE}
 

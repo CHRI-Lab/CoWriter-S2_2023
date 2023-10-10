@@ -57,7 +57,7 @@ class PhraseManagerGPT(PhraseManager):
 
     def __init__(self, language):
         super().__init__(language)
-        openai.api_key = os.environ["OPENAI_API_KEY"]
+        openai.api_key = os.getenv["OPENAI_API_KEY"]
         self.language = language
         self.messages = [
             {
