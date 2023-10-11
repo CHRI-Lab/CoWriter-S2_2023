@@ -30,6 +30,7 @@ TOPIC_SHAPES_TO_DRAW = "shapes_to_draw"
 TOPIC_MANAGER_ERASE = "manager_erase"
 TOPIC_LEARNING_PACE = "simple_learning_pace"
 TOPIC_USER_DRAWN_SHAPES = "user_drawn_shapes"
+TOPIC_WORDS_TO_WRITE = "words_to_write"
 
 
 class Child_UI(QtWidgets.QMainWindow):
@@ -289,6 +290,12 @@ class ChildGUINode(Node):
             String, TOPIC_MANAGER_ERASE, self.callback_manager_erase, 10
         )
 
+        self.pub_word = self.create_subscription(
+            String, TOPIC_WORDS_TO_WRITE, self.word_getter, 10
+        )
+
+        self.word = None
+
         # init publisher
         self.publish_user_drawn_shapes = self.create_publisher(
             Int32MultiArray, TOPIC_USER_DRAWN_SHAPES, 10
@@ -302,6 +309,11 @@ class ChildGUINode(Node):
         #     'topic',
         #     self.listener_callback,
         #     10)
+
+    def word_getter(self,data):
+        self.word = data.data
+        self.get_logger().info(data.data)
+        self.get_logger().info("!!!!!!!!!!!!!")
 
     def listener_callback(self, msg):
         self.get_logger().info('I heard: "%s"' % msg.data)
@@ -337,7 +349,7 @@ class ChildGUINode(Node):
         )
 
     def button_strugg_clicked(self):
-        word = "tree"
+        word = self.word
         self.gui.drawing.pixmap().save("draw.png")
 
         child_x_axle = []
