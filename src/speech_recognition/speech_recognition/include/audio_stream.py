@@ -184,6 +184,7 @@ class AudioStream:
                 + f"  self.n_cont_silent_chunk : {self.n_cont_silent_chunk}  |"
                 + f"  self.buf : {len(self.buf)}  |"
                 + f"  self.audio_buflen : {self.audio_buflen}"
+                + f"  audio_data mean: {np.abs(audio_data).mean()}"
             )
 
         if (
