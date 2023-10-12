@@ -19,7 +19,6 @@ class GPT_Word_Generator:
                         prompt=prompt,
                         temperature=0.5
                     ).get("choices")[0].text.lstrip()
-            print("word before processing", response)
             response = response.replace('\n', ' ')
             response = response.replace('\\', '')
             response = response.replace('.', '')
