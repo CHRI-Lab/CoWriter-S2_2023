@@ -88,6 +88,113 @@ const LearningPaceSlider = () => {
     );
 }
 
+const ChildProfile = () => {
+    const [firstName, setFirstName] = useState<string>('');
+    const [lastName, setLastName] = useState<string>('');
+    const [birthDate, setBirthDate] = useState<string>('');
+    const [gender, setGender] = useState<string>('');
+    const [handedness, setHandedness] = useState<string>('');
+
+    const sendChildProfile = async () => {
+        console.log(firstName, lastName, birthDate, gender, handedness);
+        try {
+            await axios.post('http://127.0.0.1:3001/manager/child_profile',
+            { "firstName": firstName,
+              "lastName": lastName,
+              "birthDate": birthDate,
+              "gender": gender,
+              "handedness": handedness,
+            });
+        } catch (error) {
+            console.error('Error sending child profile to the backend:', error);
+        }
+    };
+    
+    return (
+        <div>
+            <div className="row">
+                <div className="col">
+                    <label>First Name: </label>
+                    <input
+                        type="text"
+                        value={firstName}
+                        onChange={(event) => setFirstName(event.target.value)}
+                        placeholder="Enter First Name"
+                    />
+                </div>
+            </div>
+            <div className="row">
+                <div className="col">
+                    <label>Last Name: </label>
+                    <input
+                        type="text"
+                        value={lastName}
+                        onChange={(event) => setLastName(event.target.value)}
+                        placeholder="Enter Last Name"
+                    />
+                </div>
+            </div>
+            <div className="row">
+                <div className="col">
+                    <label>Birth Date: </label>
+                    <input
+                        type="date"
+                        value={birthDate}
+                        onChange={(event) => setBirthDate(event.target.value)}
+                    />
+                </div>
+            </div>
+            <div className="row">
+                <div className="col">
+                    <label>Gender: </label>
+                    <input
+                        type="radio"
+                        name="gender"
+                        value="male"
+                        onClick={() => setGender('male')}
+                        checked={gender === "male"}
+                    />
+                    <label>Male</label>
+                    <input
+                        type="radio"
+                        name="gender"
+                        value="female"
+                        onClick={() => setGender('female')}
+                        checked={gender === "female"}
+                    />
+                    <label>Female</label>
+                </div>
+            </div>
+            <div className="row">
+                <div className="col">
+                    <label>Handedness: </label>
+                    <input
+                        type="radio"
+                        name="handedness"
+                        value="right"
+                        onClick={() => setHandedness('right')}
+                        checked={handedness === "right"}
+                    />
+                    <label>Right Handed</label>
+                    <input
+                        type="radio"
+                        name="handedness"
+                        value="left"
+                        onClick={() => setHandedness('left')}
+                        checked={handedness === "left"}
+                    />
+                    <label>Left Handed</label>
+                </div>
+            </div>
+            <div className="row">
+                <div className="col">
+                    <button onClick={sendChildProfile}>Submit</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 
 const CanvasManager = () => {
     const robotFinished = async () => {
@@ -129,6 +236,9 @@ const CanvasManager = () => {
             <button onClick={stopRobot}>Stop</button>
             <button onClick={talkToMe}>Talk to me</button>
             <button onClick={erase}>Erase</button>
+            
+            <h2>Child Profile</h2>
+            <ChildProfile />
         </div>
     );
 };

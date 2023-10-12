@@ -41,3 +41,10 @@ def learning_pace():
 def stop():
     current_app.manager_bridge.stop()
     return {"status": "ok"}
+
+
+@MANAGER_BP.route("/child_profile", methods=["POST"])
+def child_profile():
+    data = request.get_json()
+    current_app.manager_bridge.child_profile(data)
+    return {"status": "ok"}
