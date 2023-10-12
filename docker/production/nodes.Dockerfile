@@ -78,7 +78,6 @@ USER nao
 RUN mkdir -p /var/log/supervisor
 COPY ./docker/production/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY --from=build --chown=nao:nao ${MAIN_DIR}/install ${MAIN_DIR}/install
-COPY ./share ${MAIN_DIR}/share
 
 # Note: I don't know why, but for letter_learning_interaction, the command "source install/setup.bash"
 # doesn't add the package to the AMENT_PREFIX_PATH, so we add it manually
