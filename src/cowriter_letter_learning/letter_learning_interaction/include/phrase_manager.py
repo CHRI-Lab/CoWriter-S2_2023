@@ -111,7 +111,7 @@ class PhraseManagerGPT(PhraseManager):
             return response_message
         
         else:
-            self.messages.append({"role": "assistant", "content": "Answer the following question using simple sentences. Keep your response short and concise: " + input_text})
+            self.messages.append({"role": "assistant", "content": "Respond to the following chat. Your response should be short and concise: " + input_text})
             
             # Get GPT response
             response = openai.ChatCompletion.create(
