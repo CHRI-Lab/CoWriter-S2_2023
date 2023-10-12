@@ -84,52 +84,48 @@ class PhraseManagerGPT(PhraseManager):
                                     the GPT model.
         """
 
-        # Check if the input text is kids-safe using moderation model
-        moderation_response = openai.Moderation.create(input=input_text)
-        # flagged = moderation_response["results"][0]["flagged"]
-        category_scores = moderation_response["results"][0]["category_scores"]
-        flagged = False
-        threshold = 0.05
-
-        # If any of the moderation category got a score
-        # higher than the threshold, flag it
-        for category, score in category_scores.items():
-            if (
-                category not in ["self-harm/intent", "self-harm/instructions"]
-                and score > threshold
-            ):
-                flagged = True
-                break
-
-        # Get GPT response only if the moderation outcome is not flagged
-        if flagged:
-            response_message = "Sorry, but I can't assist with that. Why don't you tell me about your favorite animal?"  # noqa: E501
-            return response_message
-
-        else:
-            # Add input text to message history
-            self.messages.append(
-                {
-                    "role": "user",
-                    "content": "Answer the following question using simple sentences. Keep your response short and concise: "  # noqa: E501
-                    + input_text,
-                }
+        def moderate(input_text):
+            moderation_response = openai.Moderation.create(
+                input=input_text
             )
 
+            threshold = 0.05
+            category_scores = moderation_response["results"][0]["category_scores"]
+            flagged = False
+
+            for category, score in category_scores.items():
+                if category not in ["self-harm/intent", "self-harm/instructions"] and score > threshold:
+                    flagged = True
+                    break
+
+            return flagged
+
+        # Get GPT response only if the moderation outcome is not flagged
+        flagged = False
+        flagged = moderate(input_text)
+        self.messages.append({"role": "user", "content": input_text})
+
+        if flagged:
+            response_message = "Sorry, but I can't assist with that. Why don't you tell me about your favorite animal?"
+            self.messages.append({"role": "assistant", "content": response_message})
+            return response_message
+        
+        else:
+            self.messages.append({"role": "assistant", "content": "Answer the following question using simple sentences. Keep your response short and concise: " + input_text})
+            
             # Get GPT response
             response = openai.ChatCompletion.create(
                 model="gpt-4",
                 temperature=0.5,
                 max_tokens=1024,
                 n=1,
-                messages=self.messages,
+                messages=self.messages
             )
-
+            
             # Add response to message history
             response_message = response["choices"][0]["message"].content
-            response_message = response_message.replace("\n", " ")
-            response_message = response_message.replace("\\", "")
-            self.messages.append(
-                {"role": "assistant", "content": response_message}
-            )
+            response_message = response_message.replace('\n', ' ')
+            response_message = response_message.replace('\\', '')
+            self.messages.append({"role": "assistant", "content": response_message})
+
             return response_message
