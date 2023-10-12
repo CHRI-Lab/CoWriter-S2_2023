@@ -3,16 +3,17 @@ import openai
 import json
 from phrase_manager import PhraseManagerGPT
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# openai.api_key = os.getenv("OPENAI_API_KEY")
 
 class GPT_Word_Generator:
     def __init__(self, phrase_manager):
         if phrase_manager is None:
             raise ValueError("phrase_manager cannot be None and should be initialised first")
+        openai.api_key = os.getenv("OPENAI_API_KEY")
         self.interest = None
         self.phrase_manager = phrase_manager
 
-    def generate_word(self):
+    def generate_word(self): #this function is called when the "generate word" button in manager UI is clicked
         def ask_gpt(prompt):
             response = openai.Completion.create(
                         model="text-davinci-003",
