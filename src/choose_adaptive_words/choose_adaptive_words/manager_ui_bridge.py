@@ -4,6 +4,7 @@ from rclpy.node import Node
 
 from choose_adaptive_words.audio_processor import AudioProcessor
 from choose_adaptive_words.ai_image import AI_IMAGE
+from choose_adaptive_words.child_profile import ChildProfile
 
 
 TOPIC_WORDS_TO_WRITE = "words_to_write"
@@ -63,10 +64,8 @@ class ManagerUIBridge(Node):
             Float32(data=float(pace / 100))
         )
 
-    def child_profile(self):
-        pass
-        # self.activity.childProfile = ChildProfile(self.activity)
-        # self.activity.childProfile.signal_profileCompleted.connect(self.callback_profileCompleted)
+    def child_profile(self, profile: dict):
+        self.child_profile = ChildProfile(profile, self.get_logger())
 
     def predict(self):
         print("prediction currently disabled")
