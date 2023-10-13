@@ -2,7 +2,7 @@
 
 import os
 from glob import glob
-from setuptools import setup
+from setuptools import setup, find_packages
 
 package_name = "choose_adaptive_words"
 
@@ -10,7 +10,7 @@ setup(
     name=package_name,
     version="0.0.0",
     # Packages to export
-    packages=[package_name],
+    packages=find_packages(),
     # Files we want to install, specifically launch files
     # package_data={'': ['*.svg', "*.ui", "*.png"]},
     # include_package_data=True,
@@ -60,9 +60,9 @@ setup(
     # scripts here.
     entry_points={
         "console_scripts": [
-            "child_ui = choose_adaptive_words.child_ui:main",
-            "manager_ui = choose_adaptive_words.manager_ui:main",
             "temp_backend = choose_adaptive_words.temp_backend:main",
+            "backend = choose_adaptive_words.backend:main",
+            "child_ui = choose_adaptive_words.child_ui:main",
         ]
     },
 )
