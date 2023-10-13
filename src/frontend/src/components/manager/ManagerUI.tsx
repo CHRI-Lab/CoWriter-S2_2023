@@ -232,24 +232,25 @@ const CanvasManager = () => {
         } catch (error) {
             console.error('Error sending generate_word to the backend:', error);
         }
+    }
 
 
-        return (
-            <div id="canvas_manager" className="container-fluid">
-                <h1>Manager</h1>
-                <WordToWriteInput />
-                <GPTTextInput />
-                <LearningPaceSlider />
-                <button onClick={robotFinished}>Robot finished</button>
-                <button onClick={stopRobot}>Stop</button>
-                <button onClick={generateWord}>Generate Word</button>
-                <button onClick={talkToMe}>Talk to me</button>
-                <button onClick={erase}>Erase</button>
+    return (
+        <div id="canvas_manager" className="container-fluid">
+            <h1>Manager</h1>
+            <WordToWriteInput />
+            <GPTTextInput />
+            <LearningPaceSlider />
+            <button onClick={robotFinished}>Robot finished</button>
+            <button onClick={stopRobot}>Stop</button>
+            <button onClick={generateWord}>Generate Word</button>
+            <button onClick={talkToMe}>Talk to me</button>
+            <button onClick={erase}>Erase</button>
 
-                <h2>Child Profile</h2>
-                <ChildProfile />
-            </div>
-        );
-    };
+            <h2>Child Profile</h2>
+            <ChildProfile />
+        </div>
+    );
+};
 
-    export default CanvasManager;
+export default CanvasManager;
