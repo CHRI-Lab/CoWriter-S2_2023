@@ -48,3 +48,9 @@ def child_profile():
     data = request.get_json()
     current_app.manager_bridge.child_profile(data)
     return {"status": "ok"}
+
+
+@MANAGER_BP.route("/generate_word", methods=["POST"])
+def generate_word():
+    response = current_app.manager_bridge.generate_word()
+    return {"word": response.data}
