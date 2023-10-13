@@ -44,14 +44,14 @@ class ManagerUIBridge(Node):
         self.req = GenerateWord.Request()
 
     def generate_word(self):
-        self.req.request_data = "generate_word"
+        #self.req.data = "generate_word"
         future = self.cli.call_async(self.req)
         rclpy.spin_until_future_complete(self, future)
         if future.result() is not None:
             self.get_logger().info(
-                "Response: %s" % future.result().response_data
+                "Response: %s" % future.result().data
             )
-            return future.result().response_data
+            return future.result().data
         else:
             self.get_logger().info("Service call failed")
 

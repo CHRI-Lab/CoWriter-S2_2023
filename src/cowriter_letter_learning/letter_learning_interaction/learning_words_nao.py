@@ -89,7 +89,6 @@ class LearningWordsNao(Node):
         generated_word_logger,
     ):
         super().__init__("learning_words_nao")
-        self.gpt_word_generator = GPT_Word_Generator(phrase_manager)
         self.session = session
         self.declare_parameter("dataset_directory", "default")
         self.topics = SubscriberTopics(self)
@@ -103,6 +102,7 @@ class LearningWordsNao(Node):
         self.device_manager = DeviceManager(self)
         self.publish_manager = PublisherManager(self)
         self.managerGPT = PhraseManagerGPT("English")
+        self.gpt_word_generator = GPT_Word_Generator(self.managerGPT)
 
         self.session = session
         self.publish_manager.init_publishers()
@@ -913,8 +913,9 @@ class LearningWordsNao(Node):
 
         :param message: The generated word.
         """
-        response.data = self.gpt_word_generator.generate_word()
-        self.get_logger().info("Generated word: " + response.data)
+        response.data = String(data=self.gpt_word_generator.generate_word())
+        self.get_logger().info("Generated word: " + str(response.data))
+        self.get_logger().info("message history: " + str(self.managerGPT.messages))
         return response
 
     def wait_for_word(
