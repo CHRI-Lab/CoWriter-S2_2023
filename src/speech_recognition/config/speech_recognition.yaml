@@ -1,0 +1,22 @@
+/**:
+  ros__parameters:
+    dst: "appsink"
+    device: ""
+    format: "wave"
+    bitrate: 128
+    channels: 1
+    depth: 16
+    sample_rate: 16000
+    sample_format: "S16LE"
+    ns: ""
+    
+    min_silent_chunk_to_split: 100
+    audio_buflen: 10240
+    silent_threshold: 1000
+
+    log_audio_to_file: false
+    audio_outfile: ""
+
+    listening_signal_topic: "listening_signal"
+    audio_topic: "audio"
+    transcript_topic: "speech_rec"
