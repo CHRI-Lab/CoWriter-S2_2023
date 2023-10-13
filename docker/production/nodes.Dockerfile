@@ -29,9 +29,43 @@ RUN apt-get update && apt-get install -y \
     gstreamer1.0-plugins-ugly
 
 
-COPY ./requirements.txt ./requirements.txt
-RUN pip3 install -r requirements.txt
-RUN rm requirements.txt
+#COPY ./requirements.txt ./requirements.txt
+#RUN pip3 install -r requirements.txt
+
+RUN pip3 install numpy==1.23.5
+RUN pip3 install tensorflow==2.11.0
+RUN pip3 install pandas==1.5.3
+RUN pip3 install PyQt5==5.14.1
+RUN pip3 install motion==0.2.0
+RUN pip3 install scikit-learn==1.2.2
+RUN pip3 install recordtype==1.4
+RUN pip3 install openai==0.27.6
+RUN pip3 install sounddevice==0.4.6
+RUN pip3 install pyzmq==25.0.2
+RUN pip3 install qibuild 
+RUN pip3 install scikit-build
+RUN pip3 install toml
+RUN pip3 install matplotlib
+RUN pip3 install google-cloud
+RUN pip3 install scikit-learn 
+RUN pip3 install recordtype
+RUN pip3 install google-api-core==2.11.1
+RUN pip3 install google-api-python-client==2.99.0
+RUN pip3 install google-auth==2.23.0
+RUN pip3 install google-auth-httplib2==0.1.1
+RUN pip3 install google-auth-oauthlib==0.4.6
+RUN pip3 install google-cloud==0.34.0
+RUN pip3 install google-cloud-speech==2.21.0
+RUN pip3 install google-pasta==0.2.0
+RUN pip3 install googleapis-common-protos==1.60.0
+RUN pip3 install openai-whisper @ git+https://github.com/openai/whisper.git@e8622f9afc4eba139bf796c210f5c01081000472
+RUN pip3 install transforms3d
+RUN pip3 install Flask
+RUN pip3 install flask_cors
+
+
+#RUN rm requirements.txt
+
 
 ENV MAIN_DIR=/home/nao
 ENV CMAKE_PREFIX_PATH=/opt/ros/humble

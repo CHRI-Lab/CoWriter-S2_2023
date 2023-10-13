@@ -63,7 +63,7 @@ RUN pip3 install Flask
 RUN pip3 install flask_cors
 
 
-RUN rm requirements.txt
+#RUN rm requirements.txt
 
 ENV MAIN_DIR=/home/nao
 ENV CMAKE_PREFIX_PATH=/opt/ros/humble
