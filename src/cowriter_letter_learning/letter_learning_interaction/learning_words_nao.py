@@ -26,6 +26,9 @@ from letter_learning_interaction.include.wrapper_class import (
 
 from letter_learning_interaction.include.phrase_manager import PhraseManagerGPT
 from letter_learning_interaction.include.phrase_manager import PhraseManager
+from letter_learning_interaction.include.gpt_word_generator import (
+    GPT_Word_Generator,
+)
 
 from letter_learning_interaction.include.interaction_settings import (
     InteractionSettings,
@@ -34,7 +37,7 @@ from letter_learning_interaction.include.state_machine import StateMachine
 from letter_learning_interaction.include.shape_modeler import ShapeModeler
 
 from interface.msg import Shape as ShapeMsg  # type: ignore
-from interface.srv import ClearAllShapes  # type: ignore
+from interface.srv import ClearAllShapes, GenerateWord  # type: ignore
 
 
 from nav_msgs.msg import Path
@@ -99,6 +102,7 @@ class LearningWordsNao(Node):
         self.device_manager = DeviceManager(self)
         self.publish_manager = PublisherManager(self)
         self.managerGPT = PhraseManagerGPT("English")
+        self.gpt_word_generator = GPT_Word_Generator(self.managerGPT)
 
         self.session = session
         self.publish_manager.init_publishers()
@@ -129,13 +133,18 @@ class LearningWordsNao(Node):
 
         self.topics = SubscriberTopics(self)
 
+        self.create_service(
+            GenerateWord,
+            "generate_word_service",
+            self.generate_word_callback,
+        )
+
         self.create_subscription(
             String,
             self.topics.NEW_CHILD_TOPIC,
             self.on_new_child_received,
             10,
         )
-
         # listen for words to write
         self.create_subscription(
             String, self.topics.WORDS_TOPIC, self.on_word_received, 10
@@ -896,6 +905,18 @@ class LearningWordsNao(Node):
         next_state = self.check_stop_request_received(next_state)
 
         return next_state, info_for_next_state
+
+    def generate_word_callback(self, request, response) -> None:
+        """
+        Callback function that is triggered when a new word is
+        generated.
+
+        :param message: The generated word.
+        """
+        response.data = String(data=self.gpt_word_generator.generate_word())
+        self.get_logger().info("Generated word: " + str(response.data))
+        self.get_logger().info("message history: " + str(self.managerGPT.messages))
+        return response
 
     def wait_for_word(
         self, info_from_prev_state: Dict[str, Any]

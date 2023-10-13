@@ -2,9 +2,10 @@ import { useState } from 'react';
 import axios from 'axios';
 
 
-const WordToWriteInput = () => {
-    const [wordToWrite, setWordToWrite] = useState<string>('');
-
+const WordToWriteInput: React.FC<{
+    wordToWrite: string;
+    setWordToWrite: React.Dispatch<React.SetStateAction<string>>;
+}> = ({ wordToWrite, setWordToWrite }) => {
     const sendWordToWrite = async () => {
         console.log(wordToWrite);
         try {
@@ -28,7 +29,7 @@ const WordToWriteInput = () => {
             </div>
         </div>
     );
-}
+};
 
 const GPTTextInput = () => {
     const [chatGPTText, setChatGPTText] = useState<string>('');
@@ -99,17 +100,18 @@ const ChildProfile = () => {
         console.log(firstName, lastName, birthDate, gender, handedness);
         try {
             await axios.post('http://127.0.0.1:3001/manager/child_profile',
-            { "firstName": firstName,
-              "lastName": lastName,
-              "birthDate": birthDate,
-              "gender": gender,
-              "handedness": handedness,
-            });
+                {
+                    "firstName": firstName,
+                    "lastName": lastName,
+                    "birthDate": birthDate,
+                    "gender": gender,
+                    "handedness": handedness,
+                });
         } catch (error) {
             console.error('Error sending child profile to the backend:', error);
         }
     };
-    
+
     return (
         <div>
             <div className="row">
@@ -197,6 +199,8 @@ const ChildProfile = () => {
 
 
 const CanvasManager = () => {
+    const [wordToWrite, setWordToWrite] = useState<string>('');
+
     const robotFinished = async () => {
         try {
             await axios.post('http://127.0.0.1:3001/manager/robot_finished');
@@ -225,18 +229,28 @@ const CanvasManager = () => {
             console.error('Error sending erase to the backend:', error);
         }
     }
+    const generateWord = async () => {
+        try {
+            const response = await axios.post('http://127.0.0.1:3001/manager/generate_word');
+            setWordToWrite(response.data.word);
+        } catch (error) {
+            console.error('Error sending generate_word to the backend:', error);
+        }
+    }
+
 
     return (
         <div id="canvas_manager" className="container-fluid">
             <h1>Manager</h1>
-            <WordToWriteInput />
+            <WordToWriteInput wordToWrite={wordToWrite} setWordToWrite={setWordToWrite} />
             <GPTTextInput />
             <LearningPaceSlider />
             <button onClick={robotFinished}>Robot finished</button>
             <button onClick={stopRobot}>Stop</button>
+            <button onClick={generateWord}>Generate Word</button>
             <button onClick={talkToMe}>Talk to me</button>
             <button onClick={erase}>Erase</button>
-            
+
             <h2>Child Profile</h2>
             <ChildProfile />
         </div>

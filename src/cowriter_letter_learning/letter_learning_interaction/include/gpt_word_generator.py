@@ -1,7 +1,7 @@
 import os
 import openai
 import json
-from phrase_manager import PhraseManagerGPT
+from .phrase_manager import PhraseManagerGPT
 
 # openai.api_key = os.getenv("OPENAI_API_KEY")
 

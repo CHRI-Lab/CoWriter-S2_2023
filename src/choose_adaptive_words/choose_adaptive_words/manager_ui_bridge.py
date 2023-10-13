@@ -1,11 +1,11 @@
 from std_msgs.msg import String, Float32, Empty
-
+import rclpy
 from rclpy.node import Node
 
 from choose_adaptive_words.audio_processor import AudioProcessor
 from choose_adaptive_words.ai_image import AI_IMAGE
 from choose_adaptive_words.child_profile import ChildProfile
-
+from interface.srv import GenerateWord
 
 TOPIC_WORDS_TO_WRITE = "words_to_write"
 TOPIC_MANAGER_ERASE = "manager_erase"
@@ -38,6 +38,22 @@ class ManagerUIBridge(Node):
         )
         self.stop_publisher = self.create_publisher(Empty, "stop_learning", 10)
         self.ai_image = AI_IMAGE()
+        self.cli = self.create_client(GenerateWord, "generate_word_service")
+        while not self.cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Waiting for service...")
+        self.req = GenerateWord.Request()
+
+    def generate_word(self):
+        #self.req.data = "generate_word"
+        future = self.cli.call_async(self.req)
+        rclpy.spin_until_future_complete(self, future)
+        if future.result() is not None:
+            self.get_logger().info(
+                "Response: %s" % future.result().data
+            )
+            return future.result().data
+        else:
+            self.get_logger().info("Service call failed")
 
     def stop(self):
         self.stop_publisher.publish(Empty())
