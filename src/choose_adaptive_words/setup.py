@@ -60,8 +60,9 @@ setup(
     # scripts here.
     entry_points={
         "console_scripts": [
-            # "temp_backend = choose_adaptive_words.temp_backend:main",
+            "temp_backend = choose_adaptive_words.temp_backend:main",
             "backend = choose_adaptive_words.backend:main",
+            "child_ui = choose_adaptive_words.child_ui:main",
         ]
     },
 )
