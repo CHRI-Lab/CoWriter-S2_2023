@@ -16,7 +16,10 @@ from rclpy.node import Node
 
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
-from requests import Session
+
+import qi
+
+# from requests import Session
 
 # import motion
 import math
@@ -26,7 +29,7 @@ import time
 class nao_writer_naoqi(Node):
     def __init__(
         self,
-        session: Session,
+        # session: Session,
         effector="RArm",
         naoWriting=True,
         naoSpeaking=True,
@@ -48,39 +51,48 @@ class nao_writer_naoqi(Node):
         - alternateSidesLookingAt (bool, optional): Flag indicating whether the robot should alternate sides when looking at objects. Defaults to False.
         """
         super().__init__("nao_writer")
-        self.session = session
+        # self.session = session
         SHAPE_TOPIC = self.declare_parameter(
             "~trajectory_nao_topic", "write_traj"
         ).value
-        self.nao_settings = session.get("http://localhost:5000/get_settings").json()
+        # self.nao_settings = session.get(
+        #     "http://localhost:5000/get_settings"
+        # ).json()
         TRAJ_TOPIC = "write_traj_nao"  # rospy.get_param('~trajectory_nao_input_topic','/write_traj_nao')
         # NAO_IP = self.declare_parameter("~nao_ip", "127.0.0.1").value
+        NAO_IP = "127.0.0.1"
         # PORT = int(self.declare_parameter("~nao_port", "9559").value)
+        PORT = 9559
         # NAO_HANDEDNESS = self.declare_parameter(
         #     "~nao_handedness", "right"
         # ).value
+        NAO_HANDEDNESS = "right"
 
-        if self.nao_settings.get("nao_handedness") == "right":
+        # if self.nao_settings.get("nao_handedness") == "right":
+        if NAO_HANDEDNESS == "right":
             self.effector = "RArm"
-        elif self.nao_settings.get("nao_handedness") == "left":
+        # elif self.nao_settings.get("nao_handedness") == "left":
+        elif NAO_HANDEDNESS == "left":
             self.effector = "LArm"
         else:
             self.get_logger().info("error in handedness param")
 
-        # self.qi_url = f"tcp://{NAO_IP}:{PORT}"
-        # self.get_logger().info(
-        #     f"[RobotController] Connecting to qi_url={self.qi_url}"
-        # )
-        # self.app = qi.Application(url=self.qi_url)
-        # self.app.start()
-        # # app.run()
-        # self.get_logger().info(f"[RobotController] app started")
-        # self.session = self.app.session
-        # self.motionProxy = self.session.service("ALMotion")
+        self.qi_url = f"tcp://{NAO_IP}:{PORT}"
+        self.get_logger().info(
+            f"[RobotController] Connecting to qi_url={self.qi_url}"
+        )
+        self.app = qi.Application(url=self.qi_url)
+        self.app.start()
+        # app.run()
+        self.get_logger().info(f"[RobotController] app started")
+        self.session = self.app.session
+        self.motionProxy = self.session.service("ALMotion")
         # self.memoryProxy = self.session.service("ALMemory")
         # self.postureProxy = self.session.service("ALRobotPosture")
         # self.ttsProxy = self.session.service("ALTextToSpeech")
-        self.tl = TransformListener(Buffer(), self)  # , True, Duration(seconds=10))
+        self.tl = TransformListener(
+            Buffer(), self
+        )  # , True, Duration(seconds=10))
         self.space = 2  # {FRAME_TORSO = 0, FRAME_WORLD = 1, FRAME_ROBOT = 2}
         self.isAbsolute = True
 
@@ -114,22 +126,15 @@ class nao_writer_naoqi(Node):
         axisMask = [AXIS_MASK_X + AXIS_MASK_Y + AXIS_MASK_Z + AXIS_MASK_WX]
 
         if self.effector == "LArm":
-            self.session.post("http://localhost:5000/open_hand", json={"hand": "LHand"})
-            self.session.post(
-                "http://localhost:5000/close_hand", json={"hand": "LHand"}
-            )
-
-            roll = (
-                -1.7
-            )  # rotate wrist to the left (about the x axis, w.r.t. robot frame)
+            self.motionProxy.openHand("LHand")
+            self.motionProxy.closeHand("LHand")
+            # rotate wrist to the left (about the x axis, w.r.t. robot frame)
+            roll = -1.7
         else:
-            self.session.post("http://localhost:5000/open_hand", json={"hand": "RHand"})
-            self.session.post(
-                "http://localhost:5000/close_hand", json={"hand": "RHand"}
-            )
-            roll = (
-                1.7  # rotate wrist to the right (about the x axis, w.r.t. robot frame)
-            )
+            self.motionProxy.openHand("RHand")
+            self.motionProxy.closeHand("RHand")
+            # rotate wrist to the right (about the x axis, w.r.t. robot frame)
+            roll = 1.7
 
         target = PoseStamped()
 
@@ -197,16 +202,24 @@ class nao_writer_naoqi(Node):
         )
         # startTime = self.get_clock().now()
 
-        self.session.post(
-            "http://localhost:5000/position_interpolation",
-            json={
-                "effector": self.effector,
-                "space": self.space,
-                "path": self.traj_to_path(path),
-                "axisMask": axisMask,
-                "times": times,
-                "isAbsolute": self.isAbsolute,
-            },
+        # self.session.post(
+        #     "http://localhost:5000/position_interpolation",
+        #     json={
+        #         "effector": self.effector,
+        #         "space": self.space,
+        #         "path": self.traj_to_path(path),
+        #         "axisMask": axisMask,
+        #         "times": times,
+        #         "isAbsolute": self.isAbsolute,
+        #     },
+        # )
+        self.motionProxy.positionInterpolations(
+            [self.effector],
+            self.space,
+            self.traj_to_path(path),
+            axisMask,
+            times,
+            self.isAbsolute,
         )
         self.get_logger().info(
             "Time taken for rest of trajectory: "
@@ -261,7 +274,8 @@ class nao_writer_naoqi(Node):
             # and it needs to adjust the X-axis coordinate size according
             # to the writing position
             x = (
-                math.sqrt(max([0.12 - (y + 0.07) * (y + 0.07) - z * z, 0.1])) * 1.2
+                math.sqrt(max([0.12 - (y + 0.07) * (y + 0.07) - z * z, 0.1]))
+                * 1.2
                 - 0.21
             )
             converted_pts[i] = [x, y, z, point[3], point[4], point[5]]
@@ -271,8 +285,9 @@ class nao_writer_naoqi(Node):
 
 def main():
     rclpy.init()
-    session = Session()
-    writer = nao_writer_naoqi(session)
+    # session = Session()
+    # writer = nao_writer_naoqi(session)
+    writer = nao_writer_naoqi()
     rclpy.spin(writer)
 
     writer.destroy_node()
