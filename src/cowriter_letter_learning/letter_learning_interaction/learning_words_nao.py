@@ -14,9 +14,9 @@ from rclpy.duration import Duration
 from rclpy.time import Time
 from rclpy.node import Node
 
-from requests import Session
-
 import threading
+
+from letter_learning_interaction.include.nao_controller import NaoSettings
 
 from letter_learning_interaction.include.wrapper_class import (
     DeviceManager,
@@ -83,13 +83,11 @@ class LearningWordsNao(Node):
     def __init__(
         self,
         state_machine: StateMachine,
-        nao_settings,
-        session: Session,
+        nao_controller,
         phrase_manager: PhraseManager,
         generated_word_logger,
     ):
         super().__init__("learning_words_nao")
-        self.session = session
         self.declare_parameter("dataset_directory", "default")
         self.topics = SubscriberTopics(self)
         # listen for request to clear screen (from tablet)
@@ -104,11 +102,10 @@ class LearningWordsNao(Node):
         self.managerGPT = PhraseManagerGPT("English")
         self.gpt_word_generator = GPT_Word_Generator(self.managerGPT)
 
-        self.session = session
         self.publish_manager.init_publishers()
         self.generated_word_logger = generated_word_logger
 
-        self.nao_settings = nao_settings
+        self.nao_controller = nao_controller
         # self.managerGPT = managerGPT
         # self.device_manager = device_manager
         # self.publish_manager = publish_manager
@@ -230,7 +227,7 @@ class LearningWordsNao(Node):
             self.dt,
             self.delay_before_executing,
         ) = InteractionSettings.get_trajectory_timings(
-            self.nao_settings.get("nao_writing")
+            self.nao_controller.nao_writing
         )
 
         # Phrase params are in nao_settings.phrase_manager
@@ -295,9 +292,7 @@ class LearningWordsNao(Node):
         if self.chatGPT_enabled:
             self.response = self.managerGPT.get_gpt_response(msg.data)
             if self.chatGPT_to_say_enabled:
-                self.session.post(
-                    "http://localhost:5000/say", json={"phrase": self.response}
-                )
+                self.nao_controller.text_to_speech.say(self.response)
 
     def on_user_drawn_shape_received(self, shape: ShapeMsg) -> None:
         """
@@ -415,52 +410,37 @@ class LearningWordsNao(Node):
 
         :param message: The received new child message.
         """
-        if self.nao_settings.get("nao_writing"):
-            if self.nao_settings.get("nao_standing"):
-                self.session.post(
-                    "http://localhost:5000/go_to_posture",
-                    json={"posture": "StandInit", "speed": 0.3},
-                )
+        if self.nao_controller.nao_writing:
+            if self.nao_controller.nao_standing:
+                self.nao_controller.posture_proxy.goToPosture("StandInit", 0.3)
             else:
-                self.session.post("http://localhost:5000/rest")
-                self.session.post(
-                    "http://localhost:5000/set_stiffness",
-                    json={
-                        "joints": ["Head", "LArm", "RArm"],
-                        "set_stiffness": 0.5,
-                    },
+                self.nao_controller.motion_proxy.rest()
+                self.nao_controller.motion_proxy.setStiffnesses(
+                    ["Head", "LArm", "RArm"],
+                    0.5,
                 )
-                self.session.post(
-                    "http://localhost:5000/set_stiffness",
-                    json={
-                        "joints": [
-                            "LHipYawPitch",
-                            "LHipRoll",
-                            "LHipPitch",
-                            "RHipYawPitch",
-                            "RHipRoll",
-                            "RHipPitch",
-                        ],
-                        "set_stiffness": 0.8,
-                    },
+                self.nao_controller.motion_proxy.setStiffnesses(
+                    [
+                        "LHipYawPitch",
+                        "LHipRoll",
+                        "LHipPitch",
+                        "RHipYawPitch",
+                        "RHipRoll",
+                        "RHipPitch",
+                    ],
+                    0.8,
                 )
 
-        if self.nao_settings.get("nao_speaking"):
-            if self.nao_settings.get("alternate_sides_looking_at"):
-                self.session.post(
-                    "http://localhost:5000/look_and_ask_for_feedback",
-                    json={
-                        "phrase": self.phrase_manager.intro_phrase,
-                        "side": self.nao_settings.get("next_side_to_look_at"),
-                    },
+        if self.nao_controller.nao_speaking:
+            if self.nao_controller.alternate_sides_looking_at:
+                self.nao_controller.look_and_ask_for_feedback(
+                    self.phrase_manager.intro_phrase,
+                    self.nao_controller.next_side_to_look_at,
                 )
             else:
-                self.session.post(
-                    "http://localhost:5000/look_and_ask_for_feedback",
-                    json={
-                        "phrase": self.phrase_manager.intro_phrase,
-                        "side": self.nao_settings.get("person_side"),
-                    },
+                self.nao_controller.look_and_ask_for_feedback(
+                    self.phrase_manager.intro_phrase,
+                    self.nao_controller.person_side,
                 )
         # clear screen
         self.publish_manager.pub_clear.publish(Empty())
@@ -543,12 +523,10 @@ class LearningWordsNao(Node):
         if self.chatGPT_enabled:
             self.response = self.managerGPT.get_gpt_response(in_chat.data)
             if (
-                self.nao_settings.get("nao_connected")
+                self.nao_controller.nao_connected
                 and self.chatGPT_to_say_enabled
             ):
-                self.session.post(
-                    "http://localhost:5000/say", json={"phrase": self.response}
-                )
+                self.nao_controller.text_to_speech.say(self.response)
 
                 # signal listening again after nao speaks
                 self.publish_manager.pub_listening_signal.publish(
@@ -556,10 +534,7 @@ class LearningWordsNao(Node):
                 )
         else:
             self.response = "feedback"
-            self.session.post(
-                "http://localhost:5000/say",
-                json={"phrase": "Thanks for feedback"},
-            )
+            self.nao_controller.text_to_speech.say("Thanks for feeback")
 
         self.feedback_received = self.response
 
@@ -632,7 +607,7 @@ class LearningWordsNao(Node):
 
         letters = "".join([s.shape_type for s in demo_shapes_received])
 
-        if self.nao_settings.get("nao_speaking"):
+        if self.nao_controller.nao_speaking:
             (
                 to_say,
                 self.phrase_manager.demo_response_phrases_counter,
@@ -642,10 +617,7 @@ class LearningWordsNao(Node):
                 letters,
             )
 
-            self.session.post(
-                "http://localhost:5000/nao_speak_and_log_phrase",
-                json={"phrase": to_say},
-            )
+            self.nao_controller.nao_speak_and_log_phrase(to_say)
 
         # 1- Update the shape models with the incoming demos
         for shape in demo_shapes_received:
@@ -737,8 +709,8 @@ class LearningWordsNao(Node):
             traj_start_position = None
 
         # Look at the tablet if the Nao is connected
-        if self.nao_settings.get("nao_connected"):
-            self.session.post("http://localhost:5000/look_at_tablet")
+        if self.nao_controller.nao_connected:
+            self.nao_controller.look_at_tablet()
 
         # Publish the trajectories
         # NOTE: need to handle pub_traj
@@ -857,14 +829,13 @@ class LearningWordsNao(Node):
         self.get_logger().info("STATE: STOPPING")
 
         # Factor two if statements to method for NaoSettings
-        if self.nao_settings.get("nao_speaking"):
-            self.session.post(
-                "http://localhost:5000/nao_speak_and_log_phrase",
-                json={"phrase": self.phrase_manager.thank_you_phrase[0]},
+        if self.nao_controller.nao_speaking:
+            self.nao_controller.nao_speak_and_log_phrase(
+                self.phrase_manager.thank_you_phrase[0]
             )
 
         # Set nao to rest
-        self.session.post("http://localhost:5000/rest")
+        self.nao_controller.motion_proxy.rest()
 
         next_state = "EXIT"
         info_for_next_state = 0
@@ -893,10 +864,9 @@ class LearningWordsNao(Node):
         """
         self.get_logger().info("STATE: STARTING_INTERACTION")
         # If nao speaking say intro phrase
-        if self.nao_settings.get("nao_speaking"):
-            self.session.post(
-                "http://localhost:5000/handle_look_and_ask_for_feedback",
-                json={"phrase": self.phrase_manager.intro_phrase},
+        if self.nao_controller.nao_speaking:
+            self.nao_controller.handle_look_and_ask_for_feedback(
+                self.phrase_manager.intro_phrase
             )
 
         next_state = "WAITING_FOR_WORD"
@@ -915,7 +885,9 @@ class LearningWordsNao(Node):
         """
         response.data = String(data=self.gpt_word_generator.generate_word())
         self.get_logger().info("Generated word: " + str(response.data))
-        self.get_logger().info("message history: " + str(self.managerGPT.messages))
+        self.get_logger().info(
+            "message history: " + str(self.managerGPT.messages)
+        )
         return response
 
     def wait_for_word(
@@ -1113,7 +1085,7 @@ class LearningWordsNao(Node):
             word_to_learn
         )
 
-        if self.nao_settings.get("nao_speaking"):
+        if self.nao_controller.nao_speaking:
             if word_seen_before:
                 # word_again_response_phrases doesnt exist
                 (
@@ -1135,10 +1107,7 @@ class LearningWordsNao(Node):
                     word_to_learn,
                 )
 
-            self.session.post(
-                "http://localhost:5000/nao_speak_and_log_phrase",
-                json={"phrase": to_say},
-            )
+            self.nao_controller.nao_speak_and_log_phrase(to_say)
 
         # Clear screen
         self.device_manager.screen_manager.clear()
@@ -1205,7 +1174,7 @@ class LearningWordsNao(Node):
         )
 
         item_written = info_from_prev_state["item_written"]
-        if self.nao_settings.get("nao_speaking"):
+        if self.nao_controller.nao_speaking:
             (
                 to_say,
                 self.phrase_manager.asking_phrases_after_word_counter,
@@ -1215,11 +1184,8 @@ class LearningWordsNao(Node):
                 item_written,
             )
 
-            self.session.post(
-                "http://localhost:5000/handle_look_and_ask_for_feedback",
-                json={"phrase": to_say},
-            )
-            self.session.post("http://localhost:5000/look_at_tablet")
+            self.nao_controller.handle_look_and_ask_for_feedback(to_say)
+            self.nao_controller.look_at_tablet()
 
         next_state = "WAITING_FOR_FEEDBACK"
         info_for_next_state = {"state_came_from": "ASKING_FOR_FEEDBACK"}
@@ -1384,23 +1350,17 @@ class LearningWordsNao(Node):
         return traj
 
 
-def get_nao_settings(session):
-    return session.get("http://localhost:5000/get_settings").json()
-
-
 def main(args=None):
     # Init node inside main to avoid running node if imported
     # rospy.init_node("learning_words_nao")
-    session = Session()
-    nao_settings = get_nao_settings(session)
-    phrase_manager = PhraseManager(nao_settings.get("LANGUAGE"))
+    nao_controller = NaoSettings()
+    phrase_manager = PhraseManager(nao_controller.LANGUAGE)
 
     rclpy.init(args=None)
 
     # init node
     # node = Node("learning_words_nao")
 
-    session = session
     # topics = SubscriberTopics(node)
 
     # dataset_directory = rospy.get_param("~dataset_directory", "default")
@@ -1430,8 +1390,7 @@ def main(args=None):
     generated_word_logger = configure_logging(generated_word_logger)
     node = LearningWordsNao(
         state_machine,
-        nao_settings,
-        session,
+        nao_controller,
         phrase_manager,
         generated_word_logger,
     )
@@ -1457,7 +1416,7 @@ def main(args=None):
 
     # Set nao up for interaction
     # nao_settings.set_nao_interaction()
-    session.post("http://localhost:5000/set_interaction")
+    nao_controller.set_interaction()
 
     # Init subscribers
     # listen for a new child signal
@@ -1469,11 +1428,11 @@ def main(args=None):
     node.get_logger().info(
         "Nao configuration: writing=%s, speaking=%s (%s), standing=%s, handedness=%s"
         % (
-            nao_settings.get("nao_writing"),
-            nao_settings.get("nao_speaking"),
-            nao_settings.get("LANGUAGE"),
-            nao_settings.get("nao_standing"),
-            nao_settings.get("NAO_HANDEDNESS"),
+            nao_controller.nao_writing,
+            nao_controller.nao_speaking,
+            nao_controller.LANGUAGE,
+            nao_controller.nao_standing,
+            nao_controller.NAO_HANDEDNESS,
         )
     )
 
