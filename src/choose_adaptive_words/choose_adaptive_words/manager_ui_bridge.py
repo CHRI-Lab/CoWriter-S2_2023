@@ -3,8 +3,8 @@ from std_msgs.msg import String, Float32, Empty
 from rclpy.node import Node
 
 from choose_adaptive_words.audio_processor import AudioProcessor
-from choose_adaptive_words.ai_image import AI_IMAGE
 from choose_adaptive_words.child_profile import ChildProfile
+from choose_adaptive_words.ai_image import AiImage
 
 
 TOPIC_WORDS_TO_WRITE = "words_to_write"
@@ -12,6 +12,7 @@ TOPIC_MANAGER_ERASE = "manager_erase"
 TOPIC_LEARNING_PACE = "simple_learning_pace"
 TOPIC_GPT_INPUT = "chatgpt_input"
 TOPIC_SHAPE_FINISHED = "shape_finished"
+TOPIC_IMAGE_URL = "image_url"
 
 
 class ManagerUIBridge(Node):
@@ -36,8 +37,13 @@ class ManagerUIBridge(Node):
         self.transcription_publisher = self.create_publisher(
             String, "speech_rec", 10
         )
+        self.publish_image_url = self.create_publisher(
+            String, TOPIC_IMAGE_URL, 10
+        )
         self.stop_publisher = self.create_publisher(Empty, "stop_learning", 10)
-        self.ai_image = AI_IMAGE()
+
+        self.ai_image = AiImage()
+        self.text_image = ""
 
     def stop(self):
         self.stop_publisher.publish(Empty())
@@ -52,8 +58,11 @@ class ManagerUIBridge(Node):
 
     def word_to_write(self, word: str):
         self.get_logger().info("published " + word + " to /words_to_write")
+        self.text_image = word
         self.publish_word_to_write.publish(String(data=word))
-        self.ai_image.generate_image(word)
+        # image_url = self.ai_image.generate_image(self.text_image)
+        image_url = ""
+        self.publish_image_url.publish(String(data=image_url))
 
     def gpt_text(self, text: str):
         self.get_logger().info("published " + text + " to /chatgpt_input")
@@ -63,6 +72,11 @@ class ManagerUIBridge(Node):
         self.publish_simple_learning_pace.publish(
             Float32(data=float(pace / 100))
         )
+
+    # def get_image_url(self, word: str):
+    #     # self.get_logger().info("published " + word + " to /words_to_write")
+    #     image_url = self.ai_image.generate_image(self.text_image)
+    #     self.publish_image_url.publish(String(data=image_url))
 
     def child_profile(self, profile: dict):
         self.child_profile = ChildProfile(profile, self.get_logger())
