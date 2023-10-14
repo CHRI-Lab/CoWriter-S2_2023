@@ -94,9 +94,9 @@ RUN mogrify ./install/choose_adaptive_words/lib/python3.10/site-packages/choose_
 FROM base
 
 WORKDIR ${MAIN_DIR}
-COPY --from=qi-build ${MAIN_DIR}/tmp/libqi-python/dist/qi-3.1.1-cp38-cp38-linux_x86_64.whl ./qi-3.1.1-cp38-cp38-linux_x86_64.whl
-RUN pip3 install ./qi-3.1.1-cp38-cp38-linux_x86_64.whl
-RUN rm ./qi-3.1.1-cp38-cp38-linux_x86_64.whl
+COPY --from=qi-build ${MAIN_DIR}/tmp/libqi-python/dist/*.whl ./
+RUN pip3 install ./*.whl
+RUN rm ./*.whl
 
 RUN usermod -aG audio root
 
