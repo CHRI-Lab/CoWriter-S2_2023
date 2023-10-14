@@ -39,6 +39,29 @@ ENV AMENT_PREFIX_PATH=/opt/ros/humble
 ENV PYTHONPATH=/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages
 
 
+FROM base as qi-build
+
+ENV BOOST_ROOT_DIR=${MAIN_DIR}/boost_1_77_0 
+ENV BOOST_INCLUDE_DIR=${BOOST_ROOT_DIR}/include 
+ENV BOOST_LIB_DIR=${BOOST_ROOT_DIR}/lib 
+
+RUN apt-get install -y curl
+
+WORKDIR ${MAIN_DIR}/tmp/
+RUN curl -L https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.bz2 -o boost_1_77_0.tar.bz2
+RUN tar -xf boost_1_77_0.tar.bz2
+WORKDIR ${MAIN_DIR}/tmp/boost_1_77_0
+RUN ./bootstrap.sh && \
+    ./b2 --with=all -j2 install --prefix=${BOOST_ROOT_DIR}
+
+WORKDIR ${MAIN_DIR}/tmp/
+RUN git clone https://github.com/aldebaran/libqi-python
+WORKDIR ${MAIN_DIR}/tmp/libqi-python
+RUN sed -i '66c\cmake_args=["-DQIPYTHON_STANDALONE:BOOL=ON", "-DBOOST_ROOT:PATH=/home/nao/boost_1_77_0", "-DBoost_INCLUDE_DIR:PATH=/home/nao/boost_1_77_0/include", "-DBoost_LIBRARY_DIR:PATH=/home/nao/boost_1_77_0/lib"],' \
+    setup.py
+RUN python3 ./setup.py bdist_wheel
+
+
 FROM base as build
 
 WORKDIR ${MAIN_DIR}/src/
@@ -69,6 +92,11 @@ RUN mogrify ./install/choose_adaptive_words/lib/python3.10/site-packages/choose_
 
 
 FROM base
+
+WORKDIR ${MAIN_DIR}
+COPY --from=qi-build ${MAIN_DIR}/tmp/libqi-python/dist/qi-3.1.1-cp38-cp38-linux_x86_64.whl ./qi-3.1.1-cp38-cp38-linux_x86_64.whl
+RUN pip3 install ./qi-3.1.1-cp38-cp38-linux_x86_64.whl
+RUN rm ./qi-3.1.1-cp38-cp38-linux_x86_64.whl
 
 RUN usermod -aG audio root
 
