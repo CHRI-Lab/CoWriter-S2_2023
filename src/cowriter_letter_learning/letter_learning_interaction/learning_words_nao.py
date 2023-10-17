@@ -532,15 +532,18 @@ class LearningWordsNao(Node):
                 self.nao_controller.nao_connected
                 and self.chatGPT_to_say_enabled
             ):
-                self.nao_controller.nao_async_say(self.response)
+                say_future = self.nao_controller.nao_async_say(self.response)
                 if self.animation != None:
                     self.get_logger().info("play animation: " + self.animation)
-                    self.nao_controller.nao_async_animation(self.animation)
+                    ani_future = self.nao_controller.nao_async_animation(
+                        self.animation
+                    )
 
                 # signal listening again after nao speaks
-                self.publish_manager.pub_listening_signal.publish(
-                    String(data="convo")
-                )
+                if say_future.value() and ani_future.value():
+                    self.publish_manager.pub_listening_signal.publish(
+                        String(data="convo")
+                    )
         else:
             self.response = "feedback"
             self.nao_controller.text_to_speech.say("Thanks for feeback")
