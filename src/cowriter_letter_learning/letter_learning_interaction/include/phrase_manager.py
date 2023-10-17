@@ -144,41 +144,69 @@ class PhraseManagerGPT(PhraseManager):
         
         path = None
         motions = {
-            "greeting": [ #greeting paths are deprecated since 2.8
+            "greeting" : [
                 "animations/Stand/Gestures/Hey_1",
                 "animations/Stand/Gestures/Hey_6"
             ],
             "affirmation" : [
-                "animations/Stand/Affirmation/NAO/Center_Neutral_AFF_01",
-                "animations/Stand/Affirmation/NAO/Center_Neutral_AFF_10",
-                "animations/Stand/Affirmation/NAO/Center_Slow_AFF_02",
-                "animations/Stand/Affirmation/NAO/Center_Strong_AFF_01"
+                "animations/Stand/Gestures/Yes_1",
+                "animations/Stand/Gestures/Yes_2",
+                "animations/Stand/Gestures/Yes_3"
             ],
             "interrogative" : [
-                "animations/Stand/Question/NAO/Center_Neutral_QUE_03",
-                "animations/Stand/Question/NAO/Center_Neutral_QUE_08",
-                "animations/Stand/Question/NAO/Center_Slow_QUE_02",
-                "animations/Stand/Question/NAO/Center_Strong_QUE_03"
+                "animations/Stand/Gestures/YouKnowWhat_1",
+                "animations/Stand/Gestures/YouKnowWhat_5"
             ],
             "joy" : [
-                "animations/Stand/Exclamation/NAO/Center_Neutral_EXC_03", 
-                "animations/Stand/Exclamation/NAO/Center_Neutral_EXC_06", 
-                "animations/Stand/Exclamation/NAO/Center_Slow_EXC_0",
-                "animations/Stand/Exclamation/NAO/Center_Strong_EXC_04"
+                "animations/Stand/Gestures/Enthusiastic_4", 
+                "animations/Stand/Gestures/Enthusiastic_5"
             ],
             "hesitation" : [
-                "animations/Stand/Question/NAO/Center_Neutral_QUE_01",
-                "animations/Stand/Question/NAO/Center_Neutral_QUE_05",
-                "animations/Stand/Question/NAO/Center_Neutral_QUE_10",
-                "animations/Stand/Question/NAO/Center_Strong_QUE_01"
+                "animations/Stand/Gestures/IDontKnow_1",
+                "animations/Stand/Gestures/IDontKnow_2"
             ],
             "refusal" : [
-                "animations/Stand/Negation/NAO/Center_Neutral_NEG_01", 
-                "animations/Stand/Negation/NAO/Center_Neutral_NEG_04", 
-                "animations/Stand/Negation/NAO/Center_Slow_NEG_01", 
-                "animations/Stand/Negation/NAO/Center_Strong_NEG_01"
+                "animations/Stand/Gestures/No_3",
+                "animations/Stand/Gestures/No_8",
+                "animations/Stand/Gestures/No_9"
             ]
         }
+        # motions = {
+        #     "greeting": [ #greeting paths are deprecated since 2.8
+        #         "animations/Stand/Gestures/Hey_1",
+        #         "animations/Stand/Gestures/Hey_6"
+        #     ],
+        #     "affirmation" : [
+        #         "animations/Stand/Affirmation/NAO/Center_Neutral_AFF_01",
+        #         "animations/Stand/Affirmation/NAO/Center_Neutral_AFF_10",
+        #         "animations/Stand/Affirmation/NAO/Center_Slow_AFF_02",
+        #         "animations/Stand/Affirmation/NAO/Center_Strong_AFF_01"
+        #     ],
+        #     "interrogative" : [
+        #         "animations/Stand/Question/NAO/Center_Neutral_QUE_03",
+        #         "animations/Stand/Question/NAO/Center_Neutral_QUE_08",
+        #         "animations/Stand/Question/NAO/Center_Slow_QUE_02",
+        #         "animations/Stand/Question/NAO/Center_Strong_QUE_03"
+        #     ],
+        #     "joy" : [
+        #         "animations/Stand/Exclamation/NAO/Center_Neutral_EXC_03", 
+        #         "animations/Stand/Exclamation/NAO/Center_Neutral_EXC_06", 
+        #         "animations/Stand/Exclamation/NAO/Center_Slow_EXC_0",
+        #         "animations/Stand/Exclamation/NAO/Center_Strong_EXC_04"
+        #     ],
+        #     "hesitation" : [
+        #         "animations/Stand/Question/NAO/Center_Neutral_QUE_01",
+        #         "animations/Stand/Question/NAO/Center_Neutral_QUE_05",
+        #         "animations/Stand/Question/NAO/Center_Neutral_QUE_10",
+        #         "animations/Stand/Question/NAO/Center_Strong_QUE_01"
+        #     ],
+        #     "refusal" : [
+        #         "animations/Stand/Negation/NAO/Center_Neutral_NEG_01", 
+        #         "animations/Stand/Negation/NAO/Center_Neutral_NEG_04", 
+        #         "animations/Stand/Negation/NAO/Center_Slow_NEG_01", 
+        #         "animations/Stand/Negation/NAO/Center_Strong_NEG_01"
+        #     ]
+        # }
 
         def ask_gpt(prompt):
             response = openai.Completion.create(
