@@ -6,20 +6,20 @@
   <img src="./docs/images/main_read_me_illustration.jpeg" />
 </p>
 
-Composed of a set of ROS nodes that facilitate the user interaction with a robot, the CoWriter project is designed for children to teach a social robot handwriting. Nao is an autonomous, programmable humanoid robot and has been used for demonstration purposes for this project.
+Composed of a set of ROS nodes that facilitate the user interaction with a robot, the CoWriter project is designed for children to teach a social robot handwriting. The intuition behind this interaction is "learning by teaching" where children can have the acquisiton of handwriting by teaching a robot to write better. Nao is an autonomous, programmable humanoid robot and has been used for demonstration purposes for this project. 
 
 Last semester, three different teams from the Software Project subject (COMP90082) took over this project with goals to:
 1. update the CoWriter project from Python2 to Python3 ;
 2. integrate ChatGPT to enable NAO robot to have conversations with children.
 
-Currently, these projects are each deployed in different environments and have achieved slightly different outcomes.
+Currently, these projects are each deployed in different versions and environments and have achieved slightly different outcomes.
 
 ## Goals
 
 This semester, our team aims to:
 1. merge the previous projects in one unified environment ;
-2. add further enhancements to the CoWriter project and NAO’s conversation capabilities ;
-3. implement a logging and annotation module for data management purposes.
+2. update the CoWriter learning algorithm and UI ;
+3. enhance NAO's conversation capabilities using ChatGPT.
 
 ## Contributors
 
@@ -27,10 +27,10 @@ This semester, our team aims to:
 | ----------- | ----------- | ----------- |
 | Wafa Johal | Client | wafa.johal@unimelb.edu.au |
 | Sebastian Bobadilla | Project Supervisor | bobadillacha@unimelb.edu.au |
-| Eunji Kim | Product Owner, Dev Member | kimek@student.unimelb.edu.au |
+| Eunji Kim (Rachel) | Product Owner, Dev Member | kimek@student.unimelb.edu.au |
 | Difan Wu | Scrum Master, Dev Member | difan.wu@student.unimelb.edu.au |
 | Aurélien Plaire | Tech Lead | aplaire@student.unimelb.edu.au |
-| Chien-Pu Lin | Test Lead | chienpu.lin@student.unimelb.edu.au
+| Chien-Pu Lin (Jeff) | Test Lead | chienpu.lin@student.unimelb.edu.au
 | Yangchen Shen | Quality Lead | yangchen.shen1@student.unimelb.edu.au |
 
 ## Structure
