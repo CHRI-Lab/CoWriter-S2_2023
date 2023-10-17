@@ -62,7 +62,7 @@ class PhraseManagerGPT(PhraseManager):
         self.messages = [
             {
                 "role": "system",
-                "content": "Your name is NAO, and you're learning handwriting from a child aged between 5-10. Make sure to keep the conversation kids-friendly.",  # noqa
+                "content": "Your name is NAO, and you're learning handwriting from a child aged between 5-10. Make sure to keep the conversation kids-friendly, and you're not supposed to suggest a word to practice.",  # noqa
             }
         ]
 
@@ -111,7 +111,7 @@ class PhraseManagerGPT(PhraseManager):
             return response_message
         
         else:
-            self.messages.append({"role": "assistant", "content": "Respond to the following chat. Your response should be short and concise: " + input_text})
+            self.messages.append({"role": "assistant", "content": "Respond to the following chat. Your response should be short and concise, and DO NOT suggest a word to practice: " + input_text})
             
             # Get GPT response
             response = openai.ChatCompletion.create(
