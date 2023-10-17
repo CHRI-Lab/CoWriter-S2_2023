@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import '../css/canvas.css'
 import { Coordinate, Stroke, UserInput } from "../../types/types";
 
@@ -10,7 +10,6 @@ interface CanvasProps {
     input_text: string;
     setUserInputs: (userInput: UserInput) => void;
 }
-
 
 const Canvas = ({ width, height, canvas_color, char_to_draw, input_text, setUserInputs }: CanvasProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -145,11 +144,13 @@ const Canvas = ({ width, height, canvas_color, char_to_draw, input_text, setUser
         clearCanvas();
     }, [input_text]);
 
+
     return (
         <div id="canvas_container">
             <button type="button" className="btn btn-warning" onClick={clearCanvas}>Rewrite</button>
             <div>{char_to_draw}</div>
             <canvas ref={canvasRef} height={height} width={width} style={{ backgroundColor: canvas_color }} />
+
         </div>
     )
 };

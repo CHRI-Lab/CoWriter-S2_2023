@@ -6,16 +6,13 @@ CHILD_BP = Blueprint("child", __name__, url_prefix="/child")
 # TODO: Difan
 
 
-# @CHILD_BP.route("/example_route", methods=["POST"])
-# def example_route():
-#   return {"status": "ok"}
-@CHILD_BP.route("/send_text", methods=["POST"])
-def send_Text():
-    user_inputs = request.json
-    inputText = user_inputs.get("inputText")
-    image_url = current_app.child_bridge.call_generate_image(inputText)
+# @CHILD_BP.route("/send_text", methods=["POST"])
+# def send_Text():
+#     user_inputs = request.json
+#     inputText = user_inputs.get("inputText")
+#     image_url = current_app.child_bridge.call_generate_image(inputText)
 
-    return jsonify({"image_url": image_url})
+#     return jsonify({"image_url": image_url})
 
 
 @CHILD_BP.route("/update_url", methods=["POST"])
@@ -35,11 +32,32 @@ def update_url():
 @CHILD_BP.route("/send_strokes", methods=["POST"])
 def send_strokes():
     user_inputs = request.json
-    user_inputs_processed = [
-        current_app.child_bridge.process_user_input(user_inputs)
-        for user_inputs in user_inputs
-    ]
-    for strokes in user_inputs_processed:
-        current_app.child_bridge.publish_strokesMessage(strokes)
-    current_app.child_bridge.update_canvas(False)
+    user_inputs_processed = current_app.child_bridge.process_user_input(
+        user_inputs
+    )
+
+    current_app.child_bridge.publish_user_drawn_shapes.publish(
+        user_inputs_processed
+    )
+    current_app.child_bridge.get_logger().info(
+        'I heard: "%s"' % str(user_inputs_processed.data)
+    )
+
+    # current_app.child_bridge.update_canvas(False)
     return jsonify({"message": "User input recieved successfully!"})
+
+
+@CHILD_BP.route("/update_traj", methods=["POST"])
+def update_traj():
+    new_traj = current_app.child_bridge.traj
+    return jsonify(
+        {
+            "traj": new_traj,
+        }
+    )
+
+
+@CHILD_BP.route("/erase_canvas", methods=["POST"])
+def erase_canvas():
+    erased = current_app.child_bridge.erase()
+    return jsonify({"erase_canvas": erased})

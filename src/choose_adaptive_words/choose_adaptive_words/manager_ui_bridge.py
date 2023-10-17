@@ -50,6 +50,9 @@ class ManagerUIBridge(Node):
 
     def erase(self):
         self.get_logger().info("erasing child")
+        self.text_image = ""
+        image_url = ""
+
         self.publish_manager_erase.publish(String(data="erased"))
 
     def talk_to_me(self):
@@ -72,11 +75,6 @@ class ManagerUIBridge(Node):
         self.publish_simple_learning_pace.publish(
             Float32(data=float(pace / 100))
         )
-
-    # def get_image_url(self, word: str):
-    #     # self.get_logger().info("published " + word + " to /words_to_write")
-    #     image_url = self.ai_image.generate_image(self.text_image)
-    #     self.publish_image_url.publish(String(data=image_url))
 
     def child_profile(self, profile: dict):
         self.child_profile = ChildProfile(profile, self.get_logger())

@@ -12,8 +12,7 @@ def words_to_write():
 
 @MANAGER_BP.route("/erase", methods=["POST"])
 def erase():
-    data = request.get_json()
-    current_app.manager_bridge.word_to_write(data["word"])
+    current_app.manager_bridge.erase()
     return {"status": "ok"}
 
 
@@ -47,4 +46,10 @@ def stop():
 def child_profile():
     data = request.get_json()
     current_app.manager_bridge.child_profile(data)
+    return {"status": "ok"}
+
+
+@MANAGER_BP.route("/robot_finished", methods=["POST"])
+def robot_finished():
+    current_app.manager_bridge.robot_finished()
     return {"status": "ok"}
