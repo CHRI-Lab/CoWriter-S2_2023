@@ -13,6 +13,7 @@ from rclpy.clock import ROSClock
 from rclpy.duration import Duration
 from rclpy.time import Time
 from rclpy.node import Node
+from ament_index_python.packages import get_package_share_directory
 
 import threading
 
@@ -1373,7 +1374,10 @@ def main(args=None):
 
     # dataset_directory = rospy.get_param("~dataset_directory", "default")
     # node.declare_parameter("dataset_directory", "default")
-    dataset_directory = "/home/nao/share/letter_model_datasets/alexis_set_for_children"  # noqa: E501
+    package_dir = get_package_share_directory("letter_learning_interaction")
+    dataset_directory = (
+        package_dir + "/datasets/alexis_set_for_children"
+    )  # noqa: E501
     # "default" #node.get_parameter("dataset_directory").value
 
     if dataset_directory.lower() == "default":  # use default
@@ -1446,6 +1450,7 @@ def main(args=None):
 
     # initialise word manager (passes feedback to shape learners
     # and keeps history of words learnt)
+    node.get_logger().info(f"dataset_directory: {dataset_directory}")
     InteractionSettings.set_dataset_directory(dataset_directory)
     # path to a log file where all learning steps will be stored
 

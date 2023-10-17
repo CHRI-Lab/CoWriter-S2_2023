@@ -155,7 +155,7 @@ class DeviceManager:
         self.SHAPE_LOGGING_PATH = ""
         # self.ros_node.get_parameter("~shape_log", "")
         self.word_manager = ShapeLearnerManager(
-            InteractionSettings.generate_settings, self.SHAPE_LOGGING_PATH
+            InteractionSettings.generate_settings,  # self.SHAPE_LOGGING_PATH
         )
 
         self.tablet_watchdog = Watchdog(
