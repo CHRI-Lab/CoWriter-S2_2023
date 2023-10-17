@@ -3,7 +3,6 @@ import openai
 import json
 from .phrase_manager import PhraseManagerGPT
 
-# openai.api_key = os.getenv("OPENAI_API_KEY")
 
 class GPT_Word_Generator:
     def __init__(self, phrase_manager):
@@ -18,17 +17,18 @@ class GPT_Word_Generator:
             response = openai.Completion.create(
                         model="text-davinci-003",
                         prompt=prompt,
-                        temperature=0.5
+                        temperature=0.7
                     ).get("choices")[0].text.lstrip()
             response = response.replace('\n', ' ')
             response = response.replace('\\', '')
             response = response.replace('.', '')
+            response = response.lower()
             return response
 
         if self.interest is None:
             message_history = self.phrase_manager.messages
             message_history = json.dumps(message_history)
-            prompt = "Based on this kid's input history, suggest one general topic that the kid might be interested in. Response should only contain one word of topic. Input history: " + message_history
+            prompt = "Based on this kid's user input history, suggest one general topic that the kid might be interested in. Put priorities on the latter messages. Response should only contain one word of topic. Input history: " + message_history
             self.interest = ask_gpt(prompt)
         
         prompt = "Generate one short and kids-friendly word related to " + self.interest + ". Your response should only contain the word."
