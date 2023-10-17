@@ -294,7 +294,7 @@ class LearningWordsNao(Node):
             self.animation = self.managerGPT.get_motion_path(self.response)
             if self.chatGPT_to_say_enabled:
                 self.nao_controller.nao_async_say(self.response)
-                if self.animation != "":
+                if self.animation != None:
                     self.get_logger().info("play animation: " + self.animation)
                     self.nao_controller.nao_async_animation(self.animation)
 
@@ -532,7 +532,7 @@ class LearningWordsNao(Node):
                 and self.chatGPT_to_say_enabled
             ):
                 self.nao_controller.nao_async_say(self.response)
-                if self.animation != "":
+                if self.animation != None:
                     self.get_logger().info("play animation: " + self.animation)
                     self.nao_controller.nao_async_animation(self.animation)
 
