@@ -34,7 +34,7 @@ class NaoSettings:
     # passed in as arguments, but treated as class variables.
 
     # Default behaviour is to connect to simulator locally
-    NAO_IP = "127.0.0.1"
+    NAO_IP = "10.100.237.241"
     NAO_PORT = 9559
     FRONT_INTERACTION = True
     NAO_HANDEDNESS = "right"
@@ -127,7 +127,7 @@ class NaoSettings:
         if self.nao_connected:
             qi_url = "tcp://%s:%s" % (self.NAO_IP, self.NAO_PORT)
             print("[RobotController] Connecting to qi_url=%s" % qi_url)
-            app = qi.Application()
+            app = qi.Application(url=qi_url)
             app.start()
             self.session = app.session
             print("[RobotController] app started")
@@ -138,6 +138,7 @@ class NaoSettings:
             self.motion_proxy = self.session.service("ALMotion")
             # return
             self.posture_proxy = self.session.service("ALRobotPosture")
+            self.animation_player = self.session.service("ALAnimationPlayer")
             self.text_to_speech = self.session.service("ALTextToSpeech")
             self.text_to_speech.setLanguage(self.LANGUAGE.capitalize())
             # textToSpeech.setVolume(1.0)
@@ -170,6 +171,12 @@ class NaoSettings:
                 self.arm_joints_stand_init = self.motion_proxy.getAngles(
                     self.effector, True
                 )
+
+    def nao_async_animation(self, animation_path):
+        return qi.runAsync(self.animation_player.run, animation_path)
+
+    def nao_async_say(self, phrase):
+        return qi.runAsync(self.text_to_speech.say, phrase)
 
     def nao_speak_and_log_phrase(self, phrase):
         """
