@@ -291,8 +291,11 @@ class LearningWordsNao(Node):
         self.get_logger().info("input for GPT: " + msg.data)
         if self.chatGPT_enabled:
             self.response = self.managerGPT.get_gpt_response(msg.data)
+            self.animation = self.managerGPT.get_motion_path(self.response)
             if self.chatGPT_to_say_enabled:
                 self.nao_controller.text_to_speech.say(self.response)
+                if self.animation != "":
+                    self.nao_controller.animation_player.run(self.animation)
 
     def on_user_drawn_shape_received(self, shape: ShapeMsg) -> None:
         """
@@ -522,11 +525,14 @@ class LearningWordsNao(Node):
         self.get_logger().info("input for GPT: " + in_chat.data)
         if self.chatGPT_enabled:
             self.response = self.managerGPT.get_gpt_response(in_chat.data)
+            self.animation = self.managerGPT.get_motion_path(self.response)
             if (
                 self.nao_controller.nao_connected
                 and self.chatGPT_to_say_enabled
             ):
                 self.nao_controller.text_to_speech.say(self.response)
+                if self.animation != "":
+                    self.nao_controller.animation_player.run(self.animation)
 
                 # signal listening again after nao speaks
                 self.publish_manager.pub_listening_signal.publish(
