@@ -34,7 +34,7 @@ class NaoSettings:
     # passed in as arguments, but treated as class variables.
 
     # Default behaviour is to connect to simulator locally
-    NAO_IP = "10.100.237.241"
+    NAO_IP = "127.0.0.1"
     NAO_PORT = 9559
     FRONT_INTERACTION = True
     NAO_HANDEDNESS = "right"

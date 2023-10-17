@@ -60,7 +60,7 @@ class nao_writer_naoqi(Node):
         # ).json()
         TRAJ_TOPIC = "write_traj_nao"  # rospy.get_param('~trajectory_nao_input_topic','/write_traj_nao')
         # NAO_IP = self.declare_parameter("~nao_ip", "127.0.0.1").value
-        NAO_IP = "10.100.237.241"
+        NAO_IP = "127.0.0.1"
         # PORT = int(self.declare_parameter("~nao_port", "9559").value)
         PORT = 9559
         # NAO_HANDEDNESS = self.declare_parameter(
