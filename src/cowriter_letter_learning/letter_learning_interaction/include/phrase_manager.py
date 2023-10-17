@@ -1,6 +1,6 @@
 import openai
 import os
-
+import random
 from .interaction_settings import InteractionSettings
 
 
