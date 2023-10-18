@@ -294,10 +294,16 @@ class LearningWordsNao(Node):
             self.response = self.managerGPT.get_gpt_response(msg.data)
             self.animation = self.managerGPT.get_motion_path(self.response)
             if self.chatGPT_to_say_enabled:
-                self.nao_controller.nao_async_say(self.response)
-                if self.animation != None:
+                say_future = self.nao_controller.nao_async_say(self.response)
+                if self.animation is not None:
                     self.get_logger().info("play animation: " + self.animation)
-                    self.nao_controller.nao_async_animation(self.animation)
+                    ani_future = self.nao_controller.nao_async_animation(
+                        self.animation
+                    )
+                    self.get_logger().info(
+                        f"animation finish: {ani_future.value()}"
+                    )
+                self.get_logger().info(f"say finish: {say_future.value()}")
 
     def on_user_drawn_shape_received(self, shape: ShapeMsg) -> None:
         """
@@ -467,6 +473,10 @@ class LearningWordsNao(Node):
         ):  # state machine hasn't started yet - word probably came from input arguments
             self.word_received = message
             self.get_logger().info(f"Received word: {self.word_received}")
+            # signal stop listening
+            self.publish_manager.pub_listening_signal.publish(
+                String(data="false")
+            )
         else:
             self.get_logger().info("no word received")
             self.word_received = None  # ignore
@@ -533,9 +543,14 @@ class LearningWordsNao(Node):
                 and self.chatGPT_to_say_enabled
             ):
                 say_future = self.nao_controller.nao_async_say(self.response)
-                if self.animation != None:
+                if self.animation is not None:
                     self.get_logger().info("play animation: " + self.animation)
-                    self.nao_controller.nao_async_animation(self.animation)
+                    ani_future = self.nao_controller.nao_async_animation(
+                        self.animation
+                    )
+                    self.get_logger().info(
+                        f"animation finish: {ani_future.value()}"
+                    )
 
                 # signal listening again after nao speaks
                 self.get_logger().info(f"say finish: {say_future.value()}")
@@ -875,13 +890,14 @@ class LearningWordsNao(Node):
         self.get_logger().info("STATE: STARTING_INTERACTION")
         # If nao speaking say intro phrase
         if self.nao_controller.nao_speaking:
-            self.nao_controller.nao_async_animation(
+            ani_future = self.nao_controller.nao_async_animation(
                 "animations/Stand/Gestures/Hey_1"
             )
-            future = self.nao_controller.nao_async_say(
+            say_future = self.nao_controller.nao_async_say(
                 self.phrase_manager.intro_phrase
             )
-            self.get_logger().info(f"say finish: {future.value()}")
+            self.get_logger().info(f"say finish: {say_future.value()}")
+            self.get_logger().info(f"animation finish: {ani_future.value()}")
 
         next_state = "WAITING_FOR_WORD"
         info_for_next_state = {"state_came_from": "STARTING_INTERACTION"}
@@ -941,11 +957,6 @@ class LearningWordsNao(Node):
             next_state = "WAITING_FOR_WORD"
             sleep(0.1)  # Don't check again immediately
         else:
-            # signal stop conversation
-            self.publish_manager.pub_listening_signal.publish(
-                String(data="false")
-            )
-
             # Check for received word and modify next_state if so
             next_state, info_for_next_state = self.handle_word_received(
                 next_state, info_for_next_state
