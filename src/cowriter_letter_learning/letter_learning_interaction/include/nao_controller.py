@@ -54,6 +54,11 @@ class NaoSettings:
 
         self.nao_writing = True
 
+        if self.NAO_IP == "127.0.0.1":
+            self.nao_animation = False
+        else:
+            self.nao_animation = True
+
         # Set effector based on handedness
         self.set_effector()
 

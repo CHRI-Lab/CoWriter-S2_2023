@@ -295,7 +295,7 @@ class LearningWordsNao(Node):
             self.animation = self.managerGPT.get_motion_path(self.response)
             if self.chatGPT_to_say_enabled:
                 say_future = self.nao_controller.nao_async_say(self.response)
-                if self.animation is not None:
+                if self.nao_controller.nao_animation and self.animation is not None:
                     self.get_logger().info("play animation: " + self.animation)
                     ani_future = self.nao_controller.nao_async_animation(
                         self.animation
@@ -543,7 +543,7 @@ class LearningWordsNao(Node):
                 and self.chatGPT_to_say_enabled
             ):
                 say_future = self.nao_controller.nao_async_say(self.response)
-                if self.animation is not None:
+                if self.nao_controller.nao_animation and self.animation is not None:
                     self.get_logger().info("play animation: " + self.animation)
                     ani_future = self.nao_controller.nao_async_animation(
                         self.animation
@@ -890,14 +890,16 @@ class LearningWordsNao(Node):
         self.get_logger().info("STATE: STARTING_INTERACTION")
         # If nao speaking say intro phrase
         if self.nao_controller.nao_speaking:
-            ani_future = self.nao_controller.nao_async_animation(
-                "animations/Stand/Gestures/Hey_1"
-            )
             say_future = self.nao_controller.nao_async_say(
                 self.phrase_manager.intro_phrase
             )
+            if self.nao_controller.nao_animation:
+                ani_future = self.nao_controller.nao_async_animation(
+                    "animations/Stand/Gestures/Hey_1"
+                )
+                self.get_logger().info(f"animation finish: {ani_future.value()}")
             self.get_logger().info(f"say finish: {say_future.value()}")
-            self.get_logger().info(f"animation finish: {ani_future.value()}")
+            
 
         next_state = "WAITING_FOR_WORD"
         info_for_next_state = {"state_came_from": "STARTING_INTERACTION"}
