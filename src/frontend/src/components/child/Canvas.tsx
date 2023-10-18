@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import '../css/canvas.css'
 import { Coordinate, Stroke, UserInput } from "../../types/types";
 
