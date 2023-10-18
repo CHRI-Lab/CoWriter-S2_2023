@@ -20,12 +20,12 @@ check-env:
 
 # Using Docker Compose
 compose-build:
-	docker-compose \
+	docker compose \
 		--file docker-compose.${ENV}.yml \
 		--env-file ./docker/docker.env \
 		build
 compose-up:
-	docker-compose \
+	docker compose \
 		--file docker-compose.${ENV}.yml \
 		--env-file ./docker/docker.env \
 		up
