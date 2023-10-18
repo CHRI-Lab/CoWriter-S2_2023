@@ -11,6 +11,7 @@ from rclpy.node import Node
 from interface.msg import Strokes, Stroke
 from interface.srv import GetDemo, TextToImage
 from nav_msgs.msg import Path
+import matplotlib.pyplot as plt
 
 # from choose_adaptive_words.input_interpreter import InputInterpreter
 
@@ -27,6 +28,8 @@ TOPIC_USER_DRAWN_SHAPES = "user_drawn_shapes"
 TOPIC_WORDS_TO_WRITE = "words_to_write"
 TOPIC_IMAGE_URL = "image_url"
 SHAPE_TOPIC = "write_traj"
+
+LETTER_FILES_READY_TOPIC = "files_ready"
 
 
 # TODO: Difan add your code here for the child UI
@@ -61,6 +64,10 @@ class ChildUIBridge(Node):
         )
 
         self.publisher_ = self.create_publisher(Strokes, "strokesMessage", 10)
+
+        self.publish_letter_files_ready = self.create_publisher(
+            String, LETTER_FILES_READY_TOPIC, 10
+        )
 
         self.image_url = ""
         self.generate_canvas = False
@@ -126,12 +133,32 @@ class ChildUIBridge(Node):
         # print(user_input, type(user_input))
         # strokes = Strokes()
         strokes_value = []
-        for user_input in user_inputs:
+        for k, user_input in enumerate(user_inputs):
             stroke_value = []
             for coordinates in user_input["strokes"][0]:
                 x, y = coordinates.values()
                 stroke_value.append((int(x), int(y)))
-            strokes_value += stroke_value
+            min_y = min([y for _, y in stroke_value])
+            max_y = max([y for _, y in stroke_value])
+            middle_y = (min_y + max_y) // 2
+            corrected_stroke_value = [
+                (x, middle_y + (middle_y - y)) for x, y in stroke_value
+            ]
+            x_coords, y_coords = zip(*corrected_stroke_value)
+            # plt.figure(figsize=(6, 6))
+            plt.plot(x_coords, y_coords, "-", linewidth=8)
+            plt.axis("off")
+            plt.savefig(
+                f"/home/nao/strugg_letter_data/{k}.png",
+                format="png",
+                dpi=300,
+                bbox_inches="tight",
+                pad_inches=0,
+            )
+            plt.close()
+            strokes_value += corrected_stroke_value
+        self.publish_letter_files_ready.publish(String(data=self.inputText))
+
         return self.pack_writing_pts(strokes_value)
 
     def pack_writing_pts(self, strokes_value):

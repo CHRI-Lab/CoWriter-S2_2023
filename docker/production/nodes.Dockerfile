@@ -66,7 +66,7 @@ COPY ./share ${MAIN_DIR}/share
 # Note: I don't know why, but for letter_learning_interaction, the command "source install/setup.bash"
 # doesn't add the package to the AMENT_PREFIX_PATH, so we add it manually
 ENV AMENT_PREFIX_PATH=${AMENT_PREFIX_PATH}:/home/nao/install/letter_learning_interaction:/home/nao/install/interface:/home/nao/install/choose_adaptive_words:/home/nao/install/nao_trajectory_following
-
+RUN mkdir /home/nao/strugg_letter_data
 WORKDIR ${MAIN_DIR}
 
 # launch supervisor as root

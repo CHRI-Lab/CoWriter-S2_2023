@@ -12,6 +12,7 @@ run-nodes-production:
 		-v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=${DISPLAY} \
 		-v ./.env:/home/nao/.env \
 		-v ./share:/home/nao/share \
+		-v ./strugg_letter_data:/home/nao/strugg_letter_data \
 		${NODES_IMAGE}
 
 run-controller-production:

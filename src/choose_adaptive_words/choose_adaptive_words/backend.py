@@ -7,6 +7,7 @@ from .manager_ui_bridge import ManagerUIBridge
 from .child_ui_bridge import ChildUIBridge
 from .app import create_app
 from .temp_backend import UIBackend
+from .strugg_letter import StruggLetterNode
 
 TOPIC_WORDS_TO_WRITE = "words_to_write"
 
@@ -17,11 +18,13 @@ def main():
     manager_bridge = ManagerUIBridge()
     child_bridge = ChildUIBridge()
     ui_backend = UIBackend()
+    strugg_letter = StruggLetterNode()
 
     executor = MultiThreadedExecutor()
     executor.add_node(manager_bridge)
     executor.add_node(child_bridge)
     executor.add_node(ui_backend)
+    executor.add_node(strugg_letter)
 
     thread = Thread(target=executor.spin)
     thread.start()
@@ -39,6 +42,7 @@ def main():
         child_bridge.destroy_node()
 
         ui_backend.destroy_node()
+        strugg_letter.destroy_node()
 
         executor.shutdown()
 

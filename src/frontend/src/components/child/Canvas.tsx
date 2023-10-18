@@ -144,10 +144,21 @@ const Canvas = ({ width, height, canvas_color, char_to_draw, input_text, setUser
         clearCanvas();
     }, [input_text]);
 
+    // const handelDown = () =>{
+    //     const imaageUrl = canvasRef.current.toDataURL("image/png");
+    //     const blob = base64ToBlob(imaageUrl);
+    //     const link = document.createElement("a");
+    //     link.href = URL.createObjectURL(blob);
+    //     link.download = "a.png";
+    //     const clickHandler = new MouseEvent("click");
+    //     link.dispatchEvent(clickHandler)
+    // }
+
 
     return (
         <div id="canvas_container">
             <button type="button" className="btn btn-warning" onClick={clearCanvas}>Rewrite</button>
+            {/* <button onClick = {handelDown}>Feedback</button> */}
             <div>{char_to_draw}</div>
             <canvas ref={canvasRef} height={height} width={width} style={{ backgroundColor: canvas_color }} />
 
