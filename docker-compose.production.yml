@@ -18,15 +18,6 @@ services:
       - ./strugg_letter_data:/home/nao/strugg_letter_data
       - ./credentials:/home/nao/credentials
 
-  controller-production:
-    build:
-      context: .
-      dockerfile: ${FILE_PATH}/controller.Dockerfile
-    image: ${CONTROLLER_IMAGE}
-    container_name: ${CONTROLLER_CONTAINER}
-    network_mode: host
-    user: nao
-
   frontend-production:
     build:
       context: .

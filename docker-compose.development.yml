@@ -10,22 +10,15 @@ services:
     network_mode: host
     stdin_open: true # docker run -i
     tty: true # docker run -t
+    devices:
+      - /dev/snd
     volumes:
       - ./src:/home/nao/src
       - ./.env:/home/nao/.env
       - ./share:/home/nao/share
+      - ./strugg_letter_data:/home/nao/strugg_letter_data
+      - ./credentials:/home/nao/credentials
     command: bash
-
-  controller-development:
-    build:
-      context: .
-      dockerfile: ${FILE_PATH}/controller.Dockerfile
-    image: ${CONTROLLER_IMAGE}
-    container_name: ${CONTROLLER_CONTAINER}
-    user: nao
-    network_mode: host
-    volumes:
-      - ./src/controller:/home/nao/controller
 
   frontend-development:
     build:

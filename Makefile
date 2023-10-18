@@ -32,19 +32,15 @@ compose-up:
 
 # Without Docker Compose
 build-nodes: build-nodes-${ENV}
-build-controller: build-controller-${ENV}
 build-frontend: build-frontend-${ENV}
-build: build-nodes build-controller build-frontend
+build: build-nodes build-frontend
 
 run-nodes: run-nodes-${ENV}
-run-controller: run-controller-${ENV}
 run-frontend: run-frontend-${ENV}
 
 start-nodes: start-nodes-${ENV}
-start-controller: start-controller-${ENV}
 start-frontend: start-frontend-${ENV}
 
 rm-nodes: rm-nodes-${ENV}
-rm-controller: rm-controller-${ENV}
-rm-frontend: rm-controller-${ENV}
-rm: rm-nodes rm-controller rm-frontend
+rm-frontend: rm-frontend-${ENV}
+rm: rm-nodes rm-frontend
