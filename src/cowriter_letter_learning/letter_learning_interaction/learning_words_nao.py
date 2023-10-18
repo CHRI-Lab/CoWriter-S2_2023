@@ -941,6 +941,11 @@ class LearningWordsNao(Node):
             next_state = "WAITING_FOR_WORD"
             sleep(0.1)  # Don't check again immediately
         else:
+            # signal stop conversation
+            self.publish_manager.pub_listening_signal.publish(
+                String(data="false")
+            )
+
             # Check for received word and modify next_state if so
             next_state, info_for_next_state = self.handle_word_received(
                 next_state, info_for_next_state
@@ -1094,7 +1099,7 @@ class LearningWordsNao(Node):
                 information for the next state.
         """
         self.get_logger().info("STATE: RESPONDING_TO_NEW_WORD")
-        word_to_learn = info_from_prev_state["word_received"].data
+        word_to_learn = info_from_prev_state["word_received"].data.lower()
         word_seen_before = self.device_manager.word_manager.new_collection(
             word_to_learn
         )

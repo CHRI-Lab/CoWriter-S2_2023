@@ -7,6 +7,7 @@
 # import sounddevice as sd
 # from scipy.io.wavfile import write
 import qi
+import os
 
 
 class NaoSettings:
@@ -34,8 +35,8 @@ class NaoSettings:
     # passed in as arguments, but treated as class variables.
 
     # Default behaviour is to connect to simulator locally
-    NAO_IP = "10.100.238.133"
-    NAO_PORT = 9559
+    NAO_IP = os.getenv("NAO_IP")
+    NAO_PORT = os.getenv("NAO_PORT")
     FRONT_INTERACTION = True
     NAO_HANDEDNESS = "right"
 

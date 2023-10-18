@@ -24,6 +24,7 @@ import qi
 # import motion
 import math
 import time
+import os
 
 
 class nao_writer_naoqi(Node):
@@ -60,9 +61,9 @@ class nao_writer_naoqi(Node):
         # ).json()
         TRAJ_TOPIC = "write_traj_nao"  # rospy.get_param('~trajectory_nao_input_topic','/write_traj_nao')
         # NAO_IP = self.declare_parameter("~nao_ip", "127.0.0.1").value
-        NAO_IP = "10.100.238.133"
+        NAO_IP = os.getenv("NAO_IP")
         # PORT = int(self.declare_parameter("~nao_port", "9559").value)
-        PORT = 9559
+        PORT = os.getenv("NAO_PORT")
         # NAO_HANDEDNESS = self.declare_parameter(
         #     "~nao_handedness", "right"
         # ).value
