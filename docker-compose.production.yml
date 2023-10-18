@@ -1,0 +1,40 @@
+version: '3.8'
+services:
+  nodes-production:
+    build:
+      context: .
+      dockerfile: ${FILE_PATH}/nodes.Dockerfile
+    image: ${NODES_IMAGE}
+    container_name: ${NODES_CONTAINER}
+    network_mode: host
+    devices:
+      - /dev/snd
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./.env:/home/nao/.env
+      - ./share:/home/nao/share
+      - ./strugg_letter_data:/home/nao/strugg_letter_data
+      - ./credentials:/home/nao/credentials
+
+  controller-production:
+    build:
+      context: .
+      dockerfile: ${FILE_PATH}/controller.Dockerfile
+    image: ${CONTROLLER_IMAGE}
+    container_name: ${CONTROLLER_CONTAINER}
+    network_mode: host
+    user: nao
+
+  frontend-production:
+    build:
+      context: .
+      dockerfile: ${FILE_PATH}/frontend.Dockerfile
+    image: ${FRONTEND_IMAGE}
+    container_name: ${FRONTEND_CONTAINER}
+    volumes:
+      - ./src/frontend/app:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - "80:80"

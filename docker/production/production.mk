@@ -1,8 +1,29 @@
+# Using Docker Compose
+compose-build-production:
+	docker-compose \
+		--file ${FILE_PATH}/docker-compose.yml \
+		build
+
+compose-up-production:
+	docker-compose \
+		--file ${FILE_PATH}/docker-compose.yml \
+		up
+
+# Without Docker Compose
 build-nodes-production:
-	docker build --tag ${NODES_IMAGE} --platform linux/amd64 --file ${FILE_PATH}/nodes.Dockerfile .
+	docker build \
+		--tag ${NODES_IMAGE} \
+		--file ${FILE_PATH}/nodes.Dockerfile .
 
 build-controller-production:
-	docker build --tag ${CONTROLLER_IMAGE} --platform linux/amd64 --file ${FILE_PATH}/controller.Dockerfile .
+	docker build \
+		--tag ${CONTROLLER_IMAGE} \
+		--file ${FILE_PATH}/controller.Dockerfile .
+
+build-frontend-production:
+	docker build \
+		--tag ${FRONTEND_IMAGE} \
+		--file ${FILE_PATH}/frontend.Dockerfile .
 
 run-nodes-production:
 	docker run -it --rm \
@@ -23,8 +44,19 @@ run-controller-production:
 		--network="host" \
 		${CONTROLLER_IMAGE}
 
+run-frontend-production:
+	docker run -it \
+		--name ${FRONTEND_CONTAINER} \
+		-p 80:80 \
+		-v ./src/frontend/app:/usr/src/app \
+        -v /usr/src/app/node_modules \
+		${FRONTEND_IMAGE}
+
 rm-nodes-production:
 	docker rm -f ${NODES_CONTAINER}
 
 rm-controller-production:
 	docker rm -f ${CONTROLLER_CONTAINER}
+
+rm-frontend-production:
+	docker rm -f ${FRONTEND_CONTAINER}
