@@ -15,11 +15,6 @@ build-nodes-production:
 		--tag ${NODES_IMAGE} \
 		--file ${FILE_PATH}/nodes.Dockerfile .
 
-build-controller-production:
-	docker build \
-		--tag ${CONTROLLER_IMAGE} \
-		--file ${FILE_PATH}/controller.Dockerfile .
-
 build-frontend-production:
 	docker build \
 		--tag ${FRONTEND_IMAGE} \
@@ -37,13 +32,6 @@ run-nodes-production:
 		-v ./credentials:/home/nao/credentials \
 		${NODES_IMAGE}
 
-run-controller-production:
-	docker run -it --rm \
-		--name ${CONTROLLER_CONTAINER} \
-		--user nao \
-		--network="host" \
-		${CONTROLLER_IMAGE}
-
 run-frontend-production:
 	docker run -it \
 		--name ${FRONTEND_CONTAINER} \
@@ -54,9 +42,6 @@ run-frontend-production:
 
 rm-nodes-production:
 	docker rm -f ${NODES_CONTAINER}
-
-rm-controller-production:
-	docker rm -f ${CONTROLLER_CONTAINER}
 
 rm-frontend-production:
 	docker rm -f ${FRONTEND_CONTAINER}
