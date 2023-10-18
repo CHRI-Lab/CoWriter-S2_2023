@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+  nodes-development:
+    build:
+      context: .
+      dockerfile: ${FILE_PATH}/nodes.Dockerfile
+    image: ${NODES_IMAGE}
+    container_name: ${NODES_CONTAINER}
+    user: nao
+    network_mode: host
+    stdin_open: true # docker run -i
+    tty: true # docker run -t
+    volumes:
+      - ./src:/home/nao/src
+      - ./.env:/home/nao/.env
+      - ./share:/home/nao/share
+    command: bash
+
+  controller-development:
+    build:
+      context: .
+      dockerfile: ${FILE_PATH}/controller.Dockerfile
+    image: ${CONTROLLER_IMAGE}
+    container_name: ${CONTROLLER_CONTAINER}
+    user: nao
+    network_mode: host
+    volumes:
+      - ./src/controller:/home/nao/controller
+
+  frontend-development:
+    build:
+      context: .
+      dockerfile: ${FILE_PATH}/frontend.Dockerfile
+    image: ${FRONTEND_IMAGE}
+    container_name: ${FRONTEND_CONTAINER}
+    volumes:
+      - ./src/frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - 3000:3000
+    command: npm run dev
