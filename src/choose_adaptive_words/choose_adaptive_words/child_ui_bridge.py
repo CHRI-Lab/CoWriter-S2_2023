@@ -146,7 +146,7 @@ class ChildUIBridge(Node):
             ]
             x_coords, y_coords = zip(*corrected_stroke_value)
             # plt.figure(figsize=(6, 6))
-            plt.plot(x_coords, y_coords, "-", linewidth=8)
+            plt.plot(x_coords, y_coords, "-", linewidth=8, color="black")
             plt.axis("off")
             plt.savefig(
                 f"/home/nao/strugg_letter_data/{k}.png",
@@ -156,7 +156,7 @@ class ChildUIBridge(Node):
                 pad_inches=0,
             )
             plt.close()
-            strokes_value += corrected_stroke_value
+            strokes_value += stroke_value
         self.publish_letter_files_ready.publish(String(data=self.inputText))
 
         return self.pack_writing_pts(strokes_value)

@@ -21,7 +21,7 @@ from cowriter_letter_learning.Redback_Learning.shape_learner_manager import (
 class InputInterpreter(Node, threading.Thread):
     def __init__(self):
         # define topic - strokeMessage
-        self.publisher_ = self.create_publisher(Strokes, "strokesMessage", 10)
+        # self.publisher_ = self.create_publisher(Strokes, "strokesMessage", 10)
 
         # define service - get demo characters
         self.cli = self.create_client(GetDemo, "get_demo")
@@ -33,9 +33,9 @@ class InputInterpreter(Node, threading.Thread):
 
         self.get_demo_response = None
 
-    def publish_strokesMessage(self, msg):
-        self.publisher_.publish(msg)
-        self.get_logger().info(f"InputInterpreter publish: {msg.shape_type}")
+    # def publish_strokesMessage(self, msg):
+    #     self.publisher_.publish(msg)
+    #     self.get_logger().info(f"InputInterpreter publish: {msg.shape_type}")
 
     def send_request(self, word):
         self.get_logger().info(

@@ -63,8 +63,8 @@ class ManagerUIBridge(Node):
         self.get_logger().info("published " + word + " to /words_to_write")
         self.text_image = word
         self.publish_word_to_write.publish(String(data=word))
-        # image_url = self.ai_image.generate_image(self.text_image)
-        image_url = ""
+        image_url = self.ai_image.generate_image(self.text_image)
+        # image_url = ""
         self.publish_image_url.publish(String(data=image_url))
 
     def gpt_text(self, text: str):
