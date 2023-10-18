@@ -16,11 +16,6 @@ build-nodes-development:
 		--tag ${NODES_IMAGE} \
 		--file ${FILE_PATH}/nodes.Dockerfile .
 
-build-controller-development:
-	docker build \
-		--tag ${CONTROLLER_IMAGE} \
-		--file ${FILE_PATH}/controller.Dockerfile .
-
 build-frontend-development:
 	docker build \
 		--tag ${FRONTEND_IMAGE} \
@@ -37,13 +32,6 @@ run-nodes-development:
 		-v ./.env:/home/nao/.env \
 		${NODES_IMAGE}
 
-run-controller-development:
-	docker run -it \
-		--name ${CONTROLLER_CONTAINER} \
-		-p 3000:3000 \
-		-v ./src/controller:/home/nao/controller \
-		${CONTROLLER_IMAGE}
-
 run-frontend-development:
 	docker run -it \
 		--name ${FRONTEND_CONTAINER} \
@@ -54,17 +42,11 @@ run-frontend-development:
 start-nodes-development:
 	docker start ${NODES_CONTAINER}
 
-start-controller-development:
-	docker start ${CONTROLLER_CONTAINER}
-
 start-frontend-development:
 	docker start ${FRONTEND_CONTAINER}
 
 rm-nodes-development:
 	docker rm -f ${NODES_CONTAINER}
-
-rm-controller-development:
-	docker rm -f ${CONTROLLER_CONTAINER}
 	
 rm-frontend-development:
 	docker rm -f ${FRONTEND_CONTAINER}
