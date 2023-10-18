@@ -24,8 +24,5 @@ services:
       dockerfile: ${FILE_PATH}/frontend.Dockerfile
     image: ${FRONTEND_IMAGE}
     container_name: ${FRONTEND_CONTAINER}
-    volumes:
-      - ./src/frontend/app:/usr/src/app
-      - /usr/src/app/node_modules
     ports:
       - "80:80"
