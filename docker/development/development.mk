@@ -9,9 +9,10 @@ run-nodes-development:
 		--name ${NODES_CONTAINER} \
 		--user nao \
 		--network host \
+		--device /dev/snd \
+		-v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=${DISPLAY} \
 		-v ./src:/home/nao/src \
 		-v ./.env:/home/nao/.env \
-		-v ./share:/home/nao/share \
 		${NODES_IMAGE}
 
 run-controller-development:

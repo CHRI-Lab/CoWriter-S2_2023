@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>speech_recognition</name>
+  <version>0.0.0</version>
+  <description>Processing audio data from audio_capture into transcript by using google speech to text</description>
+  <maintainer email="chienpu.lin@student.unimelb.edu.au">Chien-Pu Lin</maintainer>
+  <license>MIT</license>
+
+  <depend>rospy</depend>
+  <depend>message_generation</depend>
+  <depend>std_msgs</depend>
+
+  <exec_depend>message_runtime</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

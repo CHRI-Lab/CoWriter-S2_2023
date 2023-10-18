@@ -13,6 +13,7 @@ run-nodes-production:
 		-v ./.env:/home/nao/.env \
 		-v ./share:/home/nao/share \
 		-v ./strugg_letter_data:/home/nao/strugg_letter_data \
+		-v ./credentials:/home/nao/credentials \
 		${NODES_IMAGE}
 
 run-controller-production:
