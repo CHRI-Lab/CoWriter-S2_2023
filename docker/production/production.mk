@@ -1,11 +1,11 @@
 # Using Docker Compose
 compose-build-production:
-	docker-compose \
+	docker compose \
 		--file ${FILE_PATH}/docker-compose.yml \
 		build
 
 compose-up-production:
-	docker-compose \
+	docker compose \
 		--file ${FILE_PATH}/docker-compose.yml \
 		up
 

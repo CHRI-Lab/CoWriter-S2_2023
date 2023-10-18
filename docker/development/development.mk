@@ -1,12 +1,12 @@
 # With Docker Compose
 compose-build-development:
-	docker-compose \
+	docker compose \
 		--file ${FILE_PATH}/docker-compose.yml \
 		--env-file ./docker/docker.env \
 		build
 
 compose-up-development:
-	docker-compose \
+	docker compose \
 		--file ${FILE_PATH}/docker-compose.yml \
 		up
 
