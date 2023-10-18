@@ -15,6 +15,8 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ./.env:/home/nao/.env
       - ./share:/home/nao/share
+      - ./strugg_letter_data:/home/nao/strugg_letter_data
+      - ./credentials:/home/nao/credentials
 
   controller-production:
     build:
