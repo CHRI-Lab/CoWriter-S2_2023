@@ -10,5 +10,15 @@ def generate_launch_description():
                 executable="backend",
                 name="backend",
             ),
+            Node(
+                package="choose_adaptive_words",
+                executable="child_ui",
+                name="child_ui",
+            ),
+            Node(
+                package="choose_adaptive_words",
+                executable="temp_backend",
+                name="temp_backend",
+            ),
         ]
     )

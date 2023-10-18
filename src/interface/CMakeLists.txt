@@ -26,6 +26,7 @@ set(msg_files
 set(srv_files
   "srv/ClearAllShapes.srv"
   "srv/DisplayNewShape.srv"
+  "srv/GenerateWord.srv"
   "srv/IsPossibleToDisplayNewShape.srv"
   "srv/IndexOfLocation.srv"
   "srv/ShapeAtLocation.srv"

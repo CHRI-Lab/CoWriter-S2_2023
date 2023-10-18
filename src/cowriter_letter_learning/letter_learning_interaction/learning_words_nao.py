@@ -13,10 +13,11 @@ from rclpy.clock import ROSClock
 from rclpy.duration import Duration
 from rclpy.time import Time
 from rclpy.node import Node
-
-from requests import Session
+from ament_index_python.packages import get_package_share_directory
 
 import threading
+
+from letter_learning_interaction.include.nao_controller import NaoSettings
 
 from letter_learning_interaction.include.wrapper_class import (
     DeviceManager,
@@ -26,6 +27,9 @@ from letter_learning_interaction.include.wrapper_class import (
 
 from letter_learning_interaction.include.phrase_manager import PhraseManagerGPT
 from letter_learning_interaction.include.phrase_manager import PhraseManager
+from letter_learning_interaction.include.gpt_word_generator import (
+    GPT_Word_Generator,
+)
 
 from letter_learning_interaction.include.interaction_settings import (
     InteractionSettings,
@@ -34,7 +38,7 @@ from letter_learning_interaction.include.state_machine import StateMachine
 from letter_learning_interaction.include.shape_modeler import ShapeModeler
 
 from interface.msg import Shape as ShapeMsg  # type: ignore
-from interface.srv import ClearAllShapes  # type: ignore
+from interface.srv import ClearAllShapes, GenerateWord  # type: ignore
 
 
 from nav_msgs.msg import Path
@@ -80,13 +84,11 @@ class LearningWordsNao(Node):
     def __init__(
         self,
         state_machine: StateMachine,
-        nao_settings,
-        session: Session,
+        nao_controller,
         phrase_manager: PhraseManager,
         generated_word_logger,
     ):
         super().__init__("learning_words_nao")
-        self.session = session
         self.declare_parameter("dataset_directory", "default")
         self.topics = SubscriberTopics(self)
         # listen for request to clear screen (from tablet)
@@ -99,12 +101,12 @@ class LearningWordsNao(Node):
         self.device_manager = DeviceManager(self)
         self.publish_manager = PublisherManager(self)
         self.managerGPT = PhraseManagerGPT("English")
+        self.gpt_word_generator = GPT_Word_Generator(self.managerGPT)
 
-        self.session = session
         self.publish_manager.init_publishers()
         self.generated_word_logger = generated_word_logger
 
-        self.nao_settings = nao_settings
+        self.nao_controller = nao_controller
         # self.managerGPT = managerGPT
         # self.device_manager = device_manager
         # self.publish_manager = publish_manager
@@ -129,13 +131,18 @@ class LearningWordsNao(Node):
 
         self.topics = SubscriberTopics(self)
 
+        self.create_service(
+            GenerateWord,
+            "generate_word_service",
+            self.generate_word_callback,
+        )
+
         self.create_subscription(
             String,
             self.topics.NEW_CHILD_TOPIC,
             self.on_new_child_received,
             10,
         )
-
         # listen for words to write
         self.create_subscription(
             String, self.topics.WORDS_TOPIC, self.on_word_received, 10
@@ -221,7 +228,7 @@ class LearningWordsNao(Node):
             self.dt,
             self.delay_before_executing,
         ) = InteractionSettings.get_trajectory_timings(
-            self.nao_settings.get("nao_writing")
+            self.nao_controller.nao_writing
         )
 
         # Phrase params are in nao_settings.phrase_manager
@@ -285,10 +292,18 @@ class LearningWordsNao(Node):
         self.get_logger().info("input for GPT: " + msg.data)
         if self.chatGPT_enabled:
             self.response = self.managerGPT.get_gpt_response(msg.data)
+            self.animation = self.managerGPT.get_motion_path(self.response)
             if self.chatGPT_to_say_enabled:
-                self.session.post(
-                    "http://localhost:5000/say", json={"phrase": self.response}
-                )
+                say_future = self.nao_controller.nao_async_say(self.response)
+                if self.animation is not None:
+                    self.get_logger().info("play animation: " + self.animation)
+                    ani_future = self.nao_controller.nao_async_animation(
+                        self.animation
+                    )
+                    self.get_logger().info(
+                        f"animation finish: {ani_future.value()}"
+                    )
+                self.get_logger().info(f"say finish: {say_future.value()}")
 
     def on_user_drawn_shape_received(self, shape: ShapeMsg) -> None:
         """
@@ -306,13 +321,17 @@ class LearningWordsNao(Node):
             self.get_logger().info("processing received shape")
             nbpts = int(len(shape.path) / 2)
             # Create a path from the shape by combining x and y coordinates into tuples
-            path = list(zip(shape.path[:nbpts], [-y for y in shape.path[nbpts:]]))
+            path = list(
+                zip(shape.path[:nbpts], [-y for y in shape.path[nbpts:]])
+            )
             self.get_logger().info(str(path))
             # self.get_logger().info(shape.path)
 
             # Split the path into segments based on a template
             demo_from_template = (
-                self.device_manager.screen_manager.split_path_from_template(path)
+                self.device_manager.screen_manager.split_path_from_template(
+                    path
+                )
             )  # type: ignore
             self.get_logger().info(str(demo_from_template))
             # If the demo_from_template is not empty
@@ -402,49 +421,37 @@ class LearningWordsNao(Node):
 
         :param message: The received new child message.
         """
-        if self.nao_settings.get("nao_writing"):
-            if self.nao_settings.get("nao_standing"):
-                self.session.post(
-                    "http://localhost:5000/go_to_posture",
-                    json={"posture": "StandInit", "speed": 0.3},
-                )
+        if self.nao_controller.nao_writing:
+            if self.nao_controller.nao_standing:
+                self.nao_controller.posture_proxy.goToPosture("StandInit", 0.3)
             else:
-                self.session.post("http://localhost:5000/rest")
-                self.session.post(
-                    "http://localhost:5000/set_stiffness",
-                    json={"joints": ["Head", "LArm", "RArm"], "set_stiffness": 0.5},
+                self.nao_controller.motion_proxy.rest()
+                self.nao_controller.motion_proxy.setStiffnesses(
+                    ["Head", "LArm", "RArm"],
+                    0.5,
                 )
-                self.session.post(
-                    "http://localhost:5000/set_stiffness",
-                    json={
-                        "joints": [
-                            "LHipYawPitch",
-                            "LHipRoll",
-                            "LHipPitch",
-                            "RHipYawPitch",
-                            "RHipRoll",
-                            "RHipPitch",
-                        ],
-                        "set_stiffness": 0.8,
-                    },
+                self.nao_controller.motion_proxy.setStiffnesses(
+                    [
+                        "LHipYawPitch",
+                        "LHipRoll",
+                        "LHipPitch",
+                        "RHipYawPitch",
+                        "RHipRoll",
+                        "RHipPitch",
+                    ],
+                    0.8,
                 )
 
-        if self.nao_settings.get("nao_speaking"):
-            if self.nao_settings.get("alternate_sides_looking_at"):
-                self.session.post(
-                    "http://localhost:5000/look_and_ask_for_feedback",
-                    json={
-                        "phrase": self.phrase_manager.intro_phrase,
-                        "side": self.nao_settings.get("next_side_to_look_at"),
-                    },
+        if self.nao_controller.nao_speaking:
+            if self.nao_controller.alternate_sides_looking_at:
+                self.nao_controller.look_and_ask_for_feedback(
+                    self.phrase_manager.intro_phrase,
+                    self.nao_controller.next_side_to_look_at,
                 )
             else:
-                self.session.post(
-                    "http://localhost:5000/look_and_ask_for_feedback",
-                    json={
-                        "phrase": self.phrase_manager.intro_phrase,
-                        "side": self.nao_settings.get("person_side"),
-                    },
+                self.nao_controller.look_and_ask_for_feedback(
+                    self.phrase_manager.intro_phrase,
+                    self.nao_controller.person_side,
                 )
         # clear screen
         self.publish_manager.pub_clear.publish(Empty())
@@ -466,6 +473,10 @@ class LearningWordsNao(Node):
         ):  # state machine hasn't started yet - word probably came from input arguments
             self.word_received = message
             self.get_logger().info(f"Received word: {self.word_received}")
+            # signal stop listening
+            self.publish_manager.pub_listening_signal.publish(
+                String(data="false")
+            )
         else:
             self.get_logger().info("no word received")
             self.word_received = None  # ignore
@@ -526,15 +537,29 @@ class LearningWordsNao(Node):
         self.get_logger().info("input for GPT: " + in_chat.data)
         if self.chatGPT_enabled:
             self.response = self.managerGPT.get_gpt_response(in_chat.data)
-            if self.nao_settings.get("nao_connected") and self.chatGPT_to_say_enabled:
-                self.session.post(
-                    "http://localhost:5000/say", json={"phrase": self.response}
+            self.animation = self.managerGPT.get_motion_path(self.response)
+            if (
+                self.nao_controller.nao_connected
+                and self.chatGPT_to_say_enabled
+            ):
+                say_future = self.nao_controller.nao_async_say(self.response)
+                if self.animation is not None:
+                    self.get_logger().info("play animation: " + self.animation)
+                    ani_future = self.nao_controller.nao_async_animation(
+                        self.animation
+                    )
+                    self.get_logger().info(
+                        f"animation finish: {ani_future.value()}"
+                    )
+
+                # signal listening again after nao speaks
+                self.get_logger().info(f"say finish: {say_future.value()}")
+                self.publish_manager.pub_listening_signal.publish(
+                    String(data="convo")
                 )
         else:
             self.response = "feedback"
-            self.session.post(
-                "http://localhost:5000/say", json={"phrase": "Thanks for feedback"}
-            )
+            self.nao_controller.text_to_speech.say("Thanks for feeback")
 
         self.feedback_received = self.response
 
@@ -607,7 +632,7 @@ class LearningWordsNao(Node):
 
         letters = "".join([s.shape_type for s in demo_shapes_received])
 
-        if self.nao_settings.get("nao_speaking"):
+        if self.nao_controller.nao_speaking:
             (
                 to_say,
                 self.phrase_manager.demo_response_phrases_counter,
@@ -617,10 +642,7 @@ class LearningWordsNao(Node):
                 letters,
             )
 
-            self.session.post(
-                "http://localhost:5000/nao_speak_and_log_phrase",
-                json={"phrase": to_say},
-            )
+            self.nao_controller.nao_speak_and_log_phrase(to_say)
 
         # 1- Update the shape models with the incoming demos
         for shape in demo_shapes_received:
@@ -633,8 +655,10 @@ class LearningWordsNao(Node):
                 f"Downsampling of {shape_name} done. "
                 + f"Demo received for {shape_name}"
             )
-            shape_index = self.device_manager.word_manager.current_collection.index(
-                shape_name
+            shape_index = (
+                self.device_manager.word_manager.current_collection.index(
+                    shape_name
+                )
             )
             self.device_manager.word_manager.respond_to_demonstration(
                 shape_index, glyph
@@ -678,7 +702,9 @@ class LearningWordsNao(Node):
         """
         # Log the current state
         self.get_logger().info("STATE: PUBLISHING_WORD")
-        self.get_logger().info("From " + info_from_prev_state["state_came_from"])
+        self.get_logger().info(
+            "From " + info_from_prev_state["state_came_from"]
+        )
         self.get_logger().info("To " + info_from_prev_state["state_go_to"])
 
         # Shape and place the word on the screen
@@ -708,8 +734,8 @@ class LearningWordsNao(Node):
             traj_start_position = None
 
         # Look at the tablet if the Nao is connected
-        if self.nao_settings.get("nao_connected"):
-            self.session.post("http://localhost:5000/look_at_tablet")
+        if self.nao_controller.nao_connected:
+            self.nao_controller.look_at_tablet()
 
         # Publish the trajectories
         # NOTE: need to handle pub_traj
@@ -763,10 +789,8 @@ class LearningWordsNao(Node):
         # Once shape is finished
         if self.shape_finished:
             # Draw the templates for the demonstrations
-            ref_boundingboxes = (
-                self.device_manager.screen_manager.place_reference_boundingboxes(
-                    self.device_manager.word_manager.current_collection
-                )
+            ref_boundingboxes = self.device_manager.screen_manager.place_reference_boundingboxes(
+                self.device_manager.word_manager.current_collection
             )
             for bb in ref_boundingboxes:
                 self.publish_manager.pub_bounding_boxes.publish(
@@ -804,7 +828,9 @@ class LearningWordsNao(Node):
 
         return next_state, info_for_next_state
 
-    def stop_interaction(self, info_from_prev_state: Dict[str, Any]) -> Tuple[str, int]:
+    def stop_interaction(
+        self, info_from_prev_state: Dict[str, Any]
+    ) -> Tuple[str, int]:
         """
         Stops the current interaction by having the NAO robot say the
         thank you phrase (if speaking is enabled), disabling effector
@@ -828,14 +854,13 @@ class LearningWordsNao(Node):
         self.get_logger().info("STATE: STOPPING")
 
         # Factor two if statements to method for NaoSettings
-        if self.nao_settings.get("nao_speaking"):
-            self.session.post(
-                "http://localhost:5000/nao_speak_and_log_phrase",
-                json={"phrase": self.phrase_manager.thank_you_phrase[0]},
+        if self.nao_controller.nao_speaking:
+            self.nao_controller.nao_speak_and_log_phrase(
+                self.phrase_manager.thank_you_phrase[0]
             )
 
         # Set nao to rest
-        self.session.post("http://localhost:5000/rest")
+        self.nao_controller.motion_proxy.rest()
 
         next_state = "EXIT"
         info_for_next_state = 0
@@ -864,11 +889,15 @@ class LearningWordsNao(Node):
         """
         self.get_logger().info("STATE: STARTING_INTERACTION")
         # If nao speaking say intro phrase
-        if self.nao_settings.get("nao_speaking"):
-            self.session.post(
-                "http://localhost:5000/handle_look_and_ask_for_feedback",
-                json={"phrase": self.phrase_manager.intro_phrase},
+        if self.nao_controller.nao_speaking:
+            ani_future = self.nao_controller.nao_async_animation(
+                "animations/Stand/Gestures/Hey_1"
             )
+            say_future = self.nao_controller.nao_async_say(
+                self.phrase_manager.intro_phrase
+            )
+            self.get_logger().info(f"say finish: {say_future.value()}")
+            self.get_logger().info(f"animation finish: {ani_future.value()}")
 
         next_state = "WAITING_FOR_WORD"
         info_for_next_state = {"state_came_from": "STARTING_INTERACTION"}
@@ -876,6 +905,20 @@ class LearningWordsNao(Node):
         next_state = self.check_stop_request_received(next_state)
 
         return next_state, info_for_next_state
+
+    def generate_word_callback(self, request, response) -> None:
+        """
+        Callback function that is triggered when a new word is
+        generated.
+
+        :param message: The generated word.
+        """
+        response.data = String(data=self.gpt_word_generator.generate_word())
+        self.get_logger().info("Generated word: " + str(response.data))
+        self.get_logger().info(
+            "message history: " + str(self.managerGPT.messages)
+        )
+        return response
 
     def wait_for_word(
         self, info_from_prev_state: Dict[str, Any]
@@ -904,7 +947,10 @@ class LearningWordsNao(Node):
             #     True)  # Turn camera on
 
         if info_from_prev_state["state_came_from"] == "STARTING_INTERACTION":
-            pass
+            # signal listening to start conversation
+            self.publish_manager.pub_listening_signal.publish(
+                String(data="convo")
+            )
 
         info_for_next_state = {"state_came_from": "WAITING_FOR_WORD"}
         if self.word_received is None:
@@ -971,7 +1017,9 @@ class LearningWordsNao(Node):
             #     self.demo_shapes_received
             # )
             self.get_logger().info("STATE: WAITING_FOR_FEEDBACK, got demo")
-            info_for_next_state["demo_shapes_received"] = self.demo_shapes_received
+            info_for_next_state[
+                "demo_shapes_received"
+            ] = self.demo_shapes_received
             self.demo_shapes_received = []
             # self.get_logger().info(
             #     self.demo_shapes_received
@@ -1062,12 +1110,12 @@ class LearningWordsNao(Node):
                 information for the next state.
         """
         self.get_logger().info("STATE: RESPONDING_TO_NEW_WORD")
-        word_to_learn = info_from_prev_state["word_received"].data
+        word_to_learn = info_from_prev_state["word_received"].data.lower()
         word_seen_before = self.device_manager.word_manager.new_collection(
             word_to_learn
         )
 
-        if self.nao_settings.get("nao_speaking"):
+        if self.nao_controller.nao_speaking:
             if word_seen_before:
                 # word_again_response_phrases doesnt exist
                 (
@@ -1089,10 +1137,7 @@ class LearningWordsNao(Node):
                     word_to_learn,
                 )
 
-            self.session.post(
-                "http://localhost:5000/nao_speak_and_log_phrase",
-                json={"phrase": to_say},
-            )
+            self.nao_controller.nao_speak_and_log_phrase(to_say)
 
         # Clear screen
         self.device_manager.screen_manager.clear()
@@ -1151,11 +1196,15 @@ class LearningWordsNao(Node):
                 the next state.
         """
         self.get_logger().info("STATE: ASKING_FOR_FEEDBACK")
-        self.get_logger().info("From " + info_from_prev_state["state_came_from"])
-        self.get_logger().info("item_written = " + info_from_prev_state["item_written"])
+        self.get_logger().info(
+            "From " + info_from_prev_state["state_came_from"]
+        )
+        self.get_logger().info(
+            "item_written = " + info_from_prev_state["item_written"]
+        )
 
         item_written = info_from_prev_state["item_written"]
-        if self.nao_settings.get("nao_speaking"):
+        if self.nao_controller.nao_speaking:
             (
                 to_say,
                 self.phrase_manager.asking_phrases_after_word_counter,
@@ -1165,11 +1214,8 @@ class LearningWordsNao(Node):
                 item_written,
             )
 
-            self.session.post(
-                "http://localhost:5000/handle_look_and_ask_for_feedback",
-                json={"phrase": to_say},
-            )
-            self.session.post("http://localhost:5000/look_at_tablet")
+            self.nao_controller.handle_look_and_ask_for_feedback(to_say)
+            self.nao_controller.look_at_tablet()
 
         next_state = "WAITING_FOR_FEEDBACK"
         info_for_next_state = {"state_came_from": "ASKING_FOR_FEEDBACK"}
@@ -1303,7 +1349,8 @@ class LearningWordsNao(Node):
         #     int(self.delay_before_executing)
         # )
         traj.header.stamp = (
-            ROSClock().now() + Duration(seconds=int(self.delay_before_executing))
+            ROSClock().now()
+            + Duration(seconds=int(self.delay_before_executing))
         ).to_msg()
 
         point_idx = 0
@@ -1333,28 +1380,25 @@ class LearningWordsNao(Node):
         return traj
 
 
-def get_nao_settings(session):
-    return session.get("http://localhost:5000/get_settings").json()
-
-
 def main(args=None):
     # Init node inside main to avoid running node if imported
     # rospy.init_node("learning_words_nao")
-    session = Session()
-    nao_settings = get_nao_settings(session)
-    phrase_manager = PhraseManager(nao_settings.get("LANGUAGE"))
+    nao_controller = NaoSettings()
+    phrase_manager = PhraseManager(nao_controller.LANGUAGE)
 
     rclpy.init(args=None)
 
     # init node
     # node = Node("learning_words_nao")
 
-    session = session
     # topics = SubscriberTopics(node)
 
     # dataset_directory = rospy.get_param("~dataset_directory", "default")
     # node.declare_parameter("dataset_directory", "default")
-    dataset_directory = "/home/nao/share/letter_model_datasets/alexis_set_for_children"  # noqa: E501
+    package_dir = get_package_share_directory("letter_learning_interaction")
+    dataset_directory = (
+        package_dir + "/datasets/alexis_set_for_children"
+    )  # noqa: E501
     # "default" #node.get_parameter("dataset_directory").value
 
     if dataset_directory.lower() == "default":  # use default
@@ -1378,7 +1422,10 @@ def main(args=None):
     # HACK: should properly configure the path from an option
     generated_word_logger = configure_logging(generated_word_logger)
     node = LearningWordsNao(
-        state_machine, nao_settings, session, phrase_manager, generated_word_logger
+        state_machine,
+        nao_controller,
+        phrase_manager,
+        generated_word_logger,
     )
 
     # Add interaction states to state machine
@@ -1402,7 +1449,7 @@ def main(args=None):
 
     # Set nao up for interaction
     # nao_settings.set_nao_interaction()
-    session.post("http://localhost:5000/set_interaction")
+    nao_controller.set_interaction()
 
     # Init subscribers
     # listen for a new child signal
@@ -1414,22 +1461,25 @@ def main(args=None):
     node.get_logger().info(
         "Nao configuration: writing=%s, speaking=%s (%s), standing=%s, handedness=%s"
         % (
-            nao_settings.get("nao_writing"),
-            nao_settings.get("nao_speaking"),
-            nao_settings.get("LANGUAGE"),
-            nao_settings.get("nao_standing"),
-            nao_settings.get("NAO_HANDEDNESS"),
+            nao_controller.nao_writing,
+            nao_controller.nao_speaking,
+            nao_controller.LANGUAGE,
+            nao_controller.nao_standing,
+            nao_controller.NAO_HANDEDNESS,
         )
     )
 
     # initialise word manager (passes feedback to shape learners
     # and keeps history of words learnt)
+    node.get_logger().info(f"dataset_directory: {dataset_directory}")
     InteractionSettings.set_dataset_directory(dataset_directory)
     # path to a log file where all learning steps will be stored
 
     # Start the interaction
     # state_machine.run(info_for_start_state)
-    thread = threading.Thread(target=lambda: state_machine.run(info_for_start_state))
+    thread = threading.Thread(
+        target=lambda: state_machine.run(info_for_start_state)
+    )
     thread.start()
 
     node.get_logger().info("Interaction started")

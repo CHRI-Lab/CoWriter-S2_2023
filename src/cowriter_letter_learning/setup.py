@@ -23,6 +23,32 @@ setup(
             os.path.join("share", package_name, "launch"),
             glob(os.path.join(package_name, "launch", "*.launch.py")),
         ),
+        (
+            os.path.join(
+                "share", package_name, "datasets/alexis_set_for_children"
+            ),
+            glob(
+                os.path.join(
+                    package_name, "datasets", "alexis_set_for_children/*.dat"
+                )
+            ),
+        ),
+        (
+            os.path.join("share", package_name, "datasets/bad_letters"),
+            glob(os.path.join(package_name, "datasets", "bad_letters/*.dat")),
+        ),
+        (
+            os.path.join("share", package_name, "datasets/uji_pen_chars2"),
+            glob(
+                os.path.join(package_name, "datasets", "uji_pen_chars2/*.dat")
+            ),
+        ),
+        (
+            os.path.join("share", package_name, "datasets/uji_pen_subset"),
+            glob(
+                os.path.join(package_name, "datasets", "uji_pen_subset/*.dat")
+            ),
+        ),
     ],
     # This is important as well
     install_requires=["setuptools"],

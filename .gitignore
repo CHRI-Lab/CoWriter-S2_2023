@@ -1,4 +1,6 @@
 ## SOURCE: https://github.com/github/gitignore/blob/main/Python.gitignore ##
+
+credentials/
 .vscode
 strugg_letter_data
 

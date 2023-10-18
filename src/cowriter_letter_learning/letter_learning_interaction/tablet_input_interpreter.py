@@ -93,7 +93,9 @@ class TabletInputInterpreter(Node):
 
         self.word_logger = logging.getLogger("word_logger")
         self.configure_logging(path)
-        self.position_to_shape_mapping_method: str = "basedOnClosestShapeToPosition"
+        self.position_to_shape_mapping_method: str = (
+            "basedOnClosestShapeToPosition"
+        )
         self.shape_preprocessing_method: str = "merge"
         self.strokes: List = []
         self.active_shape_for_demonstration_type: Optional[int] = None
@@ -115,7 +117,9 @@ class TabletInputInterpreter(Node):
         )
 
     def shape_at_location(self, request):
-        while not self.clear_all_shapes_service.wait_for_service(timeout_sec=1.0):
+        while not self.clear_all_shapes_service.wait_for_service(
+            timeout_sec=1.0
+        ):
             self.get_logger().info("Service is not available, waiting...")
 
         future = self.clear_all_shapes_service.call_async(request)
@@ -207,7 +211,9 @@ class TabletInputInterpreter(Node):
             number_of_pts: int = len(stroke) // 2
             # Stroke is formatted as [x0, ..., xn, y0, ..., yn]
             # Use number_of_pts indexing and zip to get [(x0, y0), ..., (xn, yn)]
-            xy_paths.append(list(zip(stroke[:number_of_pts], stroke[number_of_pts:])))
+            xy_paths.append(
+                list(zip(stroke[:number_of_pts], stroke[number_of_pts:]))
+            )
         self.get_logger().info(str(xy_paths))
 
         # Preprocess to turn multiple strokes into one path
@@ -310,7 +316,7 @@ class TabletInputInterpreter(Node):
                                     the gesture's position.
         """
         gesture_location = [message.point.x, message.point.y]
-        request = ShapeAtLocation()
+        request = ShapeAtLocation.Request()
         request.location.x = gesture_location[0]
         request.location.y = gesture_location[1]
         response = self.shape_at_location(request)

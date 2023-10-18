@@ -3,7 +3,7 @@
 
 from rclpy.node import Node
 from nav_msgs.msg import Path
-from std_msgs.msg import Empty, Bool, Float64MultiArray
+from std_msgs.msg import Empty, Bool, Float64MultiArray, String
 from .text_shaper import ScreenManager, TextShaper
 from .watchdog import Watchdog
 from .interaction_settings import InteractionSettings
@@ -49,6 +49,9 @@ class PublisherManager:
         #     "~clear_writing_surface_topic", "clear_screen"
         # )
 
+        # Signal speech recognition to start listening
+        self.LISTENING_SIGNAL_TOPIC = "listening_signal"
+
     def init_publishers(self):
         """
         Initialize all publishers for the interaction.
@@ -59,7 +62,9 @@ class PublisherManager:
             Bool, self.PUBLISH_STATUS_TOPIC, 10
         )
 
-        self.pub_traj = self.ros_node.create_publisher(Path, self.SHAPE_TOPIC, 10)
+        self.pub_traj = self.ros_node.create_publisher(
+            Path, self.SHAPE_TOPIC, 10
+        )
 
         self.pub_bounding_boxes = self.ros_node.create_publisher(
             Float64MultiArray, self.BOUNDING_BOXES_TOPIC, 10
@@ -71,6 +76,10 @@ class PublisherManager:
 
         self.pub_clear = self.ros_node.create_publisher(
             Empty, self.CLEAR_SURFACE_TOPIC, 10
+        )
+
+        self.pub_listening_signal = self.ros_node.create_publisher(
+            String, self.LISTENING_SIGNAL_TOPIC, 10
         )
 
 
@@ -146,9 +155,11 @@ class DeviceManager:
         self.SHAPE_LOGGING_PATH = ""
         # self.ros_node.get_parameter("~shape_log", "")
         self.word_manager = ShapeLearnerManager(
-            InteractionSettings.generate_settings, self.SHAPE_LOGGING_PATH
+            InteractionSettings.generate_settings,  # self.SHAPE_LOGGING_PATH
         )
 
-        self.tablet_watchdog = Watchdog("watchdog_clear/tablet", 0.4, self.ros_node)
+        self.tablet_watchdog = Watchdog(
+            "watchdog_clear/tablet", 0.4, self.ros_node
+        )
         self.screen_manager = ScreenManager(0.2, 0.1395)
         self.text_shaper: TextShaper = TextShaper()

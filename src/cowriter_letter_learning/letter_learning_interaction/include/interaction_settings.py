@@ -147,7 +147,7 @@ class InteractionSettings:
         """
         if language.lower() == "english":
             intro_phrase: str = (
-                "Hello. I'm Nao. Please show me a word to practice."
+                "Hello. I'm Nao. What are you interested in learning today?"
             )
             test_phrase: str = "Ok, test time. I'll try my best."
             thank_you_phrase: str = "Thank you for your help."

@@ -53,3 +53,8 @@ def child_profile():
 def robot_finished():
     current_app.manager_bridge.robot_finished()
     return {"status": "ok"}
+
+@MANAGER_BP.route("/generate_word", methods=["POST"])
+def generate_word():
+    response = current_app.manager_bridge.generate_word()
+    return {"word": response.data}
