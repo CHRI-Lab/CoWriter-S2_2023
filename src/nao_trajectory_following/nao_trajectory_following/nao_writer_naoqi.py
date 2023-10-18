@@ -89,7 +89,7 @@ class nao_writer_naoqi(Node):
         self.session = self.app.session
         self.motionProxy = self.session.service("ALMotion")
         # self.memoryProxy = self.session.service("ALMemory")
-        # self.postureProxy = self.session.service("ALRobotPosture")
+        self.postureProxy = self.session.service("ALRobotPosture")
         # self.ttsProxy = self.session.service("ALTextToSpeech")
         self.tl = TransformListener(
             Buffer(), self
@@ -125,6 +125,8 @@ class nao_writer_naoqi(Node):
         AXIS_MASK_WX = 8
 
         axisMask = [AXIS_MASK_X + AXIS_MASK_Y + AXIS_MASK_Z + AXIS_MASK_WX]
+
+        self.postureProxy.goToPosture("StandInit", 0.5)
 
         if self.effector == "LArm":
             self.motionProxy.openHand("LHand")
