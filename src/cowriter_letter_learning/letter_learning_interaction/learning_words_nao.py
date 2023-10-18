@@ -535,15 +535,13 @@ class LearningWordsNao(Node):
                 say_future = self.nao_controller.nao_async_say(self.response)
                 if self.animation != None:
                     self.get_logger().info("play animation: " + self.animation)
-                    ani_future = self.nao_controller.nao_async_animation(
-                        self.animation
-                    )
+                    self.nao_controller.nao_async_animation(self.animation)
 
                 # signal listening again after nao speaks
-                if say_future.value() and ani_future.value():
-                    self.publish_manager.pub_listening_signal.publish(
-                        String(data="convo")
-                    )
+                self.get_logger().info(f"say finish: {say_future.value()}")
+                self.publish_manager.pub_listening_signal.publish(
+                    String(data="convo")
+                )
         else:
             self.response = "feedback"
             self.nao_controller.text_to_speech.say("Thanks for feeback")
@@ -877,9 +875,13 @@ class LearningWordsNao(Node):
         self.get_logger().info("STATE: STARTING_INTERACTION")
         # If nao speaking say intro phrase
         if self.nao_controller.nao_speaking:
-            self.nao_controller.handle_look_and_ask_for_feedback(
+            self.nao_controller.nao_async_animation(
+                "animations/Stand/Gestures/Hey_1"
+            )
+            future = self.nao_controller.nao_async_say(
                 self.phrase_manager.intro_phrase
             )
+            self.get_logger().info(f"say finish: {future.value()}")
 
         next_state = "WAITING_FOR_WORD"
         info_for_next_state = {"state_came_from": "STARTING_INTERACTION"}
