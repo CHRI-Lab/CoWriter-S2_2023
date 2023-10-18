@@ -10,6 +10,7 @@ from .temp_backend import UIBackend
 
 TOPIC_WORDS_TO_WRITE = "words_to_write"
 
+
 # TODO @Difan
 def main():
     rclpy.init()
@@ -28,7 +29,7 @@ def main():
 
     app = create_app()
     app.manager_bridge = manager_bridge
-    #app.child_bridge = child_bridge
+    app.child_bridge = child_bridge
 
     try:
         app.run(host="0.0.0.0", port=3001, debug=True)
