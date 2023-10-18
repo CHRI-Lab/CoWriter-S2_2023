@@ -33,6 +33,11 @@ COPY ./requirements.txt ./requirements.txt
 RUN pip3 install -r requirements.txt
 RUN rm requirements.txt
 
+RUN apt-get install -y python3-pil tesseract-ocr libtesseract-dev tesseract-ocr-eng tesseract-ocr-script-latn
+
+RUN pip3 install pytesseract tesseract-ocr
+RUN pip3 install Pillow
+
 ENV MAIN_DIR=/home/nao
 ENV CMAKE_PREFIX_PATH=/opt/ros/humble
 ENV AMENT_PREFIX_PATH=/opt/ros/humble
@@ -70,6 +75,7 @@ WORKDIR ${MAIN_DIR}/src/interactive_markers
 RUN git checkout ros2
 WORKDIR ${MAIN_DIR}
 RUN colcon build --packages-select interactive_markers
+
 
 WORKDIR ${MAIN_DIR}/src/
 RUN git clone https://github.com/ros-drivers/audio_common.git/
@@ -110,7 +116,7 @@ COPY --from=build --chown=nao:nao ${MAIN_DIR}/install ${MAIN_DIR}/install
 # Note: I don't know why, but for letter_learning_interaction, the command "source install/setup.bash"
 # doesn't add the package to the AMENT_PREFIX_PATH, so we add it manually
 ENV AMENT_PREFIX_PATH=${AMENT_PREFIX_PATH}:/home/nao/install/letter_learning_interaction:/home/nao/install/interface:/home/nao/install/choose_adaptive_words:/home/nao/install/nao_trajectory_following
-
+RUN mkdir /home/nao/strugg_letter_data
 WORKDIR ${MAIN_DIR}
 
 # launch supervisor as root

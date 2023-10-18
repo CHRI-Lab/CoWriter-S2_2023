@@ -92,6 +92,7 @@ class UIBackend(Node):
         print(to_draw)
         msg = self.pack_writing_pts(points)
         self.publisher_shape_to_draw.publish(msg)
+        self.get_logger().info("Traj recieved!" + str(msg.data))
 
 
 def main(args=None):

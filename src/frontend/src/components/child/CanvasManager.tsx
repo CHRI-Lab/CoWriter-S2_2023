@@ -1,15 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState} from 'react';
 import axios from "axios";
 import '../css/canvas_manager.css'
 import Canvas from "./Canvas";
 
-import { UserInput } from "../../types/types";
+import {UserInput} from "../../types/types";
+
+
+const RobotTrajectory = ({traj}) => {
+    const createPathFromCoordinates = (coords): string => {
+        if (coords.length === 0) return "";
+        const [startCoord, ...restOfCoord] = coords;
+        return `${startCoord[0]}, ${startCoord[1]}` + " L" + restOfCoord.map(coord => `L ${coord[0]}, ${coord[1]}`).join(' ').substring(1);
+    }
+    
+    // console.log(createPathFromCoordinates(traj));
+    // console.log(traj)
+    return (
+        <svg width = '400' height ='400'>
+            {/* <rect width="100%" height="100%" fill="black"/> */}
+            <path d={`M ${createPathFromCoordinates(traj)}`} stroke="blue" fill="none" strokeWidth={2}/>
+        </svg>
+    );
+}
 
 
 const CanvasManager = () => {
     const [inputText, setInputText] = useState("");
     const [generateCanvas, setGenerateCanvas] = useState(false);
     const [userInputs, setUserInputs] = useState<UserInput[]>([]);
+    const [imageURL, setImageURL] = useState("")
+    const [traj , setTraj] = useState([])
 
     const updateUserInputs = (index: number, userInput: UserInput) => {
         let updatedUserInputs = [...userInputs];
@@ -21,49 +41,98 @@ const CanvasManager = () => {
         setUserInputs([]);
     }, [inputText]);
 
+
+
     const sendStrokesToBackend = async () => {
         console.log(userInputs)
         try {
-            const response = await axios.post('http://127.0.0.1:5000/send_strokes', userInputs);
+            const response = await axios.post('http://127.0.0.1:3001/child/send_strokes', userInputs);
 
             console.log(response.data);
+            // setGenerateCanvas(false);
         } catch (error) {
             console.error('Error sending strokes to the backend:', error);
         }
     };
 
-    const getWordDemo = async (word: string) => {
-        console.log(word)
-        try {
-            const response = await axios.post('http://127.0.0.1:5000/get_demo', { 'word': word });
+    useEffect(() => {
+        const updateImage = async () => {
+            try {
+                // Make axios request to the server to get the updated image URL
+                const response = await axios.post('http://127.0.0.1:3001/child/update_url'); 
 
-            console.log('reponse', response.data);
-        } catch (error) {
-            console.error('Error sending strokes to the backend:', error);
-        }
-    }
+                console.log(response.data);
+                setImageURL(response.data['image_url']);
+                setInputText(response.data['text_to_write']);
+                setGenerateCanvas(response.data['generate_canvas']);
+
+            } catch (error) {
+                console.error('Error fetching updated image:', error);
+            }
+        };
+
+        // Update the image every 1000 milliseconds (5 seconds)
+        const imageUpdateInterval = setInterval(updateImage, 5000);
+
+        // Clear the interval when the component unmounts
+        return () => clearInterval(imageUpdateInterval);
+    }, []);
+
+    useEffect(() => {
+        const updataTraj = async () => {
+            try {
+                // Make axios request to the server to get the updated image URL
+                const response = await axios.post('http://127.0.0.1:3001/child/update_traj'); 
+
+                console.log(response.data);
+
+                setTraj(response.data["traj"])
+            } catch (error) {
+                console.error('Error fetching updated image:', error);
+            }
+        };
+
+        // Update the image every 1000 milliseconds (5 seconds)
+        const updataTrajInterval = setInterval(updataTraj, 5000);
+
+        // Clear the interval when the component unmounts
+        return () => clearInterval(updataTrajInterval);
+    }, []);
+
+    // useEffect(() => {
+    //     const eraseCanvas = async () => {
+
+    //         try {
+    //             // Make axios request to the server to get the updated image URL
+    //             const response = await axios.post('http://127.0.0.1:3001/child/erase_canvas'); 
+
+    //             console.log(response.data);
+
+    //             if (response.data["erase_canvas"] === "erased") {
+
+    //             }
+
+    //         } catch (error) {
+    //             console.error('Error fetching updated image:', error);
+    //         }
+    //     };
+
+    //     // Update the image every 5000 milliseconds (5 seconds)
+    //     const updateEraseCanvas = setInterval(eraseCanvas, 5000);
+
+    //     // Clear the interval when the component unmounts
+    //     return () => clearInterval(updateEraseCanvas);
+
+    // }, []);
 
     return (
+
         <div id="canvas_manager" className="container-fluid">
+
+            <img src= {imageURL} alt = "Image generated by OpenAI"/>
+            <hr/>
             <button type="button" className="btn btn-info" onClick={sendStrokesToBackend}>Done</button>
-            <button type="button" className="btn btn-warning" onClick={() => { setInputText("") }}>Clear</button>
-            <hr />
-            <input
-                type="text"
-                className="form-control"
-                placeholder="input text"
-                value={inputText}
-                onChange={
-                    (event) => {
-                        setInputText(event.target.value);
-                        setGenerateCanvas(true);
-                        getWordDemo(event.target.value);
-                    }
-                }
-            />
-            <hr />
-
-
+  
             <div className="row d-flex flex-row">
                 {generateCanvas && Array.from(inputText).map((char, index) => (
                     <div key={index} className="col-auto">
@@ -78,6 +147,8 @@ const CanvasManager = () => {
                     </div>
                 ))}
             </div>
+            < RobotTrajectory traj = {traj} />
+
         </div>
     )
 };
