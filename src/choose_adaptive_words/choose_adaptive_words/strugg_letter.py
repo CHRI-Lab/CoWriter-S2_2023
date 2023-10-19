@@ -71,7 +71,7 @@ class StruggLetterNode(Node):
         # Open and resize the images, assuming they have the same size
         images = [
             Image.open(filename).resize((255, 255))
-            for filename in image_filenames
+            for filename in sorted(image_filenames)
         ]
 
         # Calculate the size of the combined image
@@ -234,6 +234,6 @@ class StruggLetterNode(Node):
         )
         self.get_logger().info("response " + str(response.json()))
         result1 = response.json()
-        result1 = result1['value']
+        result1 = result1["value"]
 
         return result1

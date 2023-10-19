@@ -950,17 +950,19 @@ class LearningWordsNao(Node):
         next_state = None
         if info_from_prev_state["state_came_from"] != "WAITING_FOR_WORD":
             self.get_logger().info("STATE: WAITING_FOR_WORD")
-            # signal listening to start conversation
-            self.publish_manager.pub_listening_signal.publish(
-                String(data="convo")
-            )
-
             # broken for now (pub_camera_status in PublisherManager class)
             # self.publish_manager.pub_camera_status.publish(
             #     True)  # Turn camera on
 
-        if info_from_prev_state["state_came_from"] == "STARTING_INTERACTION":
-            pass
+        if (
+            info_from_prev_state["state_came_from"] == "STARTING_INTERACTION"
+            or info_from_prev_state["state_came_from"]
+            == "RESPONDING_TO_DEMONSTRATION_FULL_WORD"
+        ):
+            # signal listening to start conversation
+            self.publish_manager.pub_listening_signal.publish(
+                String(data="convo")
+            )
 
         info_for_next_state = {"state_came_from": "WAITING_FOR_WORD"}
         if self.word_received is None:
