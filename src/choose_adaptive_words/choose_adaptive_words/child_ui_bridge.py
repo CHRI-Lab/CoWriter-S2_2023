@@ -146,7 +146,7 @@ class ChildUIBridge(Node):
             ]
             x_coords, y_coords = zip(*corrected_stroke_value)
             # plt.figure(figsize=(6, 6))
-            plt.plot(x_coords, y_coords, "-", linewidth=8, color="black")
+            plt.plot(x_coords, y_coords, "-", linewidth=10, color="black")
             plt.axis("off")
             plt.savefig(
                 f"/home/nao/strugg_letter_data/{k}.png",

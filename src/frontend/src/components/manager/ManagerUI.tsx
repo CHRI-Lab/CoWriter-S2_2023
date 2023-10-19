@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect} from 'react';
 import axios from 'axios';
+
 
 
 const WordToWriteInput: React.FC<{
@@ -200,6 +201,8 @@ const ChildProfile = () => {
 
 const CanvasManager = () => {
     const [wordToWrite, setWordToWrite] = useState<string>('');
+    const [feedback, setFeedback] = useState("")
+
 
     const robotFinished = async () => {
         try {
@@ -231,6 +234,27 @@ const CanvasManager = () => {
         }
     }
 
+    useEffect(() => {
+        const updateFeedback = async () => {
+            try {
+                // Make axios request to the server to get the updated feedback
+                const response = await axios.post('http://127.0.0.1:3001/child/update_feedback'); 
+
+                console.log(response.data);
+                setFeedback(response.data['feedback']);
+
+            } catch (error) {
+                console.error('Error fetching updated feedback:', error);
+            }
+        };
+
+        // Update the image every 1000 milliseconds (5 seconds)
+        const imageUpdateInterval = setInterval(updateFeedback, 5000);
+
+        // Clear the interval when the component unmounts
+        return () => clearInterval(imageUpdateInterval);
+    }, []);
+
 
     return (
         <div id="canvas_manager" className="container-fluid">
@@ -242,6 +266,7 @@ const CanvasManager = () => {
             <button onClick={stopRobot}>Stop</button>
             <button onClick={generateWord}>Generate Word</button>
             <button onClick={erase}>Erase</button>
+            <p>{feedback}</p>
 
             <h2>Child Profile</h2>
             <ChildProfile />
