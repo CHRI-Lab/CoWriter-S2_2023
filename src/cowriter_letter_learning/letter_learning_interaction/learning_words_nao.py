@@ -291,6 +291,11 @@ class LearningWordsNao(Node):
         """
         self.get_logger().info("input for GPT: " + msg.data)
         if self.chatGPT_enabled:
+            # stop listening
+            self.publish_manager.pub_listening_signal.publish(
+                String(data="false")
+            )
+
             self.response = self.managerGPT.get_gpt_response(msg.data)
             self.animation = self.managerGPT.get_motion_path(self.response)
             if self.chatGPT_to_say_enabled:
@@ -307,6 +312,11 @@ class LearningWordsNao(Node):
                         f"animation finish: {ani_future.value()}"
                     )
                 self.get_logger().info(f"say finish: {say_future.value()}")
+
+            # start listening again
+            self.publish_manager.pub_listening_signal.publish(
+                String(data="convo")
+            )
 
     def on_user_drawn_shape_received(self, shape: ShapeMsg) -> None:
         """
@@ -957,7 +967,7 @@ class LearningWordsNao(Node):
         if (
             info_from_prev_state["state_came_from"] == "STARTING_INTERACTION"
             or info_from_prev_state["state_came_from"]
-            == "RESPONDING_TO_DEMONSTRATION_FULL_WORD"
+            == "WAITING_FOR_LETTER_TO_FINISH"
         ):
             # signal listening to start conversation
             self.publish_manager.pub_listening_signal.publish(

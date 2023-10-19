@@ -150,7 +150,7 @@ class NaoSettings:
             # textToSpeech.setVolume(1.0)
             if self.nao_writing:
                 if self.nao_standing:
-                    self.posture_proxy.goToPosture("StandInit", 0.2)
+                    self.posture_proxy.goToPosture("StandInit", 0.5)
                     self.motion_proxy.wbEnableEffectorControl(
                         self.effector, True
                     )  # turn whole body motion control on
