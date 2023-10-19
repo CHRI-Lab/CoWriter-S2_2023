@@ -29,6 +29,16 @@ def update_url():
     )
 
 
+@CHILD_BP.route("/update_feedback", methods=["POST"])
+def update_feedback():
+    feedback = current_app.strugg_backendid.feedback
+    return jsonify(
+        {
+            "feedback": feedback,
+        }
+    )
+
+
 @CHILD_BP.route("/send_strokes", methods=["POST"])
 def send_strokes():
     user_inputs = request.json

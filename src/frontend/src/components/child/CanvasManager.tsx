@@ -78,6 +78,7 @@ const CanvasManager = () => {
         return () => clearInterval(imageUpdateInterval);
     }, []);
 
+
     useEffect(() => {
         const updataTraj = async () => {
             try {

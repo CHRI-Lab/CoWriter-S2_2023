@@ -42,11 +42,13 @@ class StruggLetterNode(Node):
             String, FEEDBACK_READY_TOPIC, 10
         )
         self.track = None
+        self.feedback = ""
 
     def pentrack(self, msg):
         self.track = msg.data
 
     def compute_strugg_feedback(self, msg):
+        self.feedback = ""
         word = str(msg.data)
         # images_dir = "/home/nao/strugg_letter_data/"
         # image_files = glob(os.path.join(images_dir, "*.png"))
@@ -105,6 +107,13 @@ class StruggLetterNode(Node):
                             + text[i]
                             + " seems good! Keep going!"
                         )
+                        self.feedback = (
+                            self.feedback
+                            + "Your wrote letter: "
+                            + text[i]
+                            + " seems good! Keep going!/n"
+                        )
+
                     elif text[i] == result[i].lower():
                         self.get_logger().info(
                             "-------------------------------------------"
@@ -115,6 +124,13 @@ class StruggLetterNode(Node):
                             + text[i]
                             + " seems good! Keep going!"
                         )
+                        self.feedback = (
+                            self.feedback
+                            + "Your wrote letter: "
+                            + text[i]
+                            + " seems good! Keep going!/n"
+                        )
+
                     else:
                         self.get_logger().info(
                             "-------------------------------------------"
@@ -127,6 +143,15 @@ class StruggLetterNode(Node):
                             + result[i]
                             + ". Please practice more"
                         )
+                        self.feedback = (
+                            self.feedback
+                            + "Your wrote letter: "
+                            + text[i]
+                            + " looks like: "
+                            + result[i]
+                            + ". Please practice more/n"
+                        )
+
             else:
                 self.get_logger().info(
                     "You witing looks like: "
@@ -134,12 +159,21 @@ class StruggLetterNode(Node):
                     + ", so it does match your input word."
                 )
 
+                self.feedback = (
+                    self.feedback
+                    + "You witing looks like: "
+                    + result
+                    + ", so it does match your input word./n"
+                )
+
             self.get_logger().info("Feedback Finished")
+            self.feedback = self.feedback + "Feedback Finished/n"
             self.get_logger().info(
                 "-------------------------------------------"
             )
         else:
             self.get_logger().info("You did not input any word")
+            self.feedback = self.feedback + "You did not input any word/n"
 
         # self.get_logger().info(word + "!!!!!!!!!!")
         # if word is not None:
