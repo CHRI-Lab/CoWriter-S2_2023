@@ -12,7 +12,6 @@ from .strugg_letter import StruggLetterNode
 TOPIC_WORDS_TO_WRITE = "words_to_write"
 
 
-# TODO @Difan
 def main():
     rclpy.init()
 

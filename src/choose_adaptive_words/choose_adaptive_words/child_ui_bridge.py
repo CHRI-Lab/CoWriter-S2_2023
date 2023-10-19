@@ -7,11 +7,12 @@ from std_msgs.msg import (
 
 import rclpy
 from rclpy.node import Node
-
+import os, shutil
 from interface.msg import Strokes, Stroke
 from interface.srv import GetDemo, TextToImage
 from nav_msgs.msg import Path
 import matplotlib.pyplot as plt
+import uuid
 
 # from choose_adaptive_words.input_interpreter import InputInterpreter
 
@@ -131,6 +132,9 @@ class ChildUIBridge(Node):
     # create strokes msg for publishing
     def process_user_input(self, user_inputs):
         # print(user_input, type(user_input))
+        image_directory = "/home/nao/strugg_letter_data/"
+        current_folder = os.path.join(image_directory, uuid.uuid4().hex)
+        os.makedirs(current_folder)
         # strokes = Strokes()
         strokes_value = []
         for k, user_input in enumerate(user_inputs):
@@ -149,7 +153,7 @@ class ChildUIBridge(Node):
             plt.plot(x_coords, y_coords, "-", linewidth=10, color="black")
             plt.axis("off")
             plt.savefig(
-                f"/home/nao/strugg_letter_data/{k}.png",
+               os.path.join(current_folder, f"{k}.png"),
                 format="png",
                 dpi=300,
                 bbox_inches="tight",

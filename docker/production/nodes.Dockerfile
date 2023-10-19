@@ -114,6 +114,8 @@ ENV AMENT_PREFIX_PATH=${AMENT_PREFIX_PATH}:/home/nao/install/letter_learning_int
 RUN mkdir /home/nao/strugg_letter_data
 WORKDIR ${MAIN_DIR}
 
+RUN pip3 install Pillow
+
 # launch supervisor as root
 USER root
 CMD ["/usr/bin/supervisord"]

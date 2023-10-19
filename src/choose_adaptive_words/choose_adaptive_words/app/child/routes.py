@@ -3,18 +3,6 @@ from flask import Blueprint, request, current_app, jsonify
 CHILD_BP = Blueprint("child", __name__, url_prefix="/child")
 
 
-# TODO: Difan
-
-
-# @CHILD_BP.route("/send_text", methods=["POST"])
-# def send_Text():
-#     user_inputs = request.json
-#     inputText = user_inputs.get("inputText")
-#     image_url = current_app.child_bridge.call_generate_image(inputText)
-
-#     return jsonify({"image_url": image_url})
-
-
 @CHILD_BP.route("/update_url", methods=["POST"])
 def update_url():
     image_url = current_app.child_bridge.image_url
@@ -31,7 +19,7 @@ def update_url():
 
 @CHILD_BP.route("/update_feedback", methods=["POST"])
 def update_feedback():
-    feedback = current_app.strugg_backendid.feedback
+    feedback = current_app.strugg_backend.feedback
     return jsonify(
         {
             "feedback": feedback,

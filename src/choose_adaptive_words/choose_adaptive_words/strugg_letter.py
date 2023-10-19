@@ -4,6 +4,7 @@ from std_msgs.msg import (
     MultiArrayDimension,
     MultiArrayLayout,
 )
+
 import requests
 from glob import glob
 import rclpy
@@ -13,7 +14,6 @@ from interface.msg import Strokes, Stroke
 from interface.srv import GetDemo, TextToImage
 from nav_msgs.msg import Path
 import matplotlib.pyplot as plt
-import pytesseract
 from PIL import Image
 
 LETTER_FILES_READY_TOPIC = "files_ready"
@@ -42,13 +42,13 @@ class StruggLetterNode(Node):
             String, FEEDBACK_READY_TOPIC, 10
         )
         self.track = None
-        self.feedback = ""
+        self.feedback = []
 
     def pentrack(self, msg):
         self.track = msg.data
 
     def compute_strugg_feedback(self, msg):
-        self.feedback = ""
+        self.feedback = []
         word = str(msg.data)
         # images_dir = "/home/nao/strugg_letter_data/"
         # image_files = glob(os.path.join(images_dir, "*.png"))
@@ -57,13 +57,16 @@ class StruggLetterNode(Node):
 
         # Specify the directory where your images are located
         image_directory = "/home/nao/strugg_letter_data/"
+        cache_folders = [x[0] for x in os.walk(image_directory)]
+        cache_folders.sort(key=os.path.getmtime)
+        last_folder = cache_folders[-1]
 
         # Iterate through the files in the directory
-        for filename in os.listdir(image_directory):
+        for filename in os.listdir(last_folder):
             if filename.endswith(
                 ".png"
             ):  # You can adjust the file format as needed
-                image_filenames.append(os.path.join(image_directory, filename))
+                image_filenames.append(os.path.join(last_folder, filename))
 
         # Open and resize the images, assuming they have the same size
         images = [
@@ -82,12 +85,12 @@ class StruggLetterNode(Node):
             x_offset -= 255
 
         # Save the combined image
-        combined_image.save("/home/nao/strugg_letter_data/combined_image.png")
+        combined_image.save(os.path.join(last_folder, "combined_image.png"))
 
         if word is not None:
             text = word.strip()
             test_result = self.identify_strugg_letter(
-                "/home/nao/strugg_letter_data/combined_image.png"
+                os.path.join(last_folder, "combined_image.png")
             )
             a = test_result
             result = a.strip()
@@ -107,11 +110,10 @@ class StruggLetterNode(Node):
                             + text[i]
                             + " seems good! Keep going!"
                         )
-                        self.feedback = (
-                            self.feedback
-                            + "Your wrote letter: "
+                        self.feedback.append(
+                            "Your wrote letter: "
                             + text[i]
-                            + " seems good! Keep going!/n"
+                            + " seems good! Keep going!"
                         )
 
                     elif text[i] == result[i].lower():
@@ -124,11 +126,10 @@ class StruggLetterNode(Node):
                             + text[i]
                             + " seems good! Keep going!"
                         )
-                        self.feedback = (
-                            self.feedback
-                            + "Your wrote letter: "
+                        self.feedback.append(
+                            "Your wrote letter: "
                             + text[i]
-                            + " seems good! Keep going!/n"
+                            + " seems good! Keep going!"
                         )
 
                     else:
@@ -143,13 +144,12 @@ class StruggLetterNode(Node):
                             + result[i]
                             + ". Please practice more"
                         )
-                        self.feedback = (
-                            self.feedback
-                            + "Your wrote letter: "
+                        self.feedback.append(
+                            "Your wrote letter: "
                             + text[i]
                             + " looks like: "
                             + result[i]
-                            + ". Please practice more/n"
+                            + ". Please practice more"
                         )
 
             else:
@@ -159,21 +159,20 @@ class StruggLetterNode(Node):
                     + ", so it does match your input word."
                 )
 
-                self.feedback = (
-                    self.feedback
-                    + "You witing looks like: "
+                self.feedback.append(
+                    "You witing looks like: "
                     + result
-                    + ", so it does match your input word./n"
+                    + ", so it does match your input word."
                 )
 
             self.get_logger().info("Feedback Finished")
-            self.feedback = self.feedback + "Feedback Finished/n"
+            self.feedback.append("Feedback Finished")
             self.get_logger().info(
                 "-------------------------------------------"
             )
         else:
             self.get_logger().info("You did not input any word")
-            self.feedback = self.feedback + "You did not input any word/n"
+            self.feedback.append("You did not input any word")
 
         # self.get_logger().info(word + "!!!!!!!!!!")
         # if word is not None:
@@ -226,7 +225,7 @@ class StruggLetterNode(Node):
         files = {"srcImg": open(filename, "rb")}
         payload = {"Session": "string"}
         headers = {
-            "X-RapidAPI-Key": "c97960a792mshf676e38f49cd3e6p12b5abjsnb145d15144af",
+            "X-RapidAPI-Key": os.getenv("RAPIDAPI_KEY"),
             "X-RapidAPI-Host": "pen-to-print-handwriting-ocr.p.rapidapi.com",
         }
 
@@ -235,6 +234,6 @@ class StruggLetterNode(Node):
         )
         self.get_logger().info("response " + str(response.json()))
         result1 = response.json()
-        result1 = result1["value"]
+        result1 = result1['value']
 
         return result1

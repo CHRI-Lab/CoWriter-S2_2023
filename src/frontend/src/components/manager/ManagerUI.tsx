@@ -201,7 +201,7 @@ const ChildProfile = () => {
 
 const CanvasManager = () => {
     const [wordToWrite, setWordToWrite] = useState<string>('');
-    const [feedback, setFeedback] = useState("")
+    const [feedback, setFeedback] = useState<string[]>([])
 
 
     const robotFinished = async () => {
@@ -266,7 +266,11 @@ const CanvasManager = () => {
             <button onClick={stopRobot}>Stop</button>
             <button onClick={generateWord}>Generate Word</button>
             <button onClick={erase}>Erase</button>
-            <p>{feedback}</p>
+            <ul>
+            {feedback.map((item, index) => (
+                    <li key={index}>{item}</li>
+                ))}
+            </ul>
 
             <h2>Child Profile</h2>
             <ChildProfile />
