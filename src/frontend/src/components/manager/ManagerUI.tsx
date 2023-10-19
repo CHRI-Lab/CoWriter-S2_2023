@@ -218,13 +218,6 @@ const CanvasManager = () => {
             console.error('Error sending stop to the backend:', error);
         }
     }
-    const talkToMe = async () => {
-        try {
-            await axios.post('http://127.0.0.1:3001/manager/talk_to_me');
-        } catch (error) {
-            console.error('Error sending talk_to_me to the backend:', error);
-        }
-    }
     const erase = async () => {
         try {
             await axios.post('http://127.0.0.1:3001/manager/erase');
@@ -272,7 +265,6 @@ const CanvasManager = () => {
             <button onClick={robotFinished}>Robot finished</button>
             <button onClick={stopRobot}>Stop</button>
             <button onClick={generateWord}>Generate Word</button>
-            <button onClick={talkToMe}>Talk to me</button>
             <button onClick={erase}>Erase</button>
             <p>{feedback}</p>
 

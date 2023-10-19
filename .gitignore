@@ -2,7 +2,7 @@
 
 credentials/
 .vscode
-strugg_letter_data
+strugg_letter_data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

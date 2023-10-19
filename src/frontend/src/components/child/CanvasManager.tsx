@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect, useState} from 'react';
 import axios from "axios";
 import '../css/canvas_manager.css'
@@ -5,9 +6,13 @@ import Canvas from "./Canvas";
 
 import {UserInput} from "../../types/types";
 
+type Coordinate = [number, number];
+interface Stroke {
+    traj: Coordinate[];
+}
 
-const RobotTrajectory = ({traj}) => {
-    const createPathFromCoordinates = (coords): string => {
+const RobotTrajectory : React.FC<Stroke> = ({traj}) => {
+    const createPathFromCoordinates = (coords:Coordinate[]): string => {
         if (coords.length === 0) return "";
         const [startCoord, ...restOfCoord] = coords;
         return `${startCoord[0]}, ${startCoord[1]}` + " L" + restOfCoord.map(coord => `L ${coord[0]}, ${coord[1]}`).join(' ').substring(1);

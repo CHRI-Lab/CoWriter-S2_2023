@@ -1,15 +1,6 @@
-export FILE_PATH=./docker/${ENV}
-
-export NODES_IMAGE=nodes-${ENV}
-export CONTROLLER_IMAGE=controller-${ENV}
-
-export NODES_CONTAINER=nodes-${ENV}
-export CONTROLLER_CONTAINER=controller-${ENV}
-
-
+include ./docker/docker.env
 include ./docker/production/production.mk
 include ./docker/development/development.mk
-
 
 # ensure that the ENV variable is set to either "production" or "development"
 # before running any of the targets below
@@ -27,16 +18,29 @@ check-env:
 		echo "ENV is set to $(ENV)"; \
 	fi
 
+# Using Docker Compose
+compose-build:
+	docker compose \
+		--file docker-compose.${ENV}.yml \
+		--env-file ./docker/docker.env \
+		build
+compose-up:
+	docker compose \
+		--file docker-compose.${ENV}.yml \
+		--env-file ./docker/docker.env \
+		up
+
+# Without Docker Compose
 build-nodes: build-nodes-${ENV}
-build-controller: build-controller-${ENV}
-build: build-nodes build-controller
+build-frontend: build-frontend-${ENV}
+build: build-nodes build-frontend
 
 run-nodes: run-nodes-${ENV}
-run-controller: run-controller-${ENV}
+run-frontend: run-frontend-${ENV}
 
 start-nodes: start-nodes-${ENV}
-start-controller: start-controller-${ENV}
+start-frontend: start-frontend-${ENV}
 
 rm-nodes: rm-nodes-${ENV}
-rm-controller: rm-controller-${ENV}
-rm: rm-nodes rm-controller
+rm-frontend: rm-frontend-${ENV}
+rm: rm-nodes rm-frontend

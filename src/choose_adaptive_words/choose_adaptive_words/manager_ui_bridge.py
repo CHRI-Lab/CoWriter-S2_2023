@@ -2,7 +2,6 @@ from std_msgs.msg import String, Float32, Empty
 import rclpy
 from rclpy.node import Node
 
-from choose_adaptive_words.audio_processor import AudioProcessor
 from choose_adaptive_words.child_profile import ChildProfile
 from choose_adaptive_words.ai_image import AiImage
 from interface.srv import GenerateWord
@@ -18,7 +17,6 @@ TOPIC_IMAGE_URL = "image_url"
 class ManagerUIBridge(Node):
     def __init__(self):
         super().__init__("manager_ui_bridge")
-        self.ap = AudioProcessor("english", self)
         self.publish_word_to_write = self.create_publisher(
             String, TOPIC_WORDS_TO_WRITE, 10
         )
@@ -70,10 +68,6 @@ class ManagerUIBridge(Node):
         image_url = ""
 
         self.publish_manager_erase.publish(String(data="erased"))
-
-    def talk_to_me(self):
-        self.ap.run()
-        self.transcription_publisher.publish(String(data=self.ap.transcription))
 
     def word_to_write(self, word: str):
         self.get_logger().info("published " + word + " to /words_to_write")

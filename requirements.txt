@@ -1,7 +1,6 @@
 numpy==1.23.5
 tensorflow==2.11.0
 pandas==1.5.3
-PyQt5==5.14.1
 motion==0.2.0
 scikit-learn==1.2.2
 recordtype==1.4
@@ -24,7 +23,6 @@ google-cloud==0.34.0
 google-cloud-speech==2.21.0
 google-pasta==0.2.0
 googleapis-common-protos==1.60.0
-openai-whisper @ git+https://github.com/openai/whisper.git@e8622f9afc4eba139bf796c210f5c01081000472
 transforms3d
 Flask
 flask_cors

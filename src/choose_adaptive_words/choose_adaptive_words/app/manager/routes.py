@@ -16,12 +16,6 @@ def erase():
     return {"status": "ok"}
 
 
-@MANAGER_BP.route("/talk_to_me", methods=["POST"])
-def talk_to_me():
-    current_app.manager_bridge.talk_to_me()
-    return {"status": "ok"}
-
-
 @MANAGER_BP.route("/gpt_text", methods=["POST"])
 def gpt_text():
     data = request.get_json()

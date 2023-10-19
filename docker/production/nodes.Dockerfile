@@ -33,11 +33,6 @@ COPY ./requirements.txt ./requirements.txt
 RUN pip3 install -r requirements.txt
 RUN rm requirements.txt
 
-RUN apt-get install -y python3-pil tesseract-ocr libtesseract-dev tesseract-ocr-eng tesseract-ocr-script-latn
-
-RUN pip3 install pytesseract tesseract-ocr
-RUN pip3 install Pillow
-
 ENV MAIN_DIR=/home/nao
 ENV CMAKE_PREFIX_PATH=/opt/ros/humble
 ENV AMENT_PREFIX_PATH=/opt/ros/humble

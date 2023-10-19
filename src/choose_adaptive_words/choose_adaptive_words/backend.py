@@ -33,7 +33,7 @@ def main():
     app = create_app()
     app.manager_bridge = manager_bridge
     app.strugg_backend = strugg_backend
-    # app.child_bridge = child_bridge
+    app.child_bridge = child_bridge
 
     try:
         app.run(host="0.0.0.0", port=3001, debug=True)
@@ -43,6 +43,7 @@ def main():
         child_bridge.get_logger().info("Shutting down ROS2 Node . . .")
         child_bridge.destroy_node()
         ui_backend.destroy_node()
+        strugg_backend.destroy_node()
         executor.shutdown()
 
 
