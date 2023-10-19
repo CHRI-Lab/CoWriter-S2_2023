@@ -71,18 +71,18 @@ class StruggLetterNode(Node):
         # Open and resize the images, assuming they have the same size
         images = [
             Image.open(filename).resize((255, 255))
-            for filename in image_filenames
+            for filename in sorted(image_filenames)
         ]
 
         # Calculate the size of the combined image
-        total_width = (len(images) + 2) * 255
+        total_width = 255 *(len(images) + 2)
         combined_image = Image.new("RGB", (total_width, 255))
 
         # Paste the images side by side
-        x_offset = len(images) * 255
+        x_offset = 255
         for image in images:
             combined_image.paste(image, (x_offset, 0))
-            x_offset -= 255
+            x_offset += 255
 
         # Save the combined image
         combined_image.save(os.path.join(last_folder, "combined_image.png"))
