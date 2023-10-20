@@ -87,10 +87,6 @@ RUN colcon build --packages-select nao_trajectory_following
 RUN colcon build --packages-select letter_learning_interaction
 RUN colcon build --packages-select speech_recognition
 
-# fixing png images
-WORKDIR ${MAIN_DIR}
-RUN mogrify ./install/choose_adaptive_words/lib/python3.10/site-packages/choose_adaptive_words/design/assets/*.png
-
 
 FROM base
 
