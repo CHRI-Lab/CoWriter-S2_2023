@@ -77,13 +77,13 @@ class StruggLetterNode(Node):
         # Calculate the size of the combined image
         total_width = 255 * (len(images) + 2)
         combined_image = Image.new(
-            "RGB", (total_width, 255), color=(255, 255, 255)
+            "RGB", (total_width, 270), color=(255, 255, 255)
         )
 
         # Paste the images side by side
         x_offset = 255
         for image in images:
-            combined_image.paste(image, (x_offset, 0))
+            combined_image.paste(image, (x_offset, 15))
             x_offset += 255
 
         # Save the combined image
