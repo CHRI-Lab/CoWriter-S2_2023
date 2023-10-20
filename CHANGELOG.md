@@ -38,7 +38,7 @@
 - Migration of the manager UI to React
 - Migration of the child UI to React
 - Link made between the robot's speech and movements using ChatGPT
-- Integration of the struggling letter algorithm to the project
+- Integration of the struggling letter algorithm to the project (front + back)
 - Integration of the Google Speech to Text model (taken from Bluering) to the project
 
 
