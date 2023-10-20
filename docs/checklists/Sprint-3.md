@@ -31,7 +31,7 @@ Make sure that your task tracking satisfy the following criteria:
 ## Code Review (Week 10)
 Make sure that your code review satisfy the following criteria:
 
-- [ ] Students documented their peer-to-peer or chatgpt code review on GitHub (pull request comment)[THIS ITEM IS OPTIONAL].
+- [x] Students documented their peer-to-peer or chatgpt code review on GitHub (pull request comment)[THIS ITEM IS OPTIONAL].
 - [x] Students documented their peer-to-peer or chatgpt code review on Confluence (new page on Confluence to document how you performed your code review). 
 - [ ] In case you used ChatGPT in Week 10, please disconnect your GitHub repository from our ChatGPT Code Review one so you don't get charged in the future (or, make sure you continue to use this carefully and only when stricly necessary - do not use it for all commits)
 
