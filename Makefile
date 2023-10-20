@@ -1,6 +1,4 @@
 include ./docker/docker.env
-include ./docker/production/production.mk
-include ./docker/development/development.mk
 
 # ensure that the ENV variable is set to either "production" or "development"
 # before running any of the targets below
@@ -18,7 +16,6 @@ check-env:
 		echo "ENV is set to $(ENV)"; \
 	fi
 
-# Using Docker Compose
 compose-build:
 	docker compose \
 		--file docker-compose.${ENV}.yml \
@@ -29,18 +26,3 @@ compose-up:
 		--file docker-compose.${ENV}.yml \
 		--env-file ./docker/docker.env \
 		up
-
-# Without Docker Compose
-build-nodes: build-nodes-${ENV}
-build-frontend: build-frontend-${ENV}
-build: build-nodes build-frontend
-
-run-nodes: run-nodes-${ENV}
-run-frontend: run-frontend-${ENV}
-
-start-nodes: start-nodes-${ENV}
-start-frontend: start-frontend-${ENV}
-
-rm-nodes: rm-nodes-${ENV}
-rm-frontend: rm-frontend-${ENV}
-rm: rm-nodes rm-frontend

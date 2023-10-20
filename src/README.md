@@ -148,13 +148,7 @@ export ENV=production
 
 Build the Docker images:
 ```bash
-# to build both images
-make build
- 
-# to build one image
-make build-nodes
-# or
-make build-controller
+make compose-build
 ```
 Note: once the images are built, you do not need to execute this step again unless you modify the environment (ex: installation of a new Python module) or the source code (new commit).
 
@@ -170,25 +164,16 @@ After the initialisation, you should be able to see a similar message as the one
   <img src="../docs/images/robot_connected.png" style="width:70%;" />
 </p>
 
-Allow Docker to access Ubuntu's display:
-```bash
-xhost +
-```
+Prepare the `.env` file: an example is provided in the repository (see `.env.example`).
+
 
 Launch the Docker containers:
 ```bash
-make run-controller
+make compose-up
 ```
-That command will start a small Flask application (path between the ROS nodes and the NAOQi SDK).
+That command will start the fronted application (React), the ROS nodes and the Flask API (link between React and ROS).
 
-Then, in an other terminal, run the following command to start the container hosting the ROS nodes:
-```bash
-make run-nodes
-```
-
-All the nodes will be launched using that single command.
-
-It can take some time to launch the ManagerUI (last command above). If the window is not responsive, wait a few seconds.
+Open your browser and navigate to the following URL to access the React application: http://127.0.0.1 
 
 
 ## Launch the Development environment
@@ -215,46 +200,24 @@ export ENV=development
 
 Build the development images:
 ```bash
-# if you want to build both of the images (nodes+controller)
-make build
- 
-# if you want to build only one image
-make build-nodes
-# or
-make build-controller
+make compose-build
 ```
 Note: once the images are built, you do not need to execute this step again except if you change the environment (ex: installation of a new Python module).
 
+Prepare the `.env` file: an example is provided in the repository (see `.env.example`).
+
 Run (create) the containers:
 ```bash
-make run-nodes
-# or
-make run-controller
+make compose-up
 ```
 
-Note: same as for the previous step, if the environment has not changed you do not need to create the containers again. The containers only have to be created again if the related image has changed.
+To access the web application, open your browser and navigate to the following URL: http://localhost:3000.
 
-If you ran the run commands, skip the next step.
-
-If the containers have already been created but are not running:
-```bash
-make start-nodes
-# or
-make start-controller
-```
-
-If you want to change the environment, modify the Dockerfile accordingly then remove the corresponding containers:
-```bash
-make rm-nodes
-# or
-make rm-controller
-```
-
-Then rebuild the images and run the containers again.
+If you want to change the environment, modify the Dockerfile accordingly then, rebuild the image and launch the containers.
 
 ### Develop in the environment
 
-Once a container hosting the ROS environment have been created and is running, you can access the code inside it either by:
+Once the containers have been created and are running, you can access the code inside it either by:
 - opening a VSCode window using the Dev Container extension (guide on Confluence). When the window is opened, open a terminal (ctrl+J or cmd+J), then on the prompt type bash and press enter
 - executing the container (eg. log inside it) by running in a terminal window:
 ```bash
@@ -262,7 +225,7 @@ Once a container hosting the ROS environment have been created and is running, y
 docker exec -it <the-name-of-the-container> bash
 ```
 
-### Test & Debug in the environment
+### Test & Debug in the environment (ROS)
 All the following commands are meant to be ran inside the container, eg. in the terminal window opened by either of the two possible options presented above
 
 Since the source code of the project is only "linked" to the container, none of the ROS packages have been built. To test and debug the code, the packages need to be built then launched in the container.
@@ -296,3 +259,7 @@ ros2 launch <the-package-name> <the-name-of-the-launch-file>
 ```
 
 If you modify the source code of the package, rebuild it and run the node / the package again. If the package is not rebuilt, the changes will not be taken into account.
+
+### Test & Debug in the environment (React)
+
+Once the frontend container is running, the app will be updated each time a file is modified and saved. There is no need to relaunch the containers unless you add a new dependency.
