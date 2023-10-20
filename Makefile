@@ -1,6 +1,4 @@
 include ./docker/docker.env
-include ./docker/production/production.mk
-include ./docker/development/development.mk
 
 # ensure that the ENV variable is set to either "production" or "development"
 # before running any of the targets below
