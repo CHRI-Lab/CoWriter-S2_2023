@@ -1,4 +1,9 @@
 ## SOURCE: https://github.com/github/gitignore/blob/main/Python.gitignore ##
+
+credentials/
+.vscode
+strugg_letter_data/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

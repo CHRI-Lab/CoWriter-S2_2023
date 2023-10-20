@@ -1,33 +1,36 @@
 #!/usr/bin/env python3
+# flake8: noqa
 """
 Listens for a trajectory to write and sends it to the nao via naoqi SDK.
 
 Requires a running robot/simulation with ALNetwork proxies.
 
 """
-import json
-# from geometry_msgs.msg import PoseStamped
+
 from tf2_geometry_msgs import PoseStamped
 from nav_msgs.msg import Path
-from std_msgs.msg import String, Empty, Header
 from copy import deepcopy
 
 import rclpy
 from rclpy.node import Node
-from rclpy.duration import Duration
 
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros.buffer import Buffer
-from requests import Session
+
+import qi
+
+# from requests import Session
 
 # import motion
 import math
 import time
+import os
+
 
 class nao_writer_naoqi(Node):
     def __init__(
         self,
-        session: Session,
+        # session: Session,
         effector="RArm",
         naoWriting=True,
         naoSpeaking=True,
@@ -49,47 +52,52 @@ class nao_writer_naoqi(Node):
         - alternateSidesLookingAt (bool, optional): Flag indicating whether the robot should alternate sides when looking at objects. Defaults to False.
         """
         super().__init__("nao_writer")
-        self.session = session
+        # self.session = session
         SHAPE_TOPIC = self.declare_parameter(
             "~trajectory_nao_topic", "write_traj"
         ).value
-        self.nao_settings = session.get(
-            "http://localhost:5000/get_settings"
-        ).json()
+        # self.nao_settings = session.get(
+        #     "http://localhost:5000/get_settings"
+        # ).json()
         TRAJ_TOPIC = "write_traj_nao"  # rospy.get_param('~trajectory_nao_input_topic','/write_traj_nao')
         # NAO_IP = self.declare_parameter("~nao_ip", "127.0.0.1").value
+        NAO_IP = os.getenv("NAO_IP")
         # PORT = int(self.declare_parameter("~nao_port", "9559").value)
+        PORT = os.getenv("NAO_PORT")
         # NAO_HANDEDNESS = self.declare_parameter(
         #     "~nao_handedness", "right"
         # ).value
+        NAO_HANDEDNESS = "right"
 
-        if self.nao_settings.get("nao_handedness") == "right":
+        # if self.nao_settings.get("nao_handedness") == "right":
+        if NAO_HANDEDNESS == "right":
             self.effector = "RArm"
-        elif self.nao_settings.get("nao_handedness") == "left":
+        # elif self.nao_settings.get("nao_handedness") == "left":
+        elif NAO_HANDEDNESS == "left":
             self.effector = "LArm"
         else:
             self.get_logger().info("error in handedness param")
 
-        # self.qi_url = f"tcp://{NAO_IP}:{PORT}"
-        # self.get_logger().info(
-        #     f"[RobotController] Connecting to qi_url={self.qi_url}"
-        # )
-        # self.app = qi.Application(url=self.qi_url)
-        # self.app.start()
-        # # app.run()
-        # self.get_logger().info(f"[RobotController] app started")
-        # self.session = self.app.session
-        # self.motionProxy = self.session.service("ALMotion")
+        self.qi_url = f"tcp://{NAO_IP}:{PORT}"
+        self.get_logger().info(
+            f"[RobotController] Connecting to qi_url={self.qi_url}"
+        )
+        self.app = qi.Application(url=self.qi_url)
+        self.app.start()
+        # app.run()
+        self.get_logger().info(f"[RobotController] app started")
+        self.session = self.app.session
+        self.motionProxy = self.session.service("ALMotion")
         # self.memoryProxy = self.session.service("ALMemory")
-        # self.postureProxy = self.session.service("ALRobotPosture")
+        self.postureProxy = self.session.service("ALRobotPosture")
         # self.ttsProxy = self.session.service("ALTextToSpeech")
-        self.tl = TransformListener(Buffer(), self)#, True, Duration(seconds=10))
+        self.tl = TransformListener(
+            Buffer(), self
+        )  # , True, Duration(seconds=10))
         self.space = 2  # {FRAME_TORSO = 0, FRAME_WORLD = 1, FRAME_ROBOT = 2}
         self.isAbsolute = True
 
-        self.create_subscription(
-            Path, SHAPE_TOPIC, self.on_traj, 10
-        )
+        self.create_subscription(Path, SHAPE_TOPIC, self.on_traj, 10)
 
     def point_dist(self, p1, p2):
         return math.sqrt(
@@ -118,25 +126,18 @@ class nao_writer_naoqi(Node):
 
         axisMask = [AXIS_MASK_X + AXIS_MASK_Y + AXIS_MASK_Z + AXIS_MASK_WX]
 
-        if self.effector == "LArm":
-            self.session.post(
-                "http://localhost:5000/open_hand", json={"hand": "LHand"}
-            )
-            self.session.post(
-                "http://localhost:5000/close_hand", json={"hand": "LHand"}
-            )
+        self.postureProxy.goToPosture("StandInit", 0.5)
 
-            roll = (
-                -1.7
-            )  # rotate wrist to the left (about the x axis, w.r.t. robot frame)
+        if self.effector == "LArm":
+            self.motionProxy.openHand("LHand")
+            self.motionProxy.closeHand("LHand")
+            # rotate wrist to the left (about the x axis, w.r.t. robot frame)
+            roll = -1.7
         else:
-            self.session.post(
-                "http://localhost:5000/open_hand", json={"hand": "RHand"}
-            )
-            self.session.post(
-                "http://localhost:5000/close_hand", json={"hand": "RHand"}
-            )
-            roll = 1.7  # rotate wrist to the right (about the x axis, w.r.t. robot frame)
+            self.motionProxy.openHand("RHand")
+            self.motionProxy.closeHand("RHand")
+            # rotate wrist to the right (about the x axis, w.r.t. robot frame)
+            roll = 1.7
 
         target = PoseStamped()
 
@@ -145,19 +146,19 @@ class nao_writer_naoqi(Node):
 
         """
         #go to first point then wait
-        path = []  
-        times = [] 
-        trajStartPosition = traj.poses[0].pose.position 
+        path = []
+        times = []
+        trajStartPosition = traj.poses[0].pose.position
         traj.poses[0].pose.position.z = 0.05
         target.pose.position = deepcopy(traj.poses[0].pose.position)
         target.pose.orientation = deepcopy(traj.poses[0].pose.orientation)
         trajStartPosition_robot = tl.transformPose("base_footprint",target)
-        point = [trajStartPosition_robot.pose.position.x,trajStartPosition_robot.pose.position.y,trajStartPosition_robot.pose.position.z,roll,0,0] 
+        point = [trajStartPosition_robot.pose.position.x,trajStartPosition_robot.pose.position.y,trajStartPosition_robot.pose.position.z,roll,0,0]
         
-        path.append(point) 
-        timeToStartPosition = traj.poses[0].header.stamp.to_sec() 
-        times.append(timeToStartPosition) 
-        motionProxy.setPosition(effector,space,point,0.5,axisMask) #,times,isAbsolute) 
+        path.append(point)
+        timeToStartPosition = traj.poses[0].header.stamp.to_sec()
+        times.append(timeToStartPosition)
+        motionProxy.setPosition(effector,space,point,0.5,axisMask) #,times,isAbsolute)
         """
         path = []
         times = []
@@ -168,7 +169,9 @@ class nao_writer_naoqi(Node):
             target.pose.position = deepcopy(trajp.pose.position)
             target.pose.orientation = deepcopy(trajp.pose.orientation)
             target.header.frame_id = "base_footprint"
-            target_robot = self.tl.buffer.transform(target, "base_footprint", rclpy.duration.Duration(seconds=5.0))
+            target_robot = self.tl.buffer.transform(
+                target, "base_footprint", rclpy.duration.Duration(seconds=5.0)
+            )
 
             point = [
                 float(target_robot.pose.position.x),
@@ -181,7 +184,7 @@ class nao_writer_naoqi(Node):
             # point = [0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
 
             times.append(timer)
-            if not last_point is None:
+            if last_point is not None:
                 point_dist = self.point_dist(last_point, point)
                 timer += point_dist * 80
             else:
@@ -200,22 +203,30 @@ class nao_writer_naoqi(Node):
         self.get_logger().info(
             "executing rest of traj at " + str(self.get_clock().now())
         )
-        startTime = self.get_clock().now()
+        # startTime = self.get_clock().now()
 
-        self.session.post(
-            "http://localhost:5000/position_interpolation",
-            json={
-                "effector": self.effector,
-                "space": self.space,
-                "path": self.traj_to_path(path),
-                "axisMask": axisMask,
-                "times": times,
-                "isAbsolute": self.isAbsolute,
-            },
+        # self.session.post(
+        #     "http://localhost:5000/position_interpolation",
+        #     json={
+        #         "effector": self.effector,
+        #         "space": self.space,
+        #         "path": self.traj_to_path(path),
+        #         "axisMask": axisMask,
+        #         "times": times,
+        #         "isAbsolute": self.isAbsolute,
+        #     },
+        # )
+        self.motionProxy.positionInterpolations(
+            [self.effector],
+            self.space,
+            self.traj_to_path(path),
+            axisMask,
+            times,
+            self.isAbsolute,
         )
         self.get_logger().info(
             "Time taken for rest of trajectory: "
-            #+ str((self.get_clock().now() - startTime).seconds())
+            # + str((self.get_clock().now() - startTime).seconds())
         )
 
     # normalize a path for nao robot so it can write comfortablely
@@ -230,16 +241,14 @@ class nao_writer_naoqi(Node):
         Returns:
         - converted_pts (list): A list of converted points representing the writing path, where each point is a list with six elements [x, y, z, roll, pitch, yaw].
         """
-        arm_len = 0.323
+        # arm_len = 0.323
         converted_pts = []
         corner_min = [0.12, 0.03, 0.32]
         corner_max = [0.12, -0.18, 0.47]
         # limit the coordinate range for writing
-        for (
-            point
-        ) in (
-            points
-        ):  # Convert the writing trajectory of the X and Y axes into a writing trajectory perpendicular to the ground
+        for point in points:
+            # Convert the writing trajectory of the X and Y axes
+            # into a writing trajectory perpendicular to the ground
             y = point[0]
             z = point[1]
             converted_pts.append([0, y, z, point[3], point[4], point[5]])
@@ -264,7 +273,9 @@ class nao_writer_naoqi(Node):
         for i, point in enumerate(converted_pts):
             y = (point[1] - pt_min[1]) * normal_factor[1] + corner_min[1]
             z = (point[2] - pt_min[2]) * normal_factor[2] + corner_min[2]
-            # The length of the robot's arm is limited, and it needs to adjust the X-axis coordinate size according to the writing position
+            # The length of the robot's arm is limited,
+            # and it needs to adjust the X-axis coordinate size according
+            # to the writing position
             x = (
                 math.sqrt(max([0.12 - (y + 0.07) * (y + 0.07) - z * z, 0.1]))
                 * 1.2
@@ -277,8 +288,9 @@ class nao_writer_naoqi(Node):
 
 def main():
     rclpy.init()
-    session = Session()
-    writer = nao_writer_naoqi(session)
+    # session = Session()
+    # writer = nao_writer_naoqi(session)
+    writer = nao_writer_naoqi()
     rclpy.spin(writer)
 
     writer.destroy_node()

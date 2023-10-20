@@ -18,15 +18,23 @@ find_package(nav_msgs REQUIRED)
 # Declare ROS messages and services
 set(msg_files
   "msg/Shape.msg"
+  "msg/Shapes.msg"
+  "msg/Stroke.msg"
+  "msg/Strokes.msg"
+
 )
 set(srv_files
   "srv/ClearAllShapes.srv"
   "srv/DisplayNewShape.srv"
+  "srv/GenerateWord.srv"
   "srv/IsPossibleToDisplayNewShape.srv"
   "srv/IndexOfLocation.srv"
   "srv/ShapeAtLocation.srv"
   "srv/ClosestShapesToLocation.srv"
   "srv/DisplayShapeAtLocation.srv"
+  "srv/TextToImage.srv"
+  "srv/LearnShape.srv"
+  "srv/GetDemo.srv"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

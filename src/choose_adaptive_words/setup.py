@@ -2,7 +2,7 @@
 
 import os
 from glob import glob
-from setuptools import setup
+from setuptools import setup, find_packages
 
 package_name = "choose_adaptive_words"
 
@@ -10,7 +10,7 @@ setup(
     name=package_name,
     version="0.0.0",
     # Packages to export
-    packages=[package_name],
+    packages=find_packages(),
     # Files we want to install, specifically launch files
     # package_data={'': ['*.svg', "*.ui", "*.png"]},
     # include_package_data=True,
@@ -27,8 +27,18 @@ setup(
             os.path.join("share", package_name, "launch"),
             glob(os.path.join(package_name, "launch", "*.launch.py")),
         ),
-        (os.path.join('lib/python3.10/site-packages/choose_adaptive_words/design/assets'), glob(package_name+'/design/assets/*')),
-        (os.path.join('lib/python3.10/site-packages/choose_adaptive_words/design/'), glob(package_name+'/design/*.ui')),
+        (
+            os.path.join(
+                "lib/python3.10/site-packages/choose_adaptive_words/design/assets"  # noqa: E501
+            ),
+            glob(package_name + "/design/assets/*"),
+        ),
+        (
+            os.path.join(
+                "lib/python3.10/site-packages/choose_adaptive_words/design/"
+            ),
+            glob(package_name + "/design/*.ui"),
+        ),
     ],
     # This is important as well
     install_requires=["setuptools"],
@@ -50,9 +60,9 @@ setup(
     # scripts here.
     entry_points={
         "console_scripts": [
-            "child_ui = choose_adaptive_words.child_ui:main",
-            "manager_ui = choose_adaptive_words.manager_ui:main",
             "temp_backend = choose_adaptive_words.temp_backend:main",
+            "backend = choose_adaptive_words.backend:main",
+            "child_ui = choose_adaptive_words.child_ui:main",
         ]
     },
 )

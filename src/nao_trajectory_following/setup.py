@@ -47,7 +47,7 @@ setup(
     entry_points={
         "console_scripts": [
             "nao_writer_naoqi = nao_trajectory_following.nao_writer_naoqi:main",
-            "writing_surface_positioner = nao_trajectory_following.writing_surface_positioner:main",
+            "writing_surface_positioner = nao_trajectory_following.writing_surface_positioner:main",  # noqa: E501
         ]
     },
 )

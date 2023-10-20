@@ -19,7 +19,7 @@ jobs:
         uses: py-actions/flake8@v2
         with:
           # ignore: "F401" -> to be updated later
-          # exclude: "src/ignoreme.py" -> to be updated later
-          max-line-length: "80"
+          exclude: "test_*.py"
+          max-line-length: "88"
           path: "src"
           plugins: "flake8"

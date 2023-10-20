@@ -5,6 +5,7 @@ http://www.ibm.com/developerworks/linux/library/l-python-state/index.html
 """
 
 from typing import Callable, Dict, List, Optional
+
 # Use .upper() method of str; string.upper import is not available in Python 3
 # from string import upper
 
@@ -31,8 +32,9 @@ class StateMachine:
         self.end_states: List = []
         self.current_state: Optional[str] = None
 
-    def add_state(self, name: str, handler: Optional[Callable],
-                  end_state: Optional[bool] = None) -> None:
+    def add_state(
+        self, name: str, handler: Optional[Callable], end_state: Optional[bool] = None
+    ) -> None:
         """
         Add a new state to the state machine, along with its
         corresponding handler function.
@@ -75,7 +77,7 @@ class StateMachine:
 
     def run(self, cargo) -> None:
         """
-        Run the state machine starting from the initial state, 
+        Run the state machine starting from the initial state,
         processing input (cargo) until an end state is reached.
 
         Parameters
@@ -87,12 +89,12 @@ class StateMachine:
             handler = self.handlers[self.start_state]
         # Updated exception raising to use Python 3 syntax
         except KeyError:
-            raise Exception(
-                "InitializationError: must call .set_start() before .run()")
+            raise Exception("InitializationError: must call .set_start() before .run()")
 
         if not self.end_states:
             raise Exception(
-                "InitializationError: at least one state must be an end_state")
+                "InitializationError: at least one state must be an end_state"
+            )
 
         while True:
             new_state, cargo = handler(cargo)

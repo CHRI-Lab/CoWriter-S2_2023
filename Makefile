@@ -1,46 +1,28 @@
-export NODES_IMAGE=nodes
-export ROBOT_CONTROLLER_IMAGE=robot-controller
-export NODES_CONTAINER=nodes
-export ROBOT_CONTROLLER_CONTAINER=robot-controller
+include ./docker/docker.env
 
-build-nodes:
-	docker build --tag ${NODES_IMAGE} --platform linux/amd64 .
+# ensure that the ENV variable is set to either "production" or "development"
+# before running any of the targets below
+TARGETS = $(filter-out $@,$(MAKECMDGOALS))
+$(eval $(TARGETS): check-env)
 
-build-robot-controller:
-	docker build --tag ${ROBOT_CONTROLLER_IMAGE} --platform linux/amd64 --file robot.Dockerfile .
+check-env:
+	@if [ -z "$(ENV)" ]; then \
+		echo "Set the ENV variable either to \"production\" or \"development\".\nexport ENV=..."; \
+		exit 1; \
+	elif [ "$(ENV)" != "production" ] && [ "$(ENV)" != "development" ]; then \
+		echo "Error: ENV must be set to either \"production\" or \"development\"."; \
+		exit 1; \
+	else \
+		echo "ENV is set to $(ENV)"; \
+	fi
 
-run-nodes:
-	docker run -it -d \
-		--name ${NODES_CONTAINER} \
-		--user nao \
-		--network host \
-		--device /dev/snd \
-		-v ./src:/home/nao/NAOHW-Boxjelly/src \
-		-v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=${DISPLAY} \
-		${NODES_IMAGE}
-
-run-robot-controller:
-	docker run -it \
-		--name ${ROBOT_CONTROLLER_CONTAINER} \
-		--user nao \
-		--network="host" \
-		-v ./src/controller:/home/nao/controller \
-		${ROBOT_CONTROLLER_IMAGE} 
-
-start-cowriter:
-	docker exec -it ${NODES_CONTAINER} \
-	bash -c "source ./install/setup.bash && /opt/ros/humble/bin/ros2 launch letter_learning_interaction cowriter.launch.py"
-
-start-adaptive-words:
-	docker exec -it ${NODES_CONTAINER} \
-	bash -c "source ./install/setup.bash && /opt/ros/humble/bin/ros2 launch choose_adaptive_words adaptive.launch.py"
-
-start-trajectory-following:
-	docker exec -it ${NODES_CONTAINER} \
-	bash -c "source ./install/setup.bash && /opt/ros/humble/bin/ros2 launch nao_trajectory_following trajectory.launch.py"
-
-rm-nodes:
-	docker rm -f ${NODES_CONTAINER}
-
-rm-robot-controller:
-	docker rm -f ${ROBOT_CONTROLLER_CONTAINER}
+compose-build:
+	docker compose \
+		--file docker-compose.${ENV}.yml \
+		--env-file ./docker/docker.env \
+		build
+compose-up:
+	docker compose \
+		--file docker-compose.${ENV}.yml \
+		--env-file ./docker/docker.env \
+		up

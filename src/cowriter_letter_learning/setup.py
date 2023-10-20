@@ -23,6 +23,32 @@ setup(
             os.path.join("share", package_name, "launch"),
             glob(os.path.join(package_name, "launch", "*.launch.py")),
         ),
+        (
+            os.path.join(
+                "share", package_name, "datasets/alexis_set_for_children"
+            ),
+            glob(
+                os.path.join(
+                    package_name, "datasets", "alexis_set_for_children/*.dat"
+                )
+            ),
+        ),
+        (
+            os.path.join("share", package_name, "datasets/bad_letters"),
+            glob(os.path.join(package_name, "datasets", "bad_letters/*.dat")),
+        ),
+        (
+            os.path.join("share", package_name, "datasets/uji_pen_chars2"),
+            glob(
+                os.path.join(package_name, "datasets", "uji_pen_chars2/*.dat")
+            ),
+        ),
+        (
+            os.path.join("share", package_name, "datasets/uji_pen_subset"),
+            glob(
+                os.path.join(package_name, "datasets", "uji_pen_subset/*.dat")
+            ),
+        ),
     ],
     # This is important as well
     install_requires=["setuptools"],
@@ -44,10 +70,10 @@ setup(
     # scripts here.
     entry_points={
         "console_scripts": [
-            "display_manager_server = letter_learning_interaction.display_manager_server:main",
-            "learning_words_nao = letter_learning_interaction.learning_words_nao:main",
-            "tablet_input_interpreter = letter_learning_interaction.tablet_input_interpreter:main",
-            "word_card_detector = letter_learning_interaction.word_card_detector:main",
+            "display_manager_server = letter_learning_interaction.display_manager_server:main",  # noqa: E501
+            "learning_words_nao = letter_learning_interaction.learning_words_nao:main",  # noqa: E501
+            "tablet_input_interpreter = letter_learning_interaction.tablet_input_interpreter:main",  # noqa: E501
+            "word_card_detector = letter_learning_interaction.word_card_detector:main",  # noqa: E501
         ]
     },
 )

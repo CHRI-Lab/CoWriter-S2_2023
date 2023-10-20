@@ -3,19 +3,20 @@
 import os
 import logging
 import numpy as np
-from nav_msgs.msg import Path
-from std_msgs.msg import String, Empty, Int32MultiArray
+from std_msgs.msg import Int32MultiArray
 from geometry_msgs.msg import PointStamped
 from typing import List, Optional
 from interface.msg import Shape as ShapeMsg  # type: ignore
 
-from interface.srv import *
-
-from letter_learning_interaction.include.shape_learner_manager import (
-    ShapeLearnerManager,
-    Shape,
+from interface.srv import (
+    ShapeAtLocation,
+    IsPossibleToDisplayNewShape,
+    ClosestShapesToLocation,
+    DisplayShapeAtLocation,
+    IndexOfLocation,
 )
-from letter_learning_interaction.include.shape_modeler import ShapeModeler
+
+from letter_learning_interaction.include.shape_learner_manager import Shape
 
 import rclpy
 from rclpy.node import Node
@@ -56,7 +57,6 @@ class TabletInputInterpreter(Node):
             ShapeAtLocation, "shape_at_location"
         )
         self.clear_all_shapes_service.wait_for_service(timeout_sec=1.0)
-
 
         GESTURE_TOPIC = "gesture_info"
         # only 1 argument
@@ -228,7 +228,6 @@ class TabletInputInterpreter(Node):
         demo_shape_received = Shape(path=path)
         # self.get_logger().info(np.float32(demo_shape_received.path))
 
-
         shape_message = self.make_shape_message(demo_shape_received)
         self.publish_shapes.publish(shape_message)
         self.get_logger().info("published processed shape")
@@ -249,7 +248,7 @@ class TabletInputInterpreter(Node):
         if shape.path is not None:
             self.get_logger().info("path is not none")
             self.get_logger().info(str(shape.path))
-            shape_message.path = [float( point) for point in shape.path]
+            shape_message.path = [float(point) for point in shape.path]
         if shape.shape_id is not None:
             shape_message.shape_id = shape.shape_id
         if shape.shape_type is not None:
@@ -317,7 +316,7 @@ class TabletInputInterpreter(Node):
                                     the gesture's position.
         """
         gesture_location = [message.point.x, message.point.y]
-        request = shapeAtLocationRequest()
+        request = ShapeAtLocation.Request()
         request.location.x = gesture_location[0]
         request.location.y = gesture_location[1]
         response = self.shape_at_location(request)

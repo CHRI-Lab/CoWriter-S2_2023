@@ -126,8 +126,8 @@ class Child_UI(QtWidgets.QMainWindow):
                     child_line_list.append(line_seg)
 
         p.setPen(self.child_pen)
-        for l in child_line_list:
-            p.drawLine(l)
+        for line in child_line_list:
+            p.drawLine(line)
 
         # draw manager lines
         manager_line_list = list()
@@ -140,8 +140,8 @@ class Child_UI(QtWidgets.QMainWindow):
                     manager_line_list.append(line_seg)
 
         p.setPen(self.manager_pen)
-        for l in manager_line_list:
-            p.drawLine(l)
+        for line in manager_line_list:
+            p.drawLine(line)
 
         p.end()
 
@@ -286,9 +286,9 @@ class ChildGUINode(Node):
         total_list = []
         i = 0
 
-        for l in self.gui.child_point_lists:
-            total_list.append((i, len(l)))
-            total_list += l
+        for point_list in self.gui.child_point_lists:
+            total_list.append((i, len(point_list)))
+            total_list += point_list
             i += 1
         print(total_list)
         self.publish_user_drawn_shapes.publish(

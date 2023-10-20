@@ -36,17 +36,18 @@ This semester, our team aims to:
 ## Structure
 
 ```
-    ├── .github/workflows/              # Implementation of the GitHub Actions  
+    ├── .github/workflows/              # Implementation of the GitHub Actions
+    ├── docker/                         # Docker resources
     ├── docs/                           # Documentation files 
     ├── src/
-    ├── share/
     ├── .gitignore 
     ├── CHANGELOG.md
-    ├── Dockerfile
-    ├── robot.Dockerfile
-    ├── requirements.txt
+    ├── docker-compose.development.yml  # Docker compose file for development
+    ├── docker-compose.production.yml   # Docker compose file for production
+    ├── CHANGELOG.md
     ├── Makefile                        # Commands to launch the project
-    └── README.md
+    ├── README.md
+    └── requirements.txt                # Python dependencies
 ```
 
 ## Coding Standards
@@ -74,3 +75,6 @@ If the pipeline should fail, it would mean some changes have to be made to ensur
 
 ## Sprint 2 Demo Video
 The demo video presenting the features developed during Sprint 2 is available [here](https://drive.google.com/file/d/13TsE_G87LoL3ysXPLU3SCg8_5_rH3eh1/view?usp=drive_link).
+
+## Sprint 3 Demo Video
+The demo video presenting the features developed during Sprint 3 is available [here](https://drive.google.com/file/d/1dBI04GYDs1uH_ORdyimv_hFUaKAXvo5X/view?usp=sharing).

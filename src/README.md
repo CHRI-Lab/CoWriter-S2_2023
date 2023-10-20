@@ -119,8 +119,10 @@ it means that Docker is not running. The service has to be started manually:
 sudo systemctl start docker
 ```
 
-## Launch the Project
+## Launch the Project (Production)
 *This page will be updated during the project. Since it gathers all the instructions required to launch our source code, it is meant to be modified.*
+
+This section presents the steps required to launch the project in a production environment (final product). To launch a development environment see the next section.
 
 To run the project, run the following commands in the same order they appear:
 
@@ -139,13 +141,16 @@ sudo apt-get update
 sudo apt-get install -y make
 ```
 
+Set the ENV variable to "production":
+```bash
+export ENV=production
+```
+
 Build the Docker images:
 ```bash
-# you can run the commands in two separate terminals for efficiency
-# make sure to run them inside the project folder -> cd /path/to/NA-Redback
-make build-nodes
-make build-robot-controller
+make compose-build
 ```
+Note: once the images are built, you do not need to execute this step again unless you modify the environment (ex: installation of a new Python module) or the source code (new commit).
 
 Launch Choregraphe and start the virtual robot:
 
@@ -159,52 +164,102 @@ After the initialisation, you should be able to see a similar message as the one
   <img src="../docs/images/robot_connected.png" style="width:70%;" />
 </p>
 
-Allow Docker to access Ubuntu's display:
-```bash
-xhost +
-```
+Prepare the `.env` file: an example is provided in the repository (see `.env.example`).
+
 
 Launch the Docker containers:
 ```bash
-make run-robot-controller
+make compose-up
 ```
-That command will start a small Flask application (path between the ROS nodes and the NAOQi SDK).
+That command will start the fronted application (React), the ROS nodes and the Flask API (link between React and ROS).
 
-Then, in an other terminal, run the following command to start the container hosting the ROS nodes:
+Open your browser and navigate to the following URL to access the React application: http://127.0.0.1 
+
+
+## Launch the Development environment
+
+Clone the repository:
 ```bash
-make run-nodes
+git clone git@github.com:COMP90082-2023-SM2/NA-Redback.git
+cd NA-Redback
 ```
 
-The container hosting the ROS nodes has now started. Now we need to launch each nodes.
-
-Open 3 different terminals, and run one command per terminal:
+Check if the "make" command is available by running:
 ```bash
-# make sure to run them inside the project folder -> cd /path/to/NA-Redback
-make start-cowriter
-make start-trajectory-following
-make start-adaptive-words
-```
-It can take some time to launch the ManagerUI (last command above). If the window is not responsive, wait a few seconds.
-
-If you updated the version of a Docker image, remove the existing containers before running the start commands again, otherwise the changes will not be taken into account:
-```bash
-# make sure to run them inside the project folder -> cd /path/to/NA-Redback
-make rm-nodes
-make rm-robot-controller
+which make
+# if the output is "/usr/bin/make", then skip the following commands
+# if not, run
+sudo apt-get update
+sudo apt-get install -y make
 ```
 
-Then:
+Set the ENV variable to "development":
 ```bash
-# make sure to run them inside the project folder -> cd /path/to/NA-Redback
-make run-nodes
-# and/or
-make run-robot-controller
+export ENV=development
 ```
 
-Finally:
+Build the development images:
 ```bash
-# make sure to run them inside the project folder -> cd /path/to/NA-Redback
-make start-cowriter
-make start-trajectory-following
-make start-adaptive-words
+make compose-build
 ```
+Note: once the images are built, you do not need to execute this step again except if you change the environment (ex: installation of a new Python module).
+
+Prepare the `.env` file: an example is provided in the repository (see `.env.example`).
+
+Run (create) the containers:
+```bash
+make compose-up
+```
+
+To access the web application, open your browser and navigate to the following URL: http://localhost:3000.
+
+If you want to change the environment, modify the Dockerfile accordingly then, rebuild the image and launch the containers.
+
+### Develop in the environment
+
+Once the containers have been created and are running, you can access the code inside it either by:
+- opening a VSCode window using the Dev Container extension (guide on Confluence). When the window is opened, open a terminal (ctrl+J or cmd+J), then on the prompt type bash and press enter
+- executing the container (eg. log inside it) by running in a terminal window:
+```bash
+# note: before executing this command, the container must already be running
+docker exec -it <the-name-of-the-container> bash
+```
+
+### Test & Debug in the environment (ROS)
+All the following commands are meant to be ran inside the container, eg. in the terminal window opened by either of the two possible options presented above
+
+Since the source code of the project is only "linked" to the container, none of the ROS packages have been built. To test and debug the code, the packages need to be built then launched in the container.
+
+Ensure that the ROS environment variables are loaded:
+```bash
+source /opt/ros/humble/setup.bash
+which ros2
+# the output should be "/opt/ros/humble/bin/ros2"
+```
+
+Navigate to the same level as the src folder to build the desired ROS packages:
+```bash
+sudo colcon build --packages-select <the-package-name>
+```
+
+Add the package's path to the environment variables:
+```bash
+source ./install/setup.bash
+```
+
+The nodes / package can now be tested:
+
+- to run a single node, run:
+```bash
+ros2 run <the-package-name> <the-name-of-the-node>
+```
+- to run all the nodes at the same time (if the package contains a .launch.py file:
+```bash
+ros2 launch <the-package-name> <the-name-of-the-launch-file>
+```
+
+If you modify the source code of the package, rebuild it and run the node / the package again. If the package is not rebuilt, the changes will not be taken into account.
+
+### Test & Debug in the environment (React)
+
+Once the frontend container is running, the app will be updated each time a file is modified and saved. There is no need to relaunch the containers unless you add a new dependency.
