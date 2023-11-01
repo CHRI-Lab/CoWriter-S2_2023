@@ -12,7 +12,6 @@
     
     min_silent_chunk_to_split: 100
     audio_buflen: 10240
-    silent_threshold: 1700
 
     log_audio_to_file: false
     audio_outfile: ""

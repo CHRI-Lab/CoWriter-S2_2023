@@ -6,6 +6,7 @@ from audio_common_msgs.msg import AudioData
 
 from speech_recognition.include.audio_stream import AudioStream
 
+import os
 
 class SpeechRecognition(Node):
     def __init__(self):
@@ -19,7 +20,8 @@ class SpeechRecognition(Node):
             "min_silent_chunk_to_split", 100
         ).value
         audio_buflen = self.declare_parameter("audio_buflen", 10240).value
-        silent_threshold = self.declare_parameter("silent_threshold", 700).value
+        # silent_threshold = self.declare_parameter("silent_threshold", 700).value
+        silent_threshold = int(os.getenv("SILENT_THRESHOLD"))
 
         log_audio_to_file = self.declare_parameter(
             "log_audio_to_file", False
