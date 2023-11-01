@@ -42,8 +42,7 @@ from flask_cors import CORS
 
 TOPIC_IMAGE_URL = "image_url"
 
-# api_key = "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"
-api_key = "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"
+api_key = os.getenv("OPENAI_API_KEY")
 openai.api_key = api_key
 
 
