@@ -78,3 +78,6 @@ The demo video presenting the features developed during Sprint 2 is available [h
 
 ## Sprint 3 Demo Video
 The demo video presenting the features developed during Sprint 3 is available [here](https://drive.google.com/file/d/1dBI04GYDs1uH_ORdyimv_hFUaKAXvo5X/view?usp=sharing).
+
+## Sprint 4 Final Video
+The final video of our poduct is available [here](https://youtu.be/7Zr4GBAgWPE).
